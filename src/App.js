@@ -1,7 +1,4 @@
-import zipfile
 
-# Modificar el archivo App.js para incluir las nuevas funcionalidades
-updated_app_js = """
 import React, { useState } from 'react';
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
@@ -111,11 +108,3 @@ function App() {
 }
 
 export default App;
-"""
-
-# Actualizar el archivo ZIP existente
-zip_path = "prototipo_react_konva_modificado.zip"
-with zipfile.ZipFile(zip_path, 'w') as zipf:
-    zipf.writestr("src/App.js", updated_app_js)
-
-print("Prototipo modificado exitosamente. Puedes descargar el nuevo archivo ZIP.")
