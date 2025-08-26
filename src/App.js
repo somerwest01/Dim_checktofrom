@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
-import { Stage, Layer, Line, Text, Circle, Rect, RegularPolygon } from 'react-konva';
+import { Stage, Layer, Line, Text, Circle } from 'react-konva';
 
 function App() {
   const [mode, setMode] = useState('design');
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
-  const [selectedLine, setSelectedLine] = useState(null);
+  const [selectedLineIndex, setSelectedLineIndex] = useState(null);
   const [dimensionEdit, setDimensionEdit] = useState('');
 
-  const handleClick = (e) => {
+  const handleStageClick = (e) => {
     const stage = e.target.getStage();
     const mousePos = stage.getPointerPosition();
 
@@ -31,58 +31,59 @@ function App() {
         setPoints([]);
       }
     } else if (mode === 'edit') {
-      const clickedLine = lines.find(line => {
+      const clickedIndex = lines.findIndex(line => {
+        const { p1, p2 } = line;
         const distToLine = Math.abs(
-          (line.p2.y - line.p1.y) * mousePos.x -
-          (line.p2.x - line.p1.x) * mousePos.y +
-          line.p2.x * line.p1.y - line.p2.y * line.p1.x
+          (p2.y - p1.y) * mousePos.x -
+          (p2.x - p1.x) * mousePos.y +
+          p2.x * p1.y - p2.y * p1.x
         ) / Math.sqrt(
-          Math.pow(line.p2.y - line.p1.y, 2) +
-          Math.pow(line.p2.x - line.p1.x, 2)
+          Math.pow(p2.y - p1.y, 2) +
+          Math.pow(p2.x - p1.x, 2)
         );
         return distToLine < 5;
       });
-      if (clickedLine) {
-        setSelectedLine(clickedLine);
-        setDimensionEdit(clickedLine.dimension_mm);
+      if (clickedIndex !== -1) {
+        setSelectedLineIndex(clickedIndex);
+        setDimensionEdit(lines[clickedIndex].dimension_mm);
       } else {
-        setSelectedLine(null);
+        setSelectedLineIndex(null);
       }
     }
   };
 
   const updateDimension = () => {
-    if (selectedLine) {
-      const updatedLines = lines.map(line =>
-        line === selectedLine ? { ...line, dimension_mm: dimensionEdit } : line
-      );
+    if (selectedLineIndex !== null) {
+      const updatedLines = [...lines];
+      updatedLines[selectedLineIndex].dimension_mm = dimensionEdit;
       setLines(updatedLines);
-      setSelectedLine(null);
+      setSelectedLineIndex(null);
     }
   };
 
   return (
     <div style={{ display: 'flex' }}>
-      <div style={{ width: '250px', padding: '10px' }}>
+      <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
-        <button onClick={() => setMode('design')}>✏️ Modo Diseño</button>
-        <button onClick={() => setMode('edit')}>🛠️ Modo Edición</button>
+        <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
+        <button onClick={() => setMode('edit')}>🛠️ Edición</button>
 
-        {selectedLine && (
+        {selectedLineIndex !== null && (
           <div style={{ marginTop: '20px' }}>
-            <h4>Propiedades de la línea</h4>
+            <h4>Editar línea</h4>
             <label>Dimensión (mm):</label>
             <input
               type="number"
               value={dimensionEdit}
               onChange={(e) => setDimensionEdit(e.target.value)}
-              style={{ width: '100px' }}
+              style={{ width: '100px', marginLeft: '5px' }}
             />
-            <button onClick={updateDimension}>Guardar</button>
+            <br />
+            <button onClick={updateDimension} style={{ marginTop: '10px' }}>Guardar</button>
           </div>
         )}
       </div>
-      <Stage width={800} height={600} onClick={handleClick} style={{ border: '1px solid black' }}>
+      <Stage width={800} height={600} onClick={handleStageClick} style={{ border: '1px solid black' }}>
         <Layer>
           {lines.map((line, i) => (
             <>
@@ -99,6 +100,8 @@ function App() {
                 fontSize={10}
                 fill="blue"
               />
+              <Circle x={line.p1.x} y={line.p1.y} radius={3} fill="red" />
+              <Circle x={line.p2.x} y={line.p2.y} radius={3} fill="green" />
             </>
           ))}
         </Layer>
