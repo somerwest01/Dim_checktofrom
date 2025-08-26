@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Stage, Layer, Line, Text, Circle, Rect, RegularPolygon } from 'react-konva';
+import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
 function App() {
   const [mode, setMode] = useState('design');
@@ -13,38 +13,23 @@ function App() {
   const [showInput, setShowInput] = useState(false);
   const [tempLine, setTempLine] = useState(null);
 
-  const distancia = (p1, p2) => {
-    return Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-  };
-
-  const encontrarExtremoCercano = (punto, umbral = 30) => {
-    const extremos = lines.flatMap(line => [line.p1, line.p2]);
-    for (let ext of extremos) {
-      if (distancia(punto, ext) < umbral) {
-        return ext;
-      }
-    }
-    return punto;
-  };
-
   const handleStageClick = (e) => {
     const stage = e.target.getStage();
     const mousePos = stage.getPointerPosition();
 
     if (mode === 'design') {
-      const conectado = encontrarExtremoCercano(mousePos);
       if (points.length === 0) {
-        setPoints([conectado]);
+        setPoints([mousePos]);
       } else {
         const newLine = {
           p1: points[0],
-          p2: conectado,
+          p2: mousePos,
           obj1,
           obj2,
           dimension_mm: null
         };
         setTempLine(newLine);
-        setInputPos(conectado);
+        setInputPos(mousePos);
         setShowInput(true);
         setPoints([]);
       }
@@ -79,7 +64,7 @@ function App() {
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        <button disabled>🛠️ Edición</button>
+        <button onClick={() => setMode('edit')}>🛠️ Edición</button>
 
         {mode === 'design' && (
           <>
@@ -115,7 +100,7 @@ function App() {
                 <Text
                   x={(line.p1.x + line.p2.x) / 2}
                   y={(line.p1.y + line.p2.y) / 2 - 10}
-                  text={`${line.dimension_mm} mm`}
+                  text={`${line.dimension_mm || ''} mm`}
                   fontSize={10}
                   fill="blue"
                 />
