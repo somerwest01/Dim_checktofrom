@@ -5,28 +5,44 @@ import { Stage, Layer, Line, Text, Circle } from 'react-konva';
 function App() {
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
-  const [obj1, setObj1] = useState('Conector');
-  const [obj2, setObj2] = useState('BRK');
+  const [obj1, setObj1] = useState('Ninguno');
+  const [obj2, setObj2] = useState('Ninguno');
   const [showInput, setShowInput] = useState(false);
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [tempLine, setTempLine] = useState(null);
   const [dimension, setDimension] = useState('');
 
+  const distancia = (p1, p2) => {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  };
+
+  const encontrarExtremoCercano = (punto, umbral = 30) => {
+    const extremos = lines.flatMap(line => [line.p1, line.p2]);
+    for (let ext of extremos) {
+      if (distancia(punto, ext) < umbral) {
+        return ext;
+      }
+    }
+    return punto;
+  };
+
   const handleClick = (e) => {
     const stage = e.target.getStage();
     const mousePos = stage.getPointerPosition();
+    const conectado = encontrarExtremoCercano(mousePos);
+
     if (points.length === 0) {
-      setPoints([mousePos]);
+      setPoints([conectado]);
     } else {
       const newLine = {
         p1: points[0],
-        p2: mousePos,
+        p2: conectado,
         obj1,
         obj2,
         dimension_mm: null
       };
       setTempLine(newLine);
-      setInputPos(mousePos);
+      setInputPos(conectado);
       setShowInput(true);
       setPoints([]);
     }
@@ -48,6 +64,7 @@ function App() {
         <h3>Herramientas</h3>
         <label>Objeto extremo 1:</label>
         <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
+          <option>Ninguno</option>
           <option>Conector</option>
           <option>BRK</option>
           <option>SPL</option>
@@ -55,6 +72,7 @@ function App() {
         <br /><br />
         <label>Objeto extremo 2:</label>
         <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
+          <option>Ninguno</option>
           <option>Conector</option>
           <option>BRK</option>
           <option>SPL</option>
