@@ -75,9 +75,15 @@ function App() {
     }
   };
 
+  const calcularAngulo = (p1, p2) => {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return (Math.atan2(dy, dx) * 180) / Math.PI;
+  };
+
   return (
     <div style={{ display: 'flex' }}>
-      <div style={{ width: '200px', padding: '10px' }}>
+      <div style={{ width: '220px', padding: '10px' }}>
         <h3>Herramientas</h3>
         <label>Objeto extremo 1:</label>
         <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
@@ -100,25 +106,33 @@ function App() {
       <div style={{ position: 'relative' }}>
         <Stage width={800} height={600} onClick={handleClick} style={{ border: '1px solid black' }}>
           <Layer>
-            {lines.map((line, i) => (
-              <>
-                <Line
-                  key={`line-${i}`}
-                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-                  stroke="black"
-                  strokeWidth={2}
-                />
-                <Text
-                  x={(line.p1.x + line.p2.x) / 2}
-                  y={(line.p1.y + line.p2.y) / 2 - 10}
-                  text={`${line.dimension_mm} mm`}
-                  fontSize={14}
-                  fill="blue"
-                />
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`)}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`)}
-              </>
-            ))}
+            {lines.map((line, i) => {
+              const xm = (line.p1.x + line.p2.x) / 2;
+              const ym = (line.p1.y + line.p2.y) / 2;
+              const angle = calcularAngulo(line.p1, line.p2);
+              return (
+                <>
+                  <Line
+                    key={`line-${i}`}
+                    points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+                    stroke="black"
+                    strokeWidth={2}
+                  />
+                  <Text
+                    x={xm}
+                    y={ym}
+                    text={`${line.dimension_mm} mm`}
+                    fontSize={10}
+                    fill="blue"
+                    rotation={angle}
+                    offsetX={20}
+                    offsetY={5}
+                  />
+                  {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`)}
+                  {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`)}
+                </>
+              );
+            })}
           </Layer>
         </Stage>
         {showInput && (
