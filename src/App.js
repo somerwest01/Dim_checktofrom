@@ -58,6 +58,10 @@ function App() {
     }
   };
 
+  const retrocederLinea = () => {
+    setLines(lines.slice(0, -1));
+  };
+
   const renderObjeto = (tipo, x, y, key) => {
     switch (tipo) {
       case 'Conector':
@@ -90,6 +94,8 @@ function App() {
           <option>BRK</option>
           <option>SPL</option>
         </select>
+        <br /><br />
+        <button onClick={retrocederLinea}>⏪ Retroceder última línea</button>
       </div>
       <div style={{ position: 'relative' }}>
         <Stage width={800} height={600} onClick={handleClick} style={{ border: '1px solid black' }}>
