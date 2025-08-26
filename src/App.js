@@ -1,4 +1,4 @@
 
-// Este archivo será generado en React.js con Konva.js
-// Incluye lógica para dibujar líneas, seleccionar objetos y editar propiedades
-// Se implementará en el entorno de desarrollo del usuario
+// Este archivo implementará dos modos: 'Diseño' para dibujar líneas y 'Edición' para seleccionar objetos
+// En modo edición se podrá hacer clic sobre líneas o extremos para editar sus propiedades
+// El modo se controlará desde el panel lateral con botones de alternancia
