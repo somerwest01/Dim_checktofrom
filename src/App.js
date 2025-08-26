@@ -8,9 +8,12 @@ function App() {
   const [obj1, setObj1] = useState('Ninguno');
   const [obj2, setObj2] = useState('Ninguno');
   const [showInput, setShowInput] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(false);
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [tempLine, setTempLine] = useState(null);
   const [dimension, setDimension] = useState('');
+  const [name1, setName1] = useState('');
+  const [name2, setName2] = useState('');
 
   const distancia = (p1, p2) => {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
@@ -39,22 +42,30 @@ function App() {
         p2: conectado,
         obj1,
         obj2,
-        dimension_mm: null
+        dimension_mm: null,
+        nombre1: '',
+        nombre2: ''
       };
       setTempLine(newLine);
       setInputPos(conectado);
       setShowInput(true);
+      setShowNameInput(obj1 !== 'Ninguno' || obj2 !== 'Ninguno');
       setPoints([]);
     }
   };
 
-  const confirmDimension = () => {
+  const confirmInputs = () => {
     if (tempLine) {
       tempLine.dimension_mm = dimension;
+      tempLine.nombre1 = (tempLine.obj1 === 'SPL' || tempLine.obj1 === 'Conector') ? name1 : '';
+      tempLine.nombre2 = (tempLine.obj2 === 'SPL' || tempLine.obj2 === 'Conector') ? name2 : '';
       setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
+      setName1('');
+      setName2('');
       setShowInput(false);
+      setShowNameInput(false);
     }
   };
 
@@ -130,6 +141,24 @@ function App() {
                   />
                   {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`)}
                   {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`)}
+                  {line.nombre1 && (
+                    <Text
+                      x={line.p1.x}
+                      y={line.p1.y - 15}
+                      text={line.nombre1}
+                      fontSize={10}
+                      fill="magenta"
+                    />
+                  )}
+                  {line.nombre2 && (
+                    <Text
+                      x={line.p2.x}
+                      y={line.p2.y - 15}
+                      text={line.nombre2}
+                      fontSize={10}
+                      fill="magenta"
+                    />
+                  )}
                 </>
               );
             })}
@@ -151,7 +180,36 @@ function App() {
               onChange={(e) => setDimension(e.target.value)}
               style={{ width: '80px' }}
             />
-            <button onClick={confirmDimension}>OK</button>
+            {showNameInput && (
+              <>
+                <br />
+                {obj1 !== 'Ninguno' && (
+                  <>
+                    <label>Nombre objeto 1:</label>
+                    <input
+                      type="text"
+                      value={name1}
+                      onChange={(e) => setName1(e.target.value)}
+                      style={{ width: '120px' }}
+                    />
+                  </>
+                )}
+                <br />
+                {obj2 !== 'Ninguno' && (
+                  <>
+                    <label>Nombre objeto 2:</label>
+                    <input
+                      type="text"
+                      value={name2}
+                      onChange={(e) => setName2(e.target.value)}
+                      style={{ width: '120px' }}
+                    />
+                  </>
+                )}
+              </>
+            )}
+            <br />
+            <button onClick={confirmInputs}>OK</button>
           </div>
         )}
       </div>
