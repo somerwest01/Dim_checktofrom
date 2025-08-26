@@ -8,7 +8,6 @@ function App() {
   const [obj1, setObj1] = useState('Ninguno');
   const [obj2, setObj2] = useState('Ninguno');
   const [showInput, setShowInput] = useState(false);
-  const [showNameInput, setShowNameInput] = useState(false);
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [tempLine, setTempLine] = useState(null);
   const [dimension, setDimension] = useState('');
@@ -49,7 +48,6 @@ function App() {
       setTempLine(newLine);
       setInputPos(conectado);
       setShowInput(true);
-      setShowNameInput(obj1 !== 'Ninguno' || obj2 !== 'Ninguno');
       setPoints([]);
     }
   };
@@ -57,15 +55,14 @@ function App() {
   const confirmInputs = () => {
     if (tempLine) {
       tempLine.dimension_mm = dimension;
-      tempLine.nombre1 = (tempLine.obj1 === 'SPL' || tempLine.obj1 === 'Conector') ? name1 : '';
-      tempLine.nombre2 = (tempLine.obj2 === 'SPL' || tempLine.obj2 === 'Conector') ? name2 : '';
+      tempLine.nombre1 = (tempLine.obj1 !== 'BRK' and tempLine.obj1 !== 'Ninguno') ? name1 : '';
+      tempLine.nombre2 = (tempLine.obj2 !== 'BRK' and tempLine.obj2 !== 'Ninguno') ? name2 : '';
       setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
       setName1('');
       setName2('');
       setShowInput(false);
-      setShowNameInput(false);
     }
   };
 
@@ -180,32 +177,28 @@ function App() {
               onChange={(e) => setDimension(e.target.value)}
               style={{ width: '80px' }}
             />
-            {showNameInput && (
+            {(obj1 !== 'BRK' && obj1 !== 'Ninguno') && (
               <>
                 <br />
-                {obj1 !== 'Ninguno' && (
-                  <>
-                    <label>Nombre objeto 1:</label>
-                    <input
-                      type="text"
-                      value={name1}
-                      onChange={(e) => setName1(e.target.value)}
-                      style={{ width: '120px' }}
-                    />
-                  </>
-                )}
+                <label>Nombre objeto 1:</label>
+                <input
+                  type="text"
+                  value={name1}
+                  onChange={(e) => setName1(e.target.value)}
+                  style={{ width: '120px' }}
+                />
+              </>
+            )}
+            {(obj2 !== 'BRK' && obj2 !== 'Ninguno') && (
+              <>
                 <br />
-                {obj2 !== 'Ninguno' && (
-                  <>
-                    <label>Nombre objeto 2:</label>
-                    <input
-                      type="text"
-                      value={name2}
-                      onChange={(e) => setName2(e.target.value)}
-                      style={{ width: '120px' }}
-                    />
-                  </>
-                )}
+                <label>Nombre objeto 2:</label>
+                <input
+                  type="text"
+                  value={name2}
+                  onChange={(e) => setName2(e.target.value)}
+                  style={{ width: '120px' }}
+                />
               </>
             )}
             <br />
