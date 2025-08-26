@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Stage, Layer, Line, Text, Circle } from 'react-konva';
+import { Stage, Layer, Line, Text, Circle, Rect, RegularPolygon } from 'react-konva';
 
 function App() {
   const [lines, setLines] = useState([]);
@@ -58,6 +58,19 @@ function App() {
     }
   };
 
+  const renderObjeto = (tipo, x, y, key) => {
+    switch (tipo) {
+      case 'Conector':
+        return <Rect key={key} x={x - 5} y={y - 5} width={10} height={10} fill="orange" />;
+      case 'BRK':
+        return <Circle key={key} x={x} y={y} radius={6} fill="red" />;
+      case 'SPL':
+        return <RegularPolygon key={key} x={x} y={y} sides={3} radius={7} fill="green" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ width: '200px', padding: '10px' }}>
@@ -84,7 +97,7 @@ function App() {
             {lines.map((line, i) => (
               <>
                 <Line
-                  key={i}
+                  key={`line-${i}`}
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
                   strokeWidth={2}
@@ -96,8 +109,8 @@ function App() {
                   fontSize={14}
                   fill="blue"
                 />
-                <Circle x={line.p1.x} y={line.p1.y} radius={5} fill="red" />
-                <Circle x={line.p2.x} y={line.p2.y} radius={5} fill="green" />
+                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`)}
+                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`)}
               </>
             ))}
           </Layer>
