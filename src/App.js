@@ -18,7 +18,8 @@ function App() {
   const [eraserMode, setEraserMode] = useState(false);
   const [nameInput1, setNameInput1] = useState('');
   const [nameInput2, setNameInput2] = useState('');
-  const [distanciaResultado, setDistanciaResultado] = useState(null);
+  const [distanciaRuta, setDistanciaRuta] = useState(null);
+  const [rutaCalculada, setRutaCalculada] = useState([]);
 
   const proximityThreshold = 10;
 
@@ -85,7 +86,7 @@ function App() {
 
   const confirmDimension = () => {
     if (tempLine) {
-      tempLine.dimension_mm = dimension;
+      tempLine.dimension_mm = parseFloat(dimension);
       setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
@@ -115,24 +116,66 @@ function App() {
     }
   };
 
-  const calcularDistancia = () => {
-    let punto1 = null;
-    let punto2 = null;
+  const calcularRutaReal = () => {
+    const graph = {};
 
     lines.forEach((line) => {
-      if (line.nombre_obj1 === nameInput1) punto1 = line.p1;
-      if (line.nombre_obj2 === nameInput1) punto1 = line.p2;
-      if (line.nombre_obj1 === nameInput2) punto2 = line.p1;
-      if (line.nombre_obj2 === nameInput2) punto2 = line.p2;
+      const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+      if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+
+      if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+      if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+
+      graph[nombre_obj1][nombre_obj2] = dimension_mm;
+      graph[nombre_obj2][nombre_obj1] = dimension_mm;
     });
 
-    if (punto1 && punto2) {
-      const dx = punto2.x - punto1.x;
-      const dy = punto2.y - punto1.y;
-      const distancia = Math.sqrt(dx * dx + dy * dy);
-      setDistanciaResultado(distancia);
+    const dijkstra = (start, end) => {
+      const distances = {};
+      const prev = {};
+      const visited = new Set();
+      const queue = [];
+
+      for (const node in graph) {
+        distances[node] = Infinity;
+      }
+      distances[start] = 0;
+      queue.push({ node: start, dist: 0 });
+
+      while (queue.length > 0) {
+        queue.sort((a, b) => a.dist - b.dist);
+        const { node } = queue.shift();
+        if (visited.has(node)) continue;
+        visited.add(node);
+
+        for (const neighbor in graph[node]) {
+          const newDist = distances[node] + graph[node][neighbor];
+          if (newDist < distances[neighbor]) {
+            distances[neighbor] = newDist;
+            prev[neighbor] = node;
+            queue.push({ node: neighbor, dist: newDist });
+          }
+        }
+      }
+
+      const path = [];
+      let current = end;
+      while (current) {
+        path.unshift(current);
+        current = prev[current];
+      }
+
+      return distances[end] !== Infinity ? { distance: distances[end], path } : null;
+    };
+
+    const result = dijkstra(nameInput1, nameInput2);
+    if (result) {
+      setDistanciaRuta(result.distance);
+      setRutaCalculada(result.path);
     } else {
-      alert("No se encontraron ambos objetos con los nombres ingresados.");
+      alert("No hay ruta entre los objetos ingresados.");
+      setDistanciaRuta(null);
+      setRutaCalculada([]);
     }
   };
 
@@ -198,16 +241,16 @@ function App() {
               🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
             </button>
             <br /><br />
-            <h4>Calcular distancia entre objetos</h4>
+            <h4>Calcular distancia real entre objetos</h4>
             <label>Nombre objeto 1:</label>
             <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
             <br />
             <label>Nombre objeto 2:</label>
             <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
             <br />
-            <button onClick={calcularDistancia}>Calcular distancia</button>
-            {distanciaResultado !== null && (
-              <p>📏 Distancia: {distanciaResultado.toFixed(2)} mm</p>
+            <button onClick={calcularRutaReal}>Calcular ruta</button>
+            {distanciaRuta !== null && (
+              <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
           </>
         )}
