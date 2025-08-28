@@ -13,8 +13,8 @@ function App() {
   const [tempLine, setTempLine] = useState(null);
   const [mousePos, setMousePos] = useState(null);
   const [hoveredObj, setHoveredObj] = useState(null);
-  const [selectedObj, setSelectedObj] = useState(null);
-  const [itemNumber, setItemNumber] = useState('');
+  const [selectedEnd, setSelectedEnd] = useState(null); // { lineIndex, end: 'p1' | 'p2' }
+  const [nameInput, setNameInput] = useState('');
 
   const handleStageClick = (e) => {
     const stage = e.target.getStage();
@@ -24,15 +24,13 @@ function App() {
       if (points.length === 0) {
         setPoints([pos]);
       } else {
-        'const nombre1 = prompt("Nombre del objeto extremo 1:");
-        'const nombre2 = prompt("Nombre del objeto extremo 2:");
         const newLine = {
           p1: points[0],
           p2: pos,
           obj1,
           obj2,
-          nombre_obj1: nombre1,
-          nombre_obj2: nombre2,
+          nombre_obj1: '',
+          nombre_obj2: '',
           dimension_mm: null,
           item: null
         };
@@ -60,18 +58,22 @@ function App() {
     }
   };
 
-  const updateItem = () => {
-    if (selectedObj !== null) {
+  const updateNombre = () => {
+    if (selectedEnd) {
       const updatedLines = [...lines];
-      updatedLines[selectedObj].item = itemNumber;
+      if (selectedEnd.end === 'p1') {
+        updatedLines[selectedEnd.lineIndex].nombre_obj1 = nameInput;
+      } else {
+        updatedLines[selectedEnd.lineIndex].nombre_obj2 = nameInput;
+      }
       setLines(updatedLines);
-      setItemNumber('');
+      setSelectedEnd(null);
+      setNameInput('');
     }
   };
 
-  const renderObjeto = (tipo, x, y, key, index) => {
+  const renderObjeto = (tipo, x, y, key, index, end) => {
     const isHovered = hoveredObj === key;
-    const isSelected = selectedObj === index;
     const commonProps = {
       key,
       x,
@@ -79,7 +81,10 @@ function App() {
       fill: isHovered ? 'yellow' : tipo === 'Conector' ? 'orange' : tipo === 'BRK' ? 'red' : 'green',
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
-      onClick: () => setSelectedObj(index),
+      onClick: () => {
+        setSelectedEnd({ lineIndex: index, end });
+        setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+      },
     };
 
     switch (tipo) {
@@ -122,12 +127,12 @@ function App() {
           </>
         )}
 
-        {selectedObj !== null && (
+        {selectedEnd && (
           <>
-            <h4>Editar objeto seleccionado</h4>
-            <label># Item:</label>
-            <input type="text" value={itemNumber} onChange={(e) => setItemNumber(e.target.value)} />
-            <button onClick={updateItem}>Asignar</button>
+            <h4>Editar nombre del objeto</h4>
+            <label>Nombre:</label>
+            <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+            <button onClick={updateNombre}>Asignar</button>
           </>
         )}
       </div>
@@ -149,16 +154,14 @@ function App() {
                   fontSize={10}
                   fill="blue"
                 />
-                {line.item && (
-                  <>
-                    <Text x={line.p1.x + 10} y={line.p1.y + 10} text={`#${line.item}`} fontSize={10} fill="magenta" />
-                    <Text x={line.p2.x + 10} y={line.p2.y + 10} text={`#${line.item}`} fontSize={10} fill="magenta" />
-                  </>
+                {line.nombre_obj1 && (
+                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
-                <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1 || ''} fontSize={10} fill="black" />
-                <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2 || ''} fontSize={10} fill="black" />
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i)}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i)}
+                {line.nombre_obj2 && (
+                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
+                )}
+                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
+                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
               </React.Fragment>
             ))}
 
