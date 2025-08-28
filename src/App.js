@@ -16,6 +16,9 @@ function App() {
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [nameInput, setNameInput] = useState('');
   const [eraserMode, setEraserMode] = useState(false);
+  const [nameInput1, setNameInput1] = useState('');
+  const [nameInput2, setNameInput2] = useState('');
+  const [distanciaResultado, setDistanciaResultado] = useState(null);
 
   const proximityThreshold = 10;
 
@@ -42,7 +45,7 @@ function App() {
     const pos = stage.getPointerPosition();
 
     if (mode === 'design') {
-      if (eraserMode) return; // no dibujar si está en modo borrador
+      if (eraserMode) return;
 
       if (points.length === 0) {
         const snap = getClosestEndpoint(pos);
@@ -112,6 +115,27 @@ function App() {
     }
   };
 
+  const calcularDistancia = () => {
+    let punto1 = null;
+    let punto2 = null;
+
+    lines.forEach((line) => {
+      if (line.nombre_obj1 === nameInput1) punto1 = line.p1;
+      if (line.nombre_obj2 === nameInput1) punto1 = line.p2;
+      if (line.nombre_obj1 === nameInput2) punto2 = line.p1;
+      if (line.nombre_obj2 === nameInput2) punto2 = line.p2;
+    });
+
+    if (punto1 && punto2) {
+      const dx = punto2.x - punto1.x;
+      const dy = punto2.y - punto1.y;
+      const distancia = Math.sqrt(dx * dx + dy * dy);
+      setDistanciaResultado(distancia);
+    } else {
+      alert("No se encontraron ambos objetos con los nombres ingresados.");
+    }
+  };
+
   const renderObjeto = (tipo, x, y, key, index, end) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
@@ -173,6 +197,18 @@ function App() {
             >
               🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
             </button>
+            <br /><br />
+            <h4>Calcular distancia entre objetos</h4>
+            <label>Nombre objeto 1:</label>
+            <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
+            <br />
+            <label>Nombre objeto 2:</label>
+            <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
+            <br />
+            <button onClick={calcularDistancia}>Calcular distancia</button>
+            {distanciaResultado !== null && (
+              <p>📏 Distancia: {distanciaResultado.toFixed(2)} mm</p>
+            )}
           </>
         )}
 
@@ -257,4 +293,3 @@ function App() {
 }
 
 export default App;
-
