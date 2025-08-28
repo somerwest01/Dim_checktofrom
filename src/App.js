@@ -85,13 +85,8 @@ function App() {
   };
 
   const confirmDimension = () => {
-  const parsed = parseFloat(dimension);
-  if (isNaN(parsed)) {
-    alert("Por favor ingresa una dimensión válida en milímetros.");
-    return;
-  }
-  if (tempLine) {
-    tempLine.dimension_mm = parsed;
+    if (tempLine) {
+      tempLine.dimension_mm = parseFloat(dimension);
       setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
@@ -173,13 +168,7 @@ function App() {
       return distances[end] !== Infinity ? { distance: distances[end], path } : null;
     };
 
-    if (!graph[nameInput1] || !graph[nameInput2]) {
-  alert("Uno o ambos objetos no existen en el grafo.");
-  setDistanciaRuta(null);
-  setRutaCalculada([]);
-  return;
-}
-const result = dijkstra(nameInput1, nameInput2);
+    const result = dijkstra(nameInput1, nameInput2);
     if (result) {
       setDistanciaRuta(result.distance);
       setRutaCalculada(result.path);
