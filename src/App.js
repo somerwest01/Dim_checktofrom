@@ -38,14 +38,17 @@ function App() {
         setInputPos(pos);
         setShowInput(true);
         setPoints([]);
+        setMousePos(null); // limpiar mousePos al terminar
       }
     }
   };
 
   const handleMouseMove = (e) => {
-    const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
-    setMousePos(pos);
+    if (mode === 'design' && points.length === 1) {
+      const stage = e.target.getStage();
+      const pos = stage.getPointerPosition();
+      setMousePos(pos);
+    }
   };
 
   const confirmDimension = () => {
@@ -138,7 +141,13 @@ function App() {
       </div>
 
       <div style={{ position: 'relative' }}>
-        <Stage width={800} height={600} onClick={handleStageClick} onMouseMove={handleMouseMove} style={{ border: '1px solid black' }}>
+        <Stage
+          width={800}
+          height={600}
+          onClick={handleStageClick}
+          onMouseMove={handleMouseMove}
+          style={{ border: '1px solid black' }}
+        >
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
@@ -201,3 +210,4 @@ function App() {
 }
 
 export default App;
+
