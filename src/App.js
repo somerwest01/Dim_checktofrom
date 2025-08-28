@@ -13,8 +13,28 @@ function App() {
   const [tempLine, setTempLine] = useState(null);
   const [mousePos, setMousePos] = useState(null);
   const [hoveredObj, setHoveredObj] = useState(null);
-  const [selectedEnd, setSelectedEnd] = useState(null); // { lineIndex, end: 'p1' | 'p2' }
+  const [selectedEnd, setSelectedEnd] = useState(null);
   const [nameInput, setNameInput] = useState('');
+
+  const proximityThreshold = 10;
+
+  const getClosestEndpoint = (pos) => {
+    let closest = null;
+    let minDist = Infinity;
+
+    lines.forEach((line, index) => {
+      ['p1', 'p2'].forEach((end) => {
+        const point = line[end];
+        const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
+        if (dist < proximityThreshold && dist < minDist) {
+          closest = { point, obj: line[end === 'p1' ? 'obj1' : 'obj2'] };
+          minDist = dist;
+        }
+      });
+    });
+
+    return closest;
+  };
 
   const handleStageClick = (e) => {
     const stage = e.target.getStage();
@@ -22,7 +42,13 @@ function App() {
 
     if (mode === 'design') {
       if (points.length === 0) {
-        setPoints([pos]);
+        const snap = getClosestEndpoint(pos);
+        if (snap) {
+          setPoints([snap.point]);
+          setObj1(snap.obj);
+        } else {
+          setPoints([pos]);
+        }
       } else {
         const newLine = {
           p1: points[0],
@@ -38,7 +64,7 @@ function App() {
         setInputPos(pos);
         setShowInput(true);
         setPoints([]);
-        setMousePos(null); // limpiar mousePos al terminar
+        setMousePos(null);
       }
     }
   };
