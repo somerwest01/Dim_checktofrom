@@ -24,8 +24,8 @@ function App() {
       if (points.length === 0) {
         setPoints([pos]);
       } else {
-        const nombre1 = prompt("Nombre del objeto extremo 1:");
-        const nombre2 = prompt("Nombre del objeto extremo 2:");
+        'const nombre1 = prompt("Nombre del objeto extremo 1:");
+        'const nombre2 = prompt("Nombre del objeto extremo 2:");
         const newLine = {
           p1: points[0],
           p2: pos,
