@@ -15,6 +15,7 @@ function App() {
   const [hoveredObj, setHoveredObj] = useState(null);
   const [selectedEnd, setSelectedEnd] = useState(null);
   const [nameInput, setNameInput] = useState('');
+  const [eraserMode, setEraserMode] = useState(false);
 
   const proximityThreshold = 10;
 
@@ -22,7 +23,7 @@ function App() {
     let closest = null;
     let minDist = Infinity;
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       ['p1', 'p2'].forEach((end) => {
         const point = line[end];
         const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
@@ -41,6 +42,8 @@ function App() {
     const pos = stage.getPointerPosition();
 
     if (mode === 'design') {
+      if (eraserMode) return; // no dibujar si está en modo borrador
+
       if (points.length === 0) {
         const snap = getClosestEndpoint(pos);
         if (snap) {
@@ -70,7 +73,7 @@ function App() {
   };
 
   const handleMouseMove = (e) => {
-    if (mode === 'design' && points.length === 1) {
+    if (mode === 'design' && points.length === 1 && !eraserMode) {
       const stage = e.target.getStage();
       const pos = stage.getPointerPosition();
       setMousePos(pos);
@@ -101,6 +104,14 @@ function App() {
     }
   };
 
+  const handleLineClick = (index) => {
+    if (eraserMode) {
+      const updatedLines = [...lines];
+      updatedLines.splice(index, 1);
+      setLines(updatedLines);
+    }
+  };
+
   const renderObjeto = (tipo, x, y, key, index, end) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
@@ -111,8 +122,10 @@ function App() {
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
-        setSelectedEnd({ lineIndex: index, end });
-        setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+        if (!eraserMode) {
+          setSelectedEnd({ lineIndex: index, end });
+          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+        }
       },
     };
 
@@ -153,6 +166,13 @@ function App() {
               <option>BRK</option>
               <option>SPL</option>
             </select>
+            <br /><br />
+            <button
+              onClick={() => setEraserMode(!eraserMode)}
+              style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
+            >
+              🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
+            </button>
           </>
         )}
 
@@ -181,6 +201,7 @@ function App() {
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
                   strokeWidth={2}
+                  onClick={() => handleLineClick(i)}
                 />
                 <Text
                   x={(line.p1.x + line.p2.x) / 2}
@@ -200,7 +221,7 @@ function App() {
               </React.Fragment>
             ))}
 
-            {points.length === 1 && mousePos && (
+            {points.length === 1 && mousePos && !eraserMode && (
               <Line
                 points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
                 stroke="gray"
