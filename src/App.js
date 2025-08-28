@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
@@ -12,28 +11,43 @@ function App() {
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [showInput, setShowInput] = useState(false);
   const [tempLine, setTempLine] = useState(null);
+  const [mousePos, setMousePos] = useState(null);
+  const [hoveredObj, setHoveredObj] = useState(null);
+  const [selectedObj, setSelectedObj] = useState(null);
+  const [itemNumber, setItemNumber] = useState('');
 
   const handleStageClick = (e) => {
     const stage = e.target.getStage();
-    const mousePos = stage.getPointerPosition();
+    const pos = stage.getPointerPosition();
 
     if (mode === 'design') {
       if (points.length === 0) {
-        setPoints([mousePos]);
+        setPoints([pos]);
       } else {
+        const nombre1 = prompt("Nombre del objeto extremo 1:");
+        const nombre2 = prompt("Nombre del objeto extremo 2:");
         const newLine = {
           p1: points[0],
-          p2: mousePos,
+          p2: pos,
           obj1,
           obj2,
-          dimension_mm: null
+          nombre_obj1: nombre1,
+          nombre_obj2: nombre2,
+          dimension_mm: null,
+          item: null
         };
         setTempLine(newLine);
-        setInputPos(mousePos);
+        setInputPos(pos);
         setShowInput(true);
         setPoints([]);
       }
     }
+  };
+
+  const handleMouseMove = (e) => {
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    setMousePos(pos);
   };
 
   const confirmDimension = () => {
@@ -46,14 +60,35 @@ function App() {
     }
   };
 
-  const renderObjeto = (tipo, x, y, key) => {
+  const updateItem = () => {
+    if (selectedObj !== null) {
+      const updatedLines = [...lines];
+      updatedLines[selectedObj].item = itemNumber;
+      setLines(updatedLines);
+      setItemNumber('');
+    }
+  };
+
+  const renderObjeto = (tipo, x, y, key, index) => {
+    const isHovered = hoveredObj === key;
+    const isSelected = selectedObj === index;
+    const commonProps = {
+      key,
+      x,
+      y,
+      fill: isHovered ? 'yellow' : tipo === 'Conector' ? 'orange' : tipo === 'BRK' ? 'red' : 'green',
+      onMouseEnter: () => setHoveredObj(key),
+      onMouseLeave: () => setHoveredObj(null),
+      onClick: () => setSelectedObj(index),
+    };
+
     switch (tipo) {
       case 'Conector':
-        return <Rect key={key} x={x - 5} y={y - 5} width={10} height={10} fill="orange" />;
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
       case 'BRK':
-        return <Circle key={key} x={x} y={y} radius={6} fill="red" />;
+        return <Circle {...commonProps} radius={6} />;
       case 'SPL':
-        return <RegularPolygon key={key} x={x} y={y} sides={3} radius={7} fill="green" />;
+        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
       default:
         return null;
     }
@@ -86,9 +121,19 @@ function App() {
             </select>
           </>
         )}
+
+        {selectedObj !== null && (
+          <>
+            <h4>Editar objeto seleccionado</h4>
+            <label># Item:</label>
+            <input type="text" value={itemNumber} onChange={(e) => setItemNumber(e.target.value)} />
+            <button onClick={updateItem}>Asignar</button>
+          </>
+        )}
       </div>
+
       <div style={{ position: 'relative' }}>
-        <Stage width={800} height={600} onClick={handleStageClick} style={{ border: '1px solid black' }}>
+        <Stage width={800} height={600} onClick={handleStageClick} onMouseMove={handleMouseMove} style={{ border: '1px solid black' }}>
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
@@ -104,12 +149,30 @@ function App() {
                   fontSize={10}
                   fill="blue"
                 />
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`)}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`)}
+                {line.item && (
+                  <>
+                    <Text x={line.p1.x + 10} y={line.p1.y + 10} text={`#${line.item}`} fontSize={10} fill="magenta" />
+                    <Text x={line.p2.x + 10} y={line.p2.y + 10} text={`#${line.item}`} fontSize={10} fill="magenta" />
+                  </>
+                )}
+                <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1 || ''} fontSize={10} fill="black" />
+                <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2 || ''} fontSize={10} fill="black" />
+                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i)}
+                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i)}
               </React.Fragment>
             ))}
+
+            {points.length === 1 && mousePos && (
+              <Line
+                points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
+                stroke="gray"
+                dash={[4, 4]}
+                strokeWidth={1}
+              />
+            )}
           </Layer>
         </Stage>
+
         {showInput && (
           <div style={{
             position: 'absolute',
