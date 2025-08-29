@@ -89,6 +89,39 @@ function App() {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
 
+const getNombreByPosition = (pos) => {
+  for (const line of lines) {
+    if (Math.abs(line.p1.x - pos.x) < 1 && Math.abs(line.p1.y - pos.y) < 1 && line.nombre_obj1) {
+      return line.nombre_obj1;
+    }
+    if (Math.abs(line.p2.x - pos.x) < 1 && Math.abs(line.p2.y - pos.y) < 1 && line.nombre_obj2) {
+      return line.nombre_obj2;
+    }
+  }
+  return '';
+};
+
+// BRK nombrado automáticamente solo si no tiene nombre heredado
+if (tempLine.obj1 === 'BRK' && !tempLine.nombre_obj1) {
+  const inherited = getNombreByPosition(tempLine.p1);
+  tempLine.nombre_obj1 = inherited || `BRK${brkCounter}`;
+  if (!inherited) setBrkCounter(brkCounter + 1);
+}
+
+if (tempLine.obj2 === 'BRK' && !tempLine.nombre_obj2) {
+  const inherited = getNombreByPosition(tempLine.p2);
+  tempLine.nombre_obj2 = inherited || `BRK${brkCounter}`;
+  if (!inherited) setBrkCounter(brkCounter + 1);
+}
+
+// Herencia para cualquier tipo de objeto si el extremo es 'Ninguno'
+if (!tempLine.nombre_obj1) {
+  tempLine.nombre_obj1 = getNombreByPosition(tempLine.p1);
+}
+if (!tempLine.nombre_obj2) {
+  tempLine.nombre_obj2 = getNombreByPosition(tempLine.p2);
+}
+      
       // Nombrado automático de BRK
 if (tempLine.obj1 === 'BRK' && !tempLine.nombre_obj1) {
   tempLine.nombre_obj1 = `BRK${brkCounter}`;
