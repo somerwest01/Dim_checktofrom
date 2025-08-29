@@ -242,54 +242,43 @@ updatedLines.forEach((line) => {
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
         <button onClick={() => setMode('edit')}>🛠️ Edición</button>
 
-        {mode === 'edit' && (
+        {mode === 'design' && (
   <>
-    <h4>Tabla editable de líneas</h4>
-    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-      <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Extremo 1</th>
-            <th>Extremo 2</th>
-            <th>Dimensión (mm)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {lines.map((line, index) => (
-            <tr
-              key={index}
-              style={{
-                backgroundColor: selectedEnd?.lineIndex === index ? 'lightblue' : 'white',
-              }}
-            >
-              <td>{index + 1}</td>
-              <td>
-                <input
-                  type="text"
-                  value={line.nombre_obj1}
-                  onChange={(e) => handleTableEdit(index, 'nombre_obj1', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={line.nombre_obj2}
-                  onChange={(e) => handleTableEdit(index, 'nombre_obj2', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  value={line.dimension_mm || ''}
-                  onChange={(e) => handleTableEdit(index, 'dimension_mm', parseFloat(e.target.value))}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <h4>Herramientas</h4>
+    <label>Objeto extremo 1:</label>
+    <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
+      <option>Ninguno</option>
+      <option>Conector</option>
+      <option>BRK</option>
+      <option>SPL</option>
+    </select>
+    <br /><br />
+    <label>Objeto extremo 2:</label>
+    <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
+      <option>Ninguno</option>
+      <option>Conector</option>
+      <option>BRK</option>
+      <option>SPL</option>
+    </select>
+    <br /><br />
+    <button
+      onClick={() => setEraserMode(!eraserMode)}
+      style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
+    >
+      🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
+    </button>
+    <br /><br />
+    <h4>Calcular distancia real entre objetos</h4>
+    <label>Nombre objeto 1:</label>
+    <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
+    <br />
+    <label>Nombre objeto 2:</label>
+    <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
+    <br />
+    <button onClick={calcularRutaReal}>Calcular ruta</button>
+    {distanciaRuta !== null && (
+      <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
+    )}
   </>
 )}
 
