@@ -209,8 +209,8 @@ function App() {
   };
 
   return (
-    <div style={{ display: 'flex' }}>
-      <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div style={{ display: 'flex', flex: 1 }}><div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
         <button onClick={() => setMode('edit')}>🛠️ Edición</button>
