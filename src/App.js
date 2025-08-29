@@ -335,18 +335,4 @@ function App() {
   );
 }
 
-
-function getUnionName(point, lineIndex, end) {
-  for (let i = 0; i < lines.length; i++) {
-    if (i === lineIndex) continue;
-    const otherLine = lines[i];
-    if ((Math.abs(otherLine.p1.x - point.x) < 1 && Math.abs(otherLine.p1.y - point.y) < 1) ||
-        (Math.abs(otherLine.p2.x - point.x) < 1 && Math.abs(otherLine.p2.y - point.y) < 1)) {
-      return end === 'p1' ? otherLine.nombre_obj1 || '' : otherLine.nombre_obj2 || '';
-    }
-  }
-  return '';
-}
-
-
 export default App;
