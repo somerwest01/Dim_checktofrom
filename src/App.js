@@ -20,6 +20,7 @@ function App() {
   const [nameInput2, setNameInput2] = useState('');
   const [distanciaRuta, setDistanciaRuta] = useState(null);
   const [rutaCalculada, setRutaCalculada] = useState([]);
+  const [brkCounter, setBrkCounter] = useState(1);
 
   const proximityThreshold = 10;
 
@@ -87,6 +88,37 @@ function App() {
   const confirmDimension = () => {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
+
+      // Nombrado automático de BRK
+if (tempLine.obj1 === 'BRK' && !tempLine.nombre_obj1) {
+  tempLine.nombre_obj1 = `BRK${brkCounter}`;
+  setBrkCounter(brkCounter + 1);
+}
+if (tempLine.obj2 === 'BRK' && !tempLine.nombre_obj2) {
+  tempLine.nombre_obj2 = `BRK${brkCounter}`;
+  setBrkCounter(brkCounter + 1);
+}
+
+// Herencia de nombre si el extremo conectado ya tiene nombre
+const getNombreByPosition = (pos) => {
+  for (const line of lines) {
+    if (Math.abs(line.p1.x - pos.x) < 1 && Math.abs(line.p1.y - pos.y) < 1 && line.nombre_obj1) {
+      return line.nombre_obj1;
+    }
+    if (Math.abs(line.p2.x - pos.x) < 1 && Math.abs(line.p2.y - pos.y) < 1 && line.nombre_obj2) {
+      return line.nombre_obj2;
+    }
+  }
+  return '';
+};
+
+if (!tempLine.nombre_obj1) {
+  tempLine.nombre_obj1 = getNombreByPosition(tempLine.p1);
+}
+if (!tempLine.nombre_obj2) {
+  tempLine.nombre_obj2 = getNombreByPosition(tempLine.p2);
+}
+      
       setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
