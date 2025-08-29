@@ -252,6 +252,29 @@ function App() {
             {distanciaRuta !== null && (
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
+
+            <h4>Tabla de líneas dibujadas</h4>
+<table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+  <thead>
+    <tr>
+      <th style={{ border: '1px solid black' }}>#</th>
+      <th style={{ border: '1px solid black' }}>Extremo 1</th>
+      <th style={{ border: '1px solid black' }}>Extremo 2</th>
+      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {lines.map((line, index) => (
+      <tr key={index}>
+        <td style={{ border: '1px solid gray' }}>{index + 1}</td>
+        <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
           </>
         )}
 
