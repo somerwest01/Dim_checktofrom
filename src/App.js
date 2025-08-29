@@ -94,19 +94,36 @@ function App() {
     }
   };
 
-  const updateNombre = () => {
-    if (selectedEnd) {
-      const updatedLines = [...lines];
-      if (selectedEnd.end === 'p1') {
-        updatedLines[selectedEnd.lineIndex].nombre_obj1 = nameInput;
-      } else {
-        updatedLines[selectedEnd.lineIndex].nombre_obj2 = nameInput;
-      }
-      setLines(updatedLines);
-      setSelectedEnd(null);
-      setNameInput('');
+  
+const updateNombre = () => {
+  if (selectedEnd) {
+    const updatedLines = [...lines];
+    const targetLine = updatedLines[selectedEnd.lineIndex];
+    const newName = nameInput;
+
+    if (selectedEnd.end === 'p1') {
+      targetLine.nombre_obj1 = newName;
+    } else {
+      targetLine.nombre_obj2 = newName;
     }
-  };
+
+    // Propagate name to matching endpoints in other lines
+    updatedLines.forEach((line, idx) => {
+      if (idx === selectedEnd.lineIndex) return;
+      if (Math.abs(line.p1.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p1.y - targetLine[selectedEnd.end].y) < 1) {
+        line.nombre_obj1 = newName;
+      }
+      if (Math.abs(line.p2.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p2.y - targetLine[selectedEnd.end].y) < 1) {
+        line.nombre_obj2 = newName;
+      }
+    });
+
+    setLines(updatedLines);
+    setSelectedEnd(null);
+    setNameInput('');
+  }
+};
+
 
   const handleLineClick = (index) => {
     if (eraserMode) {
@@ -252,8 +269,7 @@ function App() {
             {distanciaRuta !== null && (
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
-
-            <h4>Tabla de líneas dibujadas</h4>
+<h4>Tabla de líneas dibujadas</h4>
 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
   <thead>
     <tr>
@@ -274,7 +290,6 @@ function App() {
     ))}
   </tbody>
 </table>
-
           </>
         )}
 
