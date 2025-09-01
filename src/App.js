@@ -20,6 +20,7 @@ function App() {
   const [nameInput2, setNameInput2] = useState('');
   const [distanciaRuta, setDistanciaRuta] = useState(null);
   const [rutaCalculada, setRutaCalculada] = useState([]);
+const [pencilMode, setPencilMode] = useState(true);
 
   const proximityThreshold = 10;
 
@@ -45,7 +46,7 @@ function App() {
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
 
-    if (mode === 'design') {
+    if (pencilMode) {
       if (eraserMode) return;
 
       if (points.length === 0) {
@@ -77,7 +78,7 @@ function App() {
   };
 
   const handleMouseMove = (e) => {
-    if (mode === 'design' && points.length === 1 && !eraserMode) {
+    if (pencilMode && points.length === 1 && !eraserMode) {
       const stage = e.target.getStage();
       const pos = stage.getPointerPosition();
       setMousePos(pos);
@@ -240,11 +241,11 @@ updatedLines.forEach((line) => {
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        <button onClick={() => setMode('edit')}>🛠️ Edición</button>
+        
 
-        {mode === 'design' && (
+        {pencilMode && (
           <>
-            <h4>Herramientas</h4>
+            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Herramientas</h4>
             <label>Objeto extremo 1:</label>
             <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
               <option>Ninguno</option>
