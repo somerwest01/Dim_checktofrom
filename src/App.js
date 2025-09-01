@@ -20,9 +20,8 @@ function App() {
   const [nameInput2, setNameInput2] = useState('');
   const [distanciaRuta, setDistanciaRuta] = useState(null);
   const [rutaCalculada, setRutaCalculada] = useState([]);
-const [pencilMode, setPencilMode] = useState(true);
 
-  const proximityThreshold = 25;
+  const proximityThreshold = 10;
 
   const getClosestEndpoint = (pos) => {
     let closest = null;
@@ -46,7 +45,7 @@ const [pencilMode, setPencilMode] = useState(true);
     const stage = e.target.getStage();
     const pos = stage.getPointerPosition();
 
-    if (pencilMode) {
+    if (mode === 'design') {
       if (eraserMode) return;
 
       if (points.length === 0) {
@@ -78,7 +77,7 @@ const [pencilMode, setPencilMode] = useState(true);
   };
 
   const handleMouseMove = (e) => {
-    if (pencilMode && points.length === 1 && !eraserMode) {
+    if (mode === 'design' && points.length === 1 && !eraserMode) {
       const stage = e.target.getStage();
       const pos = stage.getPointerPosition();
       setMousePos(pos);
@@ -226,7 +225,7 @@ updatedLines.forEach((line) => {
 
     switch (tipo) {
       case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={window.innerWidth} height={window.innerHeight} />;
       case 'BRK':
         return <Circle {...commonProps} radius={6} />;
       case 'SPL':
@@ -241,11 +240,11 @@ updatedLines.forEach((line) => {
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        
+        <button onClick={() => setMode('edit')}>🛠️ Edición</button>
 
-        {true && (
+        {mode === 'design' && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Herramientas</h4>
+            <h4>Herramientas</h4>
             <label>Objeto extremo 1:</label>
             <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
               <option>Ninguno</option>
@@ -316,8 +315,8 @@ updatedLines.forEach((line) => {
 
       <div style={{ position: 'relative' }}>
         <Stage
-          width={800}
-          height={600}
+          width={window.innerWidth}
+          height={window.innerHeight}
           onClick={handleStageClick}
           onMouseMove={handleMouseMove}
           style={{ border: '1px solid black' }}
