@@ -22,7 +22,6 @@ function App() {
   const [rutaCalculada, setRutaCalculada] = useState([]);
 const [pencilMode, setPencilMode] = useState(true);
 
-  const proximityThreshold = 10;
   const proximityThreshold = 25;
 
   const getClosestEndpoint = (pos) => {
@@ -242,7 +241,7 @@ updatedLines.forEach((line) => {
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-
+        
 
         {true && (
           <>
