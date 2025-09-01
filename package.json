@@ -8,10 +8,7 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "react-konva": "^18.0.2",
-    "konva": "^9.2.0",
-    "xlsx": "^0.18.5",
-    "file-saver": "^2.0.5"
-
+    "konva": "^9.2.0"
   },
   "scripts": {
     "start": "react-scripts start",
