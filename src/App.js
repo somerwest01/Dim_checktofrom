@@ -94,7 +94,7 @@ function App() {
     }
   };
 
-  
+
 const updateNombre = () => {
   if (selectedEnd) {
     const updatedLines = [...lines];
@@ -107,14 +107,16 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
-    const handleTableEdit = (index, field, value) => {
-  const updatedLines = [...lines];
-  updatedLines[index][field] = value;
-  setLines(updatedLines);
-};
-    
-
     // Propagate name to matching endpoints in other lines
+    updatedLines.forEach((line, idx) => {
+      if (idx === selectedEnd.lineIndex) return;
+      if (Math.abs(line.p1.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p1.y - targetLine[selectedEnd.end].y) < 1) {
+        line.nombre_obj1 = newName;
+      }
+      if (Math.abs(line.p2.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p2.y - targetLine[selectedEnd.end].y) < 1) {
+        line.nombre_obj2 = newName;
+      }
+    });
    const targetPos = targetLine[selectedEnd.end];
 
 updatedLines.forEach((line) => {
@@ -134,14 +136,12 @@ updatedLines.forEach((line) => {
 
 
   const handleLineClick = (index) => {
-  if (eraserMode) {
-    const updatedLines = [...lines];
-    updatedLines.splice(index, 1);
-    setLines(updatedLines);
-  } else {
-    setSelectedEnd({ lineIndex: index, end: null }); // Selecciona la línea completa
-  }
-};
+    if (eraserMode) {
+      const updatedLines = [...lines];
+      updatedLines.splice(index, 1);
+      setLines(updatedLines);
+    }
+  };
 
   const calcularRutaReal = () => {
     const graph = {};
@@ -243,44 +243,65 @@ updatedLines.forEach((line) => {
         <button onClick={() => setMode('edit')}>🛠️ Edición</button>
 
         {mode === 'design' && (
-  <>
-    <h4>Herramientas</h4>
-    <label>Objeto extremo 1:</label>
-    <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
-      <option>Ninguno</option>
-      <option>Conector</option>
-      <option>BRK</option>
-      <option>SPL</option>
-    </select>
-    <br /><br />
-    <label>Objeto extremo 2:</label>
-    <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
-      <option>Ninguno</option>
-      <option>Conector</option>
-      <option>BRK</option>
-      <option>SPL</option>
-    </select>
-    <br /><br />
-    <button
-      onClick={() => setEraserMode(!eraserMode)}
-      style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
-    >
-      🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
-    </button>
-    <br /><br />
-    <h4>Calcular distancia real entre objetos</h4>
-    <label>Nombre objeto 1:</label>
-    <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
-    <br />
-    <label>Nombre objeto 2:</label>
-    <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
-    <br />
-    <button onClick={calcularRutaReal}>Calcular ruta</button>
-    {distanciaRuta !== null && (
-      <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
-    )}
-  </>
-)}
+          <>
+            <h4>Herramientas</h4>
+            <label>Objeto extremo 1:</label>
+            <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
+              <option>Ninguno</option>
+              <option>Conector</option>
+              <option>BRK</option>
+              <option>SPL</option>
+            </select>
+            <br /><br />
+            <label>Objeto extremo 2:</label>
+            <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
+              <option>Ninguno</option>
+              <option>Conector</option>
+              <option>BRK</option>
+              <option>SPL</option>
+            </select>
+            <br /><br />
+            <button
+              onClick={() => setEraserMode(!eraserMode)}
+              style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
+            >
+              🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
+            </button>
+            <br /><br />
+            <h4>Calcular distancia real entre objetos</h4>
+            <label>Nombre objeto 1:</label>
+            <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
+            <br />
+            <label>Nombre objeto 2:</label>
+            <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
+            <br />
+            <button onClick={calcularRutaReal}>Calcular ruta</button>
+            {distanciaRuta !== null && (
+              <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
+            )}
+<h4>Tabla de líneas dibujadas</h4>
+<table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+  <thead>
+    <tr>
+      <th style={{ border: '1px solid black' }}>#</th>
+      <th style={{ border: '1px solid black' }}>Extremo 1</th>
+      <th style={{ border: '1px solid black' }}>Extremo 2</th>
+      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {lines.map((line, index) => (
+      <tr key={index}>
+        <td style={{ border: '1px solid gray' }}>{index + 1}</td>
+        <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+          </>
+        )}
 
         {selectedEnd && (
           <>
