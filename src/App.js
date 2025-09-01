@@ -243,7 +243,7 @@ updatedLines.forEach((line) => {
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
         
 
-        {pencilMode && (
+        {true && (
           <>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Herramientas</h4>
             <label>Objeto extremo 1:</label>
