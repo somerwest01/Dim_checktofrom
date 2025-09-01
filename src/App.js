@@ -22,7 +22,7 @@ function App() {
   const [rutaCalculada, setRutaCalculada] = useState([]);
 const [pencilMode, setPencilMode] = useState(true);
 
-  const proximityThreshold = 10;
+  const proximityThreshold = 25;
 
   const getClosestEndpoint = (pos) => {
     let closest = null;
