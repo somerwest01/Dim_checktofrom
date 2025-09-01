@@ -66,6 +66,7 @@ const [pencilMode, setPencilMode] = useState(true);
           nombre_obj1: '',
           nombre_obj2: '',
           dimension_mm: null,
+deduce: '',
           item: null
         };
         setTempLine(newLine);
@@ -287,7 +288,7 @@ updatedLines.forEach((line) => {
       <th style={{ border: '1px solid black' }}>#</th>
       <th style={{ border: '1px solid black' }}>Extremo 1</th>
       <th style={{ border: '1px solid black' }}>Extremo 2</th>
-      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
+      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th><th style={{ border: '1px solid black' }}>Deduce</th>
     </tr>
   </thead>
   <tbody>
@@ -296,7 +297,7 @@ updatedLines.forEach((line) => {
         <td style={{ border: '1px solid gray' }}>{index + 1}</td>
         <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
         <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
-        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td><td style={{ border: '1px solid gray' }}><input type="number" value={line.deduce} onChange={(e) => { const updated = [...lines]; updated[index].deduce = e.target.value; setLines(updated); }} style={{ width: '60px' }} /></td>
       </tr>
     ))}
   </tbody>
