@@ -273,7 +273,7 @@ const calcularRuta = (start, end) => {
     for (let i = 2; i < updatedSheet.length; i++) {
       const row = updatedSheet[i];
       const from_item = row[16];
-      const to_item = row[8];
+      const to_item = row[9];
 
       if (!from_item || !to_item) {
         updatedSheet[i][22] = 'Extremos faltantes';
