@@ -66,6 +66,7 @@ const [pencilMode, setPencilMode] = useState(true);
           nombre_obj1: '',
           nombre_obj2: '',
           dimension_mm: null,
+deduce: '',
           item: null
         };
         setTempLine(newLine);
@@ -287,7 +288,7 @@ updatedLines.forEach((line) => {
       <th style={{ border: '1px solid black' }}>#</th>
       <th style={{ border: '1px solid black' }}>Extremo 1</th>
       <th style={{ border: '1px solid black' }}>Extremo 2</th>
-      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
+      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th><th style={{ border: '1px solid black' }}>Deduce</th>
     </tr>
   </thead>
   <tbody>
@@ -296,7 +297,7 @@ updatedLines.forEach((line) => {
         <td style={{ border: '1px solid gray' }}>{index + 1}</td>
         <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
         <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
-        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td><td style={{ border: '1px solid gray' }}><input type="number" value={line.deduce} onChange={(e) => { const updated = [...lines]; updated[index].deduce = e.target.value; setLines(updated); }} style={{ width: '60px' }} /></td>
       </tr>
     ))}
   </tbody>
@@ -385,99 +386,3 @@ updatedLines.forEach((line) => {
 }
 
 export default App;
-
-
-
-// Excel Integration
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-
-const [excelData, setExcelData] = useState([]);
-const [statusMessage, setStatusMessage] = useState('🟢 Listo');
-
-const handleImportExcel = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  setStatusMessage('📂 Cargando archivo...');
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const data = new Uint8Array(evt.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    setExcelData(json);
-    setStatusMessage('✅ Archivo cargado');
-  };
-  reader.readAsArrayBuffer(file);
-};
-
-const handleDownloadExcel = () => {
-  if (excelData.length === 0) return;
-  setStatusMessage('⬇️ Generando archivo...');
-  const ws = XLSX.utils.aoa_to_sheet(excelData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'To_from_700176_resultado.xlsx');
-  setStatusMessage('✅ Archivo listo para descargar');
-};
-
-const handleCalculateRoutes = () => {
-  if (excelData.length === 0 || lines.length === 0) return;
-  setStatusMessage('🔄 Calculando recorridos...');
-  const graph = {};
-  lines.forEach((line) => {
-    const a = line.nombre_obj1;
-    const b = line.nombre_obj2;
-    const dist = (line.dimension_mm || 0) + (parseFloat(line.deduce) || 0);
-    if (!graph[a]) graph[a] = {};
-    if (!graph[b]) graph[b] = {};
-    graph[a][b] = dist;
-    graph[b][a] = dist;
-  });
-
-  const updatedData = [...excelData];
-  const headerRow = updatedData[3];
-  const fromIndex = 15;
-  const toIndex = 8;
-  const recorridoIndex = 22;
-  if (!headerRow[recorridoIndex]) headerRow[recorridoIndex] = 'Recorrido';
-
-  const dijkstra = (graph, start, end) => {
-    const distances = {};
-    const visited = new Set();
-    const queue = [];
-    for (const node in graph) distances[node] = Infinity;
-    distances[start] = 0;
-    queue.push({ node: start, dist: 0 });
-    while (queue.length > 0) {
-      queue.sort((a, b) => a.dist - b.dist);
-      const { node } = queue.shift();
-      if (visited.has(node)) continue;
-      visited.add(node);
-      for (const neighbor in graph[node]) {
-        const newDist = distances[node] + graph[node][neighbor];
-        if (newDist < distances[neighbor]) {
-          distances[neighbor] = newDist;
-          queue.push({ node: neighbor, dist: newDist });
-        }
-      }
-    }
-    return distances[end] !== Infinity ? distances[end] : null;
-  };
-
-  for (let i = 4; i < updatedData.length; i++) {
-    const row = updatedData[i];
-    const from = String(row[fromIndex]).trim();
-    const to = String(row[toIndex]).trim();
-    if (from && to && from !== 'undefined' && to !== 'undefined') {
-      const total = dijkstra(graph, from, to);
-      updatedData[i][recorridoIndex] = total !== null ? Math.round(total * 100) / 100 : '';
-    }
-  }
-  setExcelData(updatedData);
-  setStatusMessage('✅ Recorridos calculados');
-};
-
-
-<div style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', backgroundColor: '#f0f0f0', padding: '10px', borderTop: '1px solid #ccc', textAlign: 'center', fontWeight: 'bold' }}>{statusMessage}</div>
