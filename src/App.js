@@ -326,12 +326,19 @@ const calcularRuta = (start, end) => {
         updatedSheet[i][23] = 'No';
         continue;
       }
-      const deduceEntry = lines.find(
-        l => (l.nombre_obj1 === from_item && l.nombre_obj2 === to_item) ||
-             (l.nombre_obj1 === to_item && l.nombre_obj2 === from_item)
-      );
+     let deduceTotal = 0;
+   lines.forEach(line => {
+       if (
+           line.nombre_obj1 === from_item ||
+           line.nombre_obj2 === from_item ||
+           line.nombre_obj1 === to_item ||
+           line.nombre_obj2 === to_item
+       ) {
+           deduceTotal += parseFloat(line.deduce || 0);
+       }
+   });
       const deduceValue = deduceEntry ? parseFloat(deduceEntry.deduce || 0) : 0;
-      updatedSheet[i][22] = (distancia + deduceValue).toFixed(2);
+      updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
       updatedSheet[i][23] = 'Sí';
     }
 
