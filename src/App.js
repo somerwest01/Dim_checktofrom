@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
 function App() {
@@ -24,9 +21,6 @@ function App() {
   const [distanciaRuta, setDistanciaRuta] = useState(null);
   const [rutaCalculada, setRutaCalculada] = useState([]);
 const [pencilMode, setPencilMode] = useState(true);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [archivoProcesado, setArchivoProcesado] = useState(false);
-
 
   const proximityThreshold = 25;
 
@@ -214,59 +208,6 @@ updatedLines.forEach((line) => {
     }
   };
 
-  
-  const handleImportExcel = (e) => {
-    setStatusMessage('📥 Importando archivo...');
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      const importedLines = jsonData.map((row) => ({
-        p1: { x: row.x1, y: row.y1 },
-        p2: { x: row.x2, y: row.y2 },
-        obj1: row.obj1,
-        obj2: row.obj2,
-        nombre_obj1: row.nombre_obj1 || '',
-        nombre_obj2: row.nombre_obj2 || '',
-        dimension_mm: row.dimension_mm || null,
-        deduce: row.deduce || '',
-        item: row.item || null,
-      }));
-
-      setLines(importedLines);
-      setStatusMessage('✅ Archivo importado correctamente.');
-      setArchivoProcesado(false);
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const handleExportExcel = () => {
-    setStatusMessage('📤 Procesando archivo para exportar...');
-    const exportData = lines.map((line, index) => ({
-      item: index + 1,
-      nombre_obj1: line.nombre_obj1,
-      nombre_obj2: line.nombre_obj2,
-      dimension_mm: line.dimension_mm,
-      deduce: line.deduce,
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Líneas');
-
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, 'resultado_procesado.xlsx');
-
-    setStatusMessage('✅ Archivo listo para descargar.');
-    setArchivoProcesado(true);
-  };
-
   const renderObjeto = (tipo, x, y, key, index, end) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
@@ -340,17 +281,7 @@ updatedLines.forEach((line) => {
             {distanciaRuta !== null && (
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
-
-          <h4>📁 Importar / Exportar Excel</h4>
-          <input type="file" accept=".xlsx" onChange={handleImportExcel} />
-          <br /><br />
-          <button onClick={handleExportExcel} disabled={lines.length === 0}>
-            📤 Exportar archivo procesado
-          </button>
-          <br /><br />
-          <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
-
-          <h4>Tabla de líneas dibujadas</h4>
+<h4>Tabla de líneas dibujadas</h4>
 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
   <thead>
     <tr>
@@ -455,3 +386,107 @@ updatedLines.forEach((line) => {
 }
 
 export default App;
+
+
+
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+
+const [statusMessage, setStatusMessage] = useState('');
+const [archivoProcesado, setArchivoProcesado] = useState(false);
+
+const calcularRuta = (start, end) => {
+  const graph = {};
+  lines.forEach((line) => {
+    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+    if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+    if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+    graph[nombre_obj1][nombre_obj2] = dimension_mm;
+    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+  });
+
+  const distances = {};
+  const prev = {};
+  const visited = new Set();
+  const queue = [];
+
+  for (const node in graph) {
+    distances[node] = Infinity;
+  }
+  distances[start] = 0;
+  queue.push({ node: start, dist: 0 });
+
+  while (queue.length > 0) {
+    queue.sort((a, b) => a.dist - b.dist);
+    const { node } = queue.shift();
+    if (visited.has(node)) continue;
+    visited.add(node);
+
+    for (const neighbor in graph[node]) {
+      const newDist = distances[node] + graph[node][neighbor];
+      if (newDist < distances[neighbor]) {
+        distances[neighbor] = newDist;
+        prev[neighbor] = node;
+        queue.push({ node: neighbor, dist: newDist });
+      }
+    }
+  }
+
+  return distances[end] !== Infinity ? { distance: distances[end] } : null;
+};
+
+const handleImportExcel = (e) => {
+  setStatusMessage('Importando archivo...');
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    const updatedSheet = [...jsonData];
+    if (updatedSheet[1]) updatedSheet[1][22] = 'Dimension calculada';
+
+    for (let i = 2; i < updatedSheet.length; i++) {
+      const row = updatedSheet[i];
+      const extremo1 = row[8];
+      const extremo2 = row[15];
+
+      if (!extremo1 || !extremo2) {
+        updatedSheet[i][22] = 'Extremos faltantes';
+        continue;
+      }
+
+      const result = calcularRuta(extremo1, extremo2);
+      let dimension = result ? result.distance : null;
+
+      const deduceEntry = lines.find(
+        l => (l.nombre_obj1 === extremo1 && l.nombre_obj2 === extremo2) ||
+             (l.nombre_obj1 === extremo2 && l.nombre_obj2 === extremo1)
+      );
+      const deduceValue = deduceEntry ? parseFloat(deduceEntry.deduce || 0) : 0;
+
+      if (dimension !== null) {
+        dimension += deduceValue;
+        updatedSheet[i][22] = dimension.toFixed(2);
+      } else {
+        updatedSheet[i][22] = 'Ruta no encontrada';
+      }
+    }
+
+    const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
+    const newWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+
+    const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, 'archivo_con_dimensiones.xlsx');
+
+    setStatusMessage('Archivo procesado y listo para descargar.');
+    setArchivoProcesado(true);
+  };
+  reader.readAsArrayBuffer(file);
+};
