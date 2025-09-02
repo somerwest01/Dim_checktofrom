@@ -355,7 +355,7 @@ const calcularRuta = (start, end) => {
       item: index + 1,
       nombre_obj1: line.nombre_obj1,
       nombre_obj2: line.nombre_obj2,
-      dimension_mm: line.dimension_mm,
+      dimension_mm: (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(2),
       deduce: line.deduce,
     }));
 
