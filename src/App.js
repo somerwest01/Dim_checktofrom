@@ -280,35 +280,69 @@ const calcularRuta = (start, end) => {
         continue;
       }
 
-      const result = calcularRuta(from_item, to_item);
-      let dimension = result ? result.distance : null;
+      const graph = {};
+      lines.forEach((line) => {
+        const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+        if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+        if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+        if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+        graph[nombre_obj1][nombre_obj2] = dimension_mm;
+        graph[nombre_obj2][nombre_obj1] = dimension_mm;
+      });
+
+      const dijkstra = (start, end) => {
+        const distances = {};
+        const prev = {};
+        const visited = new Set();
+        const queue = [];
+        for (const node in graph) {
+          distances[node] = Infinity;
+        }
+        distances[start] = 0;
+        queue.push({ node: start, dist: 0 });
+        while (queue.length > 0) {
+          queue.sort((a, b) => a.dist - b.dist);
+          const { node } = queue.shift();
+          if (visited.has(node)) continue;
+          visited.add(node);
+          for (const neighbor in graph[node]) {
+            const newDist = distances[node] + graph[node][neighbor];
+            if (newDist < distances[neighbor]) {
+              distances[neighbor] = newDist;
+              prev[neighbor] = node;
+              queue.push({ node: neighbor, dist: newDist });
+            }
+          }
+        }
+        return distances[end] !== Infinity ? distances[end] : null;
+      };
+
+      const distancia = dijkstra(from_item, to_item);
+      if (distancia === null) {
+        updatedSheet[i][22] = 'Ruta no encontrada';
+        continue;
+      }
 
       const deduceEntry = lines.find(
         l => (l.nombre_obj1 === from_item && l.nombre_obj2 === to_item) ||
              (l.nombre_obj1 === to_item && l.nombre_obj2 === from_item)
       );
       const deduceValue = deduceEntry ? parseFloat(deduceEntry.deduce || 0) : 0;
-
-      if (dimension !== null) {
-        updatedSheet[i][22] = (dimension + deduceValue).toFixed(2);
-      } else {
-        updatedSheet[i][22] = 'Ruta no encontrada';
-      }
+      updatedSheet[i][22] = (distancia + deduceValue).toFixed(2);
     }
 
     const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
     const newWorkbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
-
     const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(blob, 'archivo_con_dimensiones.xlsx');
-
     setStatusMessage('Archivo procesado y listo para descargar.');
     setArchivoProcesado(true);
   };
   reader.readAsArrayBuffer(file);
 };
+
   
 
   const handleExportExcel = () => {
