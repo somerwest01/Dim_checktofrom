@@ -150,7 +150,49 @@ updatedLines.forEach((line) => {
       setLines(updatedLines);
     }
   };
+const calcularRuta = (start, end) => {
+  const graph = {};
+  lines.forEach((line) => {
+    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+    if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+    if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+    graph[nombre_obj1][nombre_obj2] = dimension_mm;
+    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+  });
 
+  const distances = {};
+  const prev = {};
+  const visited = new Set();
+  const queue = [];
+
+  for (const node in graph) {
+    distances[node] = Infinity;
+  }
+  distances[start] = 0;
+  queue.push({ node: start, dist: 0 });
+
+  while (queue.length > 0) {
+    queue.sort((a, b) => a.dist - b.dist);
+    const { node } = queue.shift();
+    if (visited.has(node)) continue;
+    visited.add(node);
+
+    for (const neighbor in graph[node]) {
+      const newDist = distances[node] + graph[node][neighbor];
+      if (newDist < distances[neighbor]) {
+        distances[neighbor] = newDist;
+        prev[neighbor] = node;
+        queue.push({ node: neighbor, dist: newDist });
+      }
+    }
+  }
+
+  return distances[end] !== Infinity ? { distance: distances[end] } : null;
+};
+  
+  
+  
   const calcularRutaReal = () => {
     const graph = {};
 
@@ -214,36 +256,60 @@ updatedLines.forEach((line) => {
     }
   };
 
-  
   const handleImportExcel = (e) => {
-    setStatusMessage('📥 Importando archivo...');
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const data = new Uint8Array(evt.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+  setStatusMessage('Importando archivo...');
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      const importedLines = jsonData.map((row) => ({
-        p1: { x: row.x1, y: row.y1 },
-        p2: { x: row.x2, y: row.y2 },
-        obj1: row.obj1,
-        obj2: row.obj2,
-        nombre_obj1: row.nombre_obj1 || '',
-        nombre_obj2: row.nombre_obj2 || '',
-        dimension_mm: row.dimension_mm || null,
-        deduce: row.deduce || '',
-        item: row.item || null,
-      }));
+    const updatedSheet = [...jsonData];
+    if (updatedSheet[1]) updatedSheet[1][22] = 'Dimension calculada';
 
-      setLines(importedLines);
-      setStatusMessage('✅ Archivo importado correctamente.');
-      setArchivoProcesado(false);
-    };
-    reader.readAsArrayBuffer(file);
+    for (let i = 2; i < updatedSheet.length; i++) {
+      const row = updatedSheet[i];
+      const from_item = row[16];
+      const to_item = row[8];
+
+      if (!from_item || !to_item) {
+        updatedSheet[i][22] = 'Extremos faltantes';
+        continue;
+      }
+
+      const result = calcularRuta(from_item, to_item);
+      let dimension = result ? result.distance : null;
+
+      const deduceEntry = lines.find(
+        l => (l.nombre_obj1 === from_item && l.nombre_obj2 === to_item) ||
+             (l.nombre_obj1 === to_item && l.nombre_obj2 === from_item)
+      );
+      const deduceValue = deduceEntry ? parseFloat(deduceEntry.deduce || 0) : 0;
+
+      if (dimension !== null) {
+        updatedSheet[i][22] = (dimension + deduceValue).toFixed(2);
+      } else {
+        updatedSheet[i][22] = 'Ruta no encontrada';
+      }
+    }
+
+    const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
+    const newWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+
+    const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, 'archivo_con_dimensiones.xlsx');
+
+    setStatusMessage('Archivo procesado y listo para descargar.');
+    setArchivoProcesado(true);
   };
+  reader.readAsArrayBuffer(file);
+};
+  
 
   const handleExportExcel = () => {
     setStatusMessage('📤 Procesando archivo para exportar...');
