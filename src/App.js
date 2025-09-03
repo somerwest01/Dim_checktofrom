@@ -29,12 +29,6 @@ const [pencilMode, setPencilMode] = useState(true);
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
-  const [showExtremos, setShowExtremos] = useState(true);
-  const [showRuta, setShowRuta] = useState(true);
-  const [showExcel, setShowExcel] = useState(true);
-  const [showTabla, setShowTabla] = useState(true);
-
-
   const botonBase = {
   display: 'inline-flex',
   alignItems: 'center',
@@ -564,7 +558,7 @@ setArchivoProcesado(true);
         
         {true && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4> setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4> setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4> setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>Seleccione los extremos</h4>
+            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Seleccione los extremos</h4>
             <label>Tipo de extremo 1:</label>
             <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
               <option>Ninguno</option>
@@ -588,7 +582,7 @@ setArchivoProcesado(true);
               🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
             </button>
             <br /><br />
-            <h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4> setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4> setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4> setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>Caulcular distancia por circuito</h4>
+            <h4>Caulcular distancia por circuito</h4>
             <label>Nombre extremo 1:</label>
             <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
             <br />
@@ -600,7 +594,7 @@ setArchivoProcesado(true);
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
 
-          <h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4> setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4> setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4> setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>📁 Importar / Exportar Excel</h4>
+          <h4>📁 Importar / Exportar Excel</h4>
           <input type="file" accept=".xlsx" onChange={handleImportExcel} />
           <br /><br />
           <button onClick={handleExportExcel} disabled={lines.length === 0}>
@@ -609,7 +603,7 @@ setArchivoProcesado(true);
           <br /><br />
           <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
 
-          <h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4> setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4> setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4> setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>Tabla de líneas dibujadas</h4>
+          <h4>Tabla de líneas dibujadas</h4>
 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
   <thead>
     <tr>
@@ -635,7 +629,7 @@ setArchivoProcesado(true);
 
         {selectedEnd && (
           <>
-            <h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4> setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4> setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4> setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>Editar nombre del objeto</h4>
+            <h4>Editar nombre del objeto</h4>
             <label>Nombre:</label>
             <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
             <button onClick={updateNombre}>Asignar</button>
