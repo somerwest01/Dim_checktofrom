@@ -666,7 +666,8 @@ setArchivoProcesado(true);
 
       });
     }
-  }}
+  }
+}}
 >
   <Stage
     width={canvasSize.width}
