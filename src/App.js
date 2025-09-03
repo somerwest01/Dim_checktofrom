@@ -469,10 +469,19 @@ setArchivoProcesado(true);
         <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>🧹 Limpiar</button>
         <button onClick={handleGuardar} style={{ marginRight: '10px' }}>💾 Guardar</button>
 
-        <label style={{ display: 'inline-block', marginRight: '10px' }}>
-       📂 Abrir
-       <input type="file" accept="application/json" onChange={handleAbrir} style={{ display: 'none' }} />
-   </label>
+        
+        <input
+        type="file"
+        id="abrirArchivo"
+        accept="application/json"
+        onChange={handleAbrir}
+        style={{ display: 'none' }}
+  />
+
+        <button onClick={() => document.getElementById('abrirArchivo').click()} style={{ marginRight: '10px' }}>
+        📂 Abrir
+        </button>
+
 
         
         {true && (
