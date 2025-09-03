@@ -653,17 +653,24 @@ setArchivoProcesado(true);
     maxWidth: '1800px',
     maxHeight: '1500px'
   }}
-  onMouseUp={() => {
-    const container = document.getElementById('canvas-container');
-    if (container) {
-        const newWidth = container.offsetWidth;
-        const newHeight = container.offsetHeight;
-    
-    if (newWidth !== canvasSize.width || newHeight !== canvasSize.height) {
-        setCanvasSize({
-          width: newWidth,
-          height: newHeight
+  onMouseUp={(e) => {
+  const container = document.getElementById('canvas-container');
+  if (container) {
+    const newWidth = container.offsetWidth;
+    const newHeight = container.offsetHeight;
 
+    // Detecta si el mouse se soltó en el borde inferior derecho (zona de resize)
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    const rect = container.getBoundingClientRect();
+
+    const isNearResizeCorner =
+      mouseX >= rect.right - 20 && mouseY >= rect.bottom - 20;
+
+    if (isNearResizeCorner) {
+      setCanvasSize({
+        width: newWidth,
+        height: newHeight
       });
     }
   }
