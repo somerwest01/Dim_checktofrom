@@ -28,6 +28,27 @@ const [pencilMode, setPencilMode] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
   const [archivoProcesado, setArchivoProcesado] = useState(false);
 
+  const botonBase = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '40px',
+  height: '40px',
+  overflow: 'hidden',
+  transition: 'width 0.3s ease',
+  whiteSpace: 'nowrap',
+  padding: '5px',
+  border: '1px solid gray',
+  borderRadius: '5px',
+  backgroundColor: '#f0f0f0',
+  cursor: 'pointer'
+};
+
+const botonExpandido = {
+  width: '150px'
+};
+
+  const [hoverBoton, setHoverBoton] = useState(null);
 
   const proximityThreshold = 25;
 
@@ -466,9 +487,44 @@ setArchivoProcesado(true);
     <div style={{ display: 'flex' }}>
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Caculadora de dimensiones</h3>
-        <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>🧹 Limpiar</button>
-        <button onClick={handleGuardar} style={{ marginRight: '10px' }}>💾 Guardar</button>
+
+      
+<div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+  <button
+  onMouseEnter={() => setHoverBoton('diseño')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={() => setMode('design')}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'diseño' ? botonExpandido : {})
+  }}
+>
+  ✏️ {hoverBoton === 'diseño' && 'Diseño'}
+</button>
+        
+<button
+  onMouseEnter={() => setHoverBoton('limpiar')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={handleResetApp}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'limpiar' ? botonExpandido : {})
+  }}
+>
+  🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
+</button>
+
+  <button
+  onMouseEnter={() => setHoverBoton('Guardar')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={handleGuardar}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'Guardar' ? botonExpandido : {})
+  }}
+>
+  ✏️ {hoverBoton === 'guardar' && 'Guardar'}
+</button>
 
         
         <input
@@ -479,9 +535,23 @@ setArchivoProcesado(true);
         style={{ display: 'none' }}
   />
 
-        <button onClick={() => document.getElementById('abrirArchivo').click()} style={{ marginRight: '10px' }}>
-        📂 Abrir
-        </button>
+        
+<button
+  onMouseEnter={() => setHoverBoton('abrir')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={() => document.getElementById('abrirArchivo').click()}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'abrir' ? botonExpandido : {})
+  }}
+>
+  📂 {hoverBoton === 'abrir' && 'Abrir'}
+</button>
+
+</div>
+
+        
+    
 
 
         
