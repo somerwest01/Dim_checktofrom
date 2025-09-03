@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-"import './estilos.css';
 
 
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
