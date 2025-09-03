@@ -564,7 +564,9 @@ setArchivoProcesado(true);
         
         {true && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4 onClick={() => setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>{showExtremos && (
+            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4 onClick={() => setShowExtremos(!showExtremos)} style={{ cursor: 'pointer' }}>{showExtremos ? '▼' : '▶️'} Seleccione los extremos</h4>
+        {showExtremos && (
+          <>
             <label>Tipo de extremo 1:</label>
             <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
               <option>Ninguno</option>
@@ -587,9 +589,12 @@ setArchivoProcesado(true);
             >
               🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
             </button>
+              </>
             <br /><br />
             </>)}</>
-<h4 onClick={() => setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4>{showRuta && (
+<h4 onClick={() => setShowRuta(!showRuta)} style={{ cursor: 'pointer' }}>{showRuta ? '▼' : '▶️'} Calcular distancia por circuito</h4>
+            {showRuta && (
+              <>
             <label>Nombre extremo 1:</label>
             <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
             <br />
@@ -600,19 +605,25 @@ setArchivoProcesado(true);
             {distanciaRuta !== null && (
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
+</>
 
           </>)}</>
-<h4 onClick={() => setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4>{showExcel && (
+<h4 onClick={() => setShowExcel(!showExcel)} style={{ cursor: 'pointer' }}>{showExcel ? '▼' : '▶️'} 📁 Importar / Exportar Excel</h4>
+{showExcel && (
+  <>
           <input type="file" accept=".xlsx" onChange={handleImportExcel} />
           <br /><br />
           <button onClick={handleExportExcel} disabled={lines.length === 0}>
             📤 Exportar archivo procesado
           </button>
+          </>
           <br /><br />
           <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
 
           </>)}</>
-<h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4>{showTabla && (
+<h4 onClick={() => setShowTabla(!showTabla)} style={{ cursor: 'pointer' }}>{showTabla ? '▼' : '▶️'} Tabla de líneas dibujadas</h4>
+            {showTabla && (
+              <>
 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
   <thead>
     <tr>
@@ -633,6 +644,7 @@ setArchivoProcesado(true);
     ))}
   </tbody>
 </table>
+    </>
           </>
         )}
 
