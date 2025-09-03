@@ -656,9 +656,14 @@ setArchivoProcesado(true);
   onMouseUp={() => {
     const container = document.getElementById('canvas-container');
     if (container) {
-      setCanvasSize({
-        width: container.offsetWidth,
-        height: container.offsetHeight
+        const newWidth = container.offsetWidth;
+        const newHeight = container.offsetHeight;
+    
+    if (newWidth !== canvasSize.width || newHeight !== canvasSize.height) {
+        setCanvasSize({
+          width: newWidth,
+          height: newHeight
+
       });
     }
   }}
