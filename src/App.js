@@ -255,6 +255,29 @@ const calcularRuta = (start, end) => {
       setRutaCalculada([]);
     }
   };
+  
+  const handleResetApp = () => {
+  setLines([]);
+  setPoints([]);
+  setObj1('Ninguno');
+  setObj2('Ninguno');
+  setDimension('');
+  setInputPos({ x: 0, y: 0 });
+  setShowInput(false);
+  setTempLine(null);
+  setMousePos(null);
+  setHoveredObj(null);
+  setSelectedEnd(null);
+  setNameInput('');
+  setEraserMode(false);
+  setNameInput1('');
+  setNameInput2('');
+  setDistanciaRuta(null);
+  setRutaCalculada([]);
+  setPencilMode(true);
+  setStatusMessage('');
+  setArchivoProcesado(false);
+};
 
   const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -421,6 +444,10 @@ setArchivoProcesado(true);
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
+        <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>
+  🧹 Limpiar
+        </button>
+
         
 
         {true && (
