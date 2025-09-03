@@ -311,45 +311,54 @@ const calcularRuta = (start, end) => {
 
     const graph = buildGraph();
 
-    for (let i = 2; i < updatedSheet.length; i++) {
-      const row = updatedSheet[i];
-      const to_item = row[8];
-      const from_item = row[15];
-      if (!from_item || !to_item) {
-        updatedSheet[i][22] = 'Extremos faltantes';
-        updatedSheet[i][23] = 'No';
-        continue;
-      }
-      const distancia = dijkstra(graph, from_item, to_item);
-      if (distancia === null) {
-        updatedSheet[i][22] = 'Ruta no encontrada';
-        updatedSheet[i][23] = 'No';
-        continue;
-      }
-     let deduceTotal = 0;
-   lines.forEach(line => {
-       if (
-           line.nombre_obj1 === from_item ||
-           line.nombre_obj2 === from_item ||
-           line.nombre_obj1 === to_item ||
-           line.nombre_obj2 === to_item
-       ) {
-           deduceTotal += parseFloat(line.deduce || 0);
-       }
-   });
-      const deduceValue = deduceEntry ? parseFloat(deduceEntry.deduce || 0) : 0;
-      updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
-      updatedSheet[i][23] = 'Sí';
-    }
+for (let i = 2; i < updatedSheet.length; i++) {
+  const row = updatedSheet[i];
+  const to_item = row[8];
+  const from_item = row[15];
 
-    const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
-    const newWorkbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
-    const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
-    setStatusMessage('Archivo procesado y listo para descargar.');
-    setArchivoProcesado(true);
+  if (!from_item || !to_item) {
+    updatedSheet[i][22] = 'Extremos faltantes';
+    updatedSheet[i][23] = 'No';
+    continue;
+  }
+
+  const distancia = dijkstra(graph, from_item, to_item);
+  if (distancia === null) {
+    updatedSheet[i][22] = 'Ruta no encontrada';
+    updatedSheet[i][23] = 'No';
+    continue;
+  }
+
+  // ✅ Sumar todos los deduce relacionados con los extremos
+  let deduceTotal = 0;
+  lines.forEach(line => {
+    if (
+      line.nombre_obj1 === from_item ||
+      line.nombre_obj2 === from_item ||
+      line.nombre_obj1 === to_item ||
+      line.nombre_obj2 === to_item
+    ) {
+      const valor = parseFloat(line.deduce);
+      if (!isNaN(valor)) {
+        deduceTotal += valor;
+      }
+    }
+  });
+
+  updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
+  updatedSheet[i][23] = 'Sí';
+}
+
+// ✅ Generar y descargar el archivo
+const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
+const newWorkbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
+setStatusMessage('Archivo procesado y listo para descargar.');
+setArchivoProcesado(true);
+
   };
   reader.readAsArrayBuffer(file);
 };
