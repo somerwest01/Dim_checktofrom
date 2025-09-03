@@ -558,8 +558,8 @@ setArchivoProcesado(true);
         
         {true && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Herramientas</h4>
-            <label>Objeto extremo 1:</label>
+            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Seleccione los extremos</h4>
+            <label>Tipo de extremo 1:</label>
             <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
               <option>Ninguno</option>
               <option>Conector</option>
@@ -567,7 +567,7 @@ setArchivoProcesado(true);
               <option>SPL</option>
             </select>
             <br /><br />
-            <label>Objeto extremo 2:</label>
+            <label>Tipo de extremo 2:</label>
             <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
               <option>Ninguno</option>
               <option>Conector</option>
@@ -579,14 +579,14 @@ setArchivoProcesado(true);
               onClick={() => setEraserMode(!eraserMode)}
               style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
             >
-              🧽 {eraserMode ? 'Cancelar borrador' : 'Activar borrador'}
+              🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
             </button>
             <br /><br />
-            <h4>Calcular distancia real entre objetos</h4>
-            <label>Nombre objeto 1:</label>
+            <h4>Caulcular distancia por circuito</h4>
+            <label>Nombre extremo 1:</label>
             <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
             <br />
-            <label>Nombre objeto 2:</label>
+            <label>Nombre extremo 2:</label>
             <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
             <br />
             <button onClick={calcularRutaReal}>Calcular ruta</button>
