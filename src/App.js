@@ -650,8 +650,8 @@ setArchivoProcesado(true);
     height: canvasSize.height,
     minWidth: '400px',
     minHeight: '300px',
-    maxWidth: '1000px',
-    maxHeight: '800px'
+    maxWidth: '1800px',
+    maxHeight: '1500px'
   }}
   onMouseUp={() => {
     const container = document.getElementById('canvas-container');
