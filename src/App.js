@@ -485,7 +485,7 @@ setArchivoProcesado(true);
 
   return (
     <div style={{ display: 'flex' }}>
-      <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
+      <div style={{ width: '300px', padding: '10px', borderRight: '2px solid gray' }}>
         <h3>Caculadora de dimensiones</h3>
 
       
@@ -523,7 +523,7 @@ setArchivoProcesado(true);
     ...(hoverBoton === 'Guardar' ? botonExpandido : {})
   }}
 >
-  ✏️ {hoverBoton === 'guardar' && 'Guardar'}
+  💾 {hoverBoton === 'guardar' && 'Guardar'}
 </button>
 
         
