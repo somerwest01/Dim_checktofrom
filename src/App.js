@@ -644,10 +644,14 @@ setArchivoProcesado(true);
   id="canvas-container"
   style={{
     resize: 'both',
-    overflow: 'auto',
+    overflow: 'hidden',
     border: '1px solid black',
     width: canvasSize.width,
     height: canvasSize.height
+    minWidth: '400px',
+    minHeight: '300px',
+    maxWidth: '1000px',
+    maxHeight: '800px'
   }}
   onMouseUp={() => {
     const container = document.getElementById('canvas-container');
