@@ -639,31 +639,13 @@ setArchivoProcesado(true);
 
       <div style={{ position: 'relative' }}>
           
-       <div
-  id="canvas-container"
-  style={{
-    resize: 'both',
-    overflow: 'auto',
-    border: '1px solid black',
-    width: canvasSize.width,
-    height: canvasSize.height
-  }}
-  onMouseUp={() => {
-    const container = document.getElementById('canvas-container');
-    if (container) {
-      setCanvasSize({
-        width: container.offsetWidth,
-        height: container.offsetHeight
-      });
-    }
-  }}
->
-  <Stage
-    width={canvasSize.width}
-    height={canvasSize.height}
-    ...
-  >
-    
+       <Stage
+          width={1000}
+          height={550}
+          onClick={handleStageClick}
+          onMouseMove={handleMouseMove}
+          style={{ border: '1px solid black' }}
+        >
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
