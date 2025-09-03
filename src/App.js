@@ -27,6 +27,7 @@ function App() {
 const [pencilMode, setPencilMode] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
   const [archivoProcesado, setArchivoProcesado] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
 
   const botonBase = {
   display: 'inline-flex',
@@ -637,13 +638,32 @@ setArchivoProcesado(true);
       </div>
 
       <div style={{ position: 'relative' }}>
-        <Stage
-          width={1000}
-          height={550}
-          onClick={handleStageClick}
-          onMouseMove={handleMouseMove}
-          style={{ border: '1px solid black' }}
-        >
+          
+       <div
+  id="canvas-container"
+  style={{
+    resize: 'both',
+    overflow: 'auto',
+    border: '1px solid black',
+    width: canvasSize.width,
+    height: canvasSize.height
+  }}
+  onMouseUp={() => {
+    const container = document.getElementById('canvas-container');
+    if (container) {
+      setCanvasSize({
+        width: container.offsetWidth,
+        height: container.offsetHeight
+      });
+    }
+  }}
+>
+  <Stage
+    width={canvasSize.width}
+    height={canvasSize.height}
+    ...
+  >
+    
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
