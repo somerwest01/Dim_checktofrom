@@ -279,6 +279,28 @@ const calcularRuta = (start, end) => {
   setArchivoProcesado(false);
 };
 
+   const handleGuardar = () => {
+       const data = JSON.stringify(lines);
+       const blob = new Blob([data], { type: 'application/json' });
+       saveAs(blob, 'dibujo_guardado.json');
+   };
+
+   const handleAbrir = (event) => {
+       const file = event.target.files[0];
+       if (!file) return;
+       const reader = new FileReader();
+       reader.onload = (e) => {
+           try {
+               const contenido = JSON.parse(e.target.result);
+               setLines(contenido);
+               setStatusMessage('✅ Archivo cargado correctamente.');
+           } catch (error) {
+               setStatusMessage('❌ Error al cargar el archivo.');
+           }
+       };
+       reader.readAsText(file);
+   };
+
   const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
   const file = e.target.files[0];
@@ -444,12 +466,15 @@ setArchivoProcesado(true);
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Modo de trabajo</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>
-  🧹 Limpiar
-        </button>
+        <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>🧹 Limpiar</button>
+        <button onClick={handleGuardar} style={{ marginRight: '10px' }}>💾 Guardar</button>
+
+        <label style={{ display: 'inline-block', marginRight: '10px' }}>
+       📂 Abrir
+       <input type="file" accept="application/json" onChange={handleAbrir} style={{ display: 'none' }} />
+   </label>
 
         
-
         {true && (
           <>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Herramientas</h4>
