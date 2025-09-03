@@ -567,8 +567,8 @@ setArchivoProcesado(true);
 
       <div style={{ position: 'relative' }}>
         <Stage
-          width={800}
-          height={600}
+          width={1000}
+          height={800}
           onClick={handleStageClick}
           onMouseMove={handleMouseMove}
           style={{ border: '1px solid black' }}
