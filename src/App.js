@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import './estilos.css';
+
 
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
@@ -466,7 +468,16 @@ setArchivoProcesado(true);
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
         <h3>Caculadora de dimensiones</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
-        <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>🧹 Limpiar</button>
+        
+<button
+  className={`boton-compacto ${hoverBoton === 'limpiar' ? 'expandido' : ''}`}
+  onMouseEnter={() => setHoverBoton('limpiar')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={handleResetApp}
+>
+  🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
+</button>
+
         <button onClick={handleGuardar} style={{ marginRight: '10px' }}>💾 Guardar</button>
 
         
