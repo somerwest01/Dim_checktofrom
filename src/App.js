@@ -647,7 +647,7 @@ setArchivoProcesado(true);
     overflow: 'hidden',
     border: '1px solid black',
     width: canvasSize.width,
-    height: canvasSize.height
+    height: canvasSize.height,
     minWidth: '400px',
     minHeight: '300px',
     maxWidth: '1000px',
@@ -669,7 +669,6 @@ setArchivoProcesado(true);
     onClick={handleStageClick}
     onMouseMove={handleMouseMove}
   >
-
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
