@@ -464,7 +464,7 @@ setArchivoProcesado(true);
   return (
     <div style={{ display: 'flex' }}>
       <div style={{ width: '250px', padding: '10px', borderRight: '1px solid gray' }}>
-        <h3>Modo de trabajo</h3>
+        <h3>Caculadora de dimensiones</h3>
         <button onClick={() => setMode('design')} style={{ marginRight: '10px' }}>✏️ Diseño</button>
         <button onClick={handleResetApp} style={{ marginRight: '10px', backgroundColor: 'lightyellow' }}>🧹 Limpiar</button>
         <button onClick={handleGuardar} style={{ marginRight: '10px' }}>💾 Guardar</button>
@@ -568,7 +568,7 @@ setArchivoProcesado(true);
       <div style={{ position: 'relative' }}>
         <Stage
           width={1000}
-          height={800}
+          height={550}
           onClick={handleStageClick}
           onMouseMove={handleMouseMove}
           style={{ border: '1px solid black' }}
