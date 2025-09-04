@@ -305,7 +305,7 @@ const calcularRuta = (start, end) => {
   setArchivoProcesado(false);
 };
 
-   const handleGuardar = () => {
+   const handle = () => {
        const data = JSON.stringify(lines);
        const blob = new Blob([data], { type: 'application/json' });
        saveAs(blob, 'dibujo_guardado.json');
@@ -550,7 +550,7 @@ setArchivoProcesado(true);
   onClick={handleGuardar}
   style={{
     ...botonBase,
-    ...(hoverBoton === 'Guardar' ? botonExpandido : {})
+    ...(hoverBoton === 'guardar' ? botonExpandido : {})
   }}
 >
   💾 {hoverBoton === 'guardar' && 'Guardar'}
