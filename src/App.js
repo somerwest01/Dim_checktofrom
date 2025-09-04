@@ -24,10 +24,11 @@ function App() {
   const [nameInput2, setNameInput2] = useState('');
   const [distanciaRuta, setDistanciaRuta] = useState(null);
   const [rutaCalculada, setRutaCalculada] = useState([]);
-const [pencilMode, setPencilMode] = useState(true);
+  const [pencilMode, setPencilMode] = useState(true);
   const [statusMessage, setStatusMessage] = useState('');
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
 
   const botonBase = {
   display: 'inline-flex',
@@ -502,6 +503,18 @@ setArchivoProcesado(true);
 >
   ✏️ {hoverBoton === 'diseño' && 'Diseño'}
 </button>
+  
+  <button
+  onMouseEnter={() => setHoverBoton('calculadora')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={() => setMostrarCalculadora(!mostrarCalculadora)}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'calculadora' ? botonExpandido : {})
+  }}
+>
+  🧮 {hoverBoton === 'calculadora' && 'Calculadora'}
+</button>
         
 <button
   onMouseEnter={() => setHoverBoton('limpiar')}
@@ -582,17 +595,22 @@ setArchivoProcesado(true);
               🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
             </button>
             <br /><br />
-            <h4>Caulcular distancia por circuito</h4>
-            <label>Nombre extremo 1:</label>
-            <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
-            <br />
-            <label>Nombre extremo 2:</label>
-            <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
-            <br />
-            <button onClick={calcularRutaReal}>Calcular ruta</button>
-            {distanciaRuta !== null && (
-              <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
-            )}
+              
+            {mostrarCalculadora && (
+  <>
+    <h4>Calcular distancia por circuito</h4>
+    <label>Nombre extremo 1:</label>
+    <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
+    <br />
+    <label>Nombre extremo 2:</label>
+    <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
+    <br />
+    <button onClick={calcularRutaReal}>Calcular ruta</button>
+    {distanciaRuta !== null && (
+      <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
+    )}
+  </>
+)}
 
           
 
