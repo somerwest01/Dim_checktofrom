@@ -594,14 +594,16 @@ setArchivoProcesado(true);
               <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
             )}
 
-          <h4>📁 Importar / Exportar Excel</h4>
-          <input type="file" accept=".xlsx" onChange={handleImportExcel} />
-          <br /><br />
-          <button onClick={handleExportExcel} disabled={lines.length === 0}>
-            📤 Exportar archivo procesado
-          </button>
-          <br /><br />
-          <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
+          
+
+              {selectedEnd && (
+          <>
+            <h4>Editar nombre del objeto</h4>
+            <label>Nombre:</label>
+            <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
+            <button onClick={updateNombre}>Asignar</button>
+          </>
+        )}
 
           <h4>Tabla de líneas dibujadas</h4>
 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
@@ -627,14 +629,14 @@ setArchivoProcesado(true);
           </>
         )}
 
-        {selectedEnd && (
-          <>
-            <h4>Editar nombre del objeto</h4>
-            <label>Nombre:</label>
-            <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
-            <button onClick={updateNombre}>Asignar</button>
-          </>
-        )}
+        <h4>📁 Importar / Exportar Excel</h4>
+          <input type="file" accept=".xlsx" onChange={handleImportExcel} />
+          <br /><br />
+          <button onClick={handleExportExcel} disabled={lines.length === 0}>
+            📤 Exportar archivo procesado
+          </button>
+          <br /><br />
+          <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
       </div>
 
       <div style={{ position: 'relative' }}>
