@@ -733,12 +733,14 @@ setArchivoProcesado(true);
                   onClick={() => handleLineClick(i)}
                 />
                 <Text
-                  x={(line.p1.x + line.p2.x) / 2}
-                  y={(line.p1.y + line.p2.y) / 2 - 10}
-                  text={`${line.dimension_mm || ''} mm`}
-                  fontSize={10}
-                  fill="blue"
-                />
+  x={(line.p1.x + line.p2.x) / 2} 
+  y={(line.p1.y + line.p2.y) / 2 - 10} 
+  text={`${line.dimension_mm ?? ''}`} 
+  fontSize={9} 
+  fill="blue" 
+  align="center"
+  verticalAlign="middle"
+/>
                 {line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
