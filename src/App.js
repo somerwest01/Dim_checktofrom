@@ -572,30 +572,35 @@ setArchivoProcesado(true);
         
         {true && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br /><h4>Seleccione los extremos</h4>
-            <label>Tipo de extremo 1:</label>
-            <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
-              <option>Ninguno</option>
-              <option>Conector</option>
-              <option>BRK</option>
-              <option>SPL</option>
-            </select>
-            <br /><br />
-            <label>Tipo de extremo 2:</label>
-            <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
-              <option>Ninguno</option>
-              <option>Conector</option>
-              <option>BRK</option>
-              <option>SPL</option>
-            </select>
-            <br /><br />
-            <button
-              onClick={() => setEraserMode(!eraserMode)}
-              style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
-            >
-              🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
-            </button>
-            <br /><br />
+            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
+{mostrarExtremos && (
+  <>
+    <h4>Seleccione los extremos</h4>
+    <label>Tipo de extremo 1:</label>
+    <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
+      <option>Ninguno</option>
+      <option>Conector</option>
+      <option>BRK</option>
+      <option>SPL</option>
+    </select>
+    <br /><br />
+    <label>Tipo de extremo 2:</label>
+    <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
+      <option>Ninguno</option>
+      <option>Conector</option>
+      <option>BRK</option>
+      <option>SPL</option>
+    </select>
+    <br /><br />
+    <button
+      onClick={() => setEraserMode(!eraserMode)}
+      style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
+    >
+      🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
+    </button>
+    <br /><br />
+  </>
+)}
               
             {mostrarCalculadora && (
   <>
