@@ -542,7 +542,7 @@ setArchivoProcesado(true);
 >
   🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
 </button>
-  
+</div>
 <div style={{ marginTop: '10px' }}>
   <button
   onMouseEnter={() => setHoverBoton('Guardar')}
@@ -578,12 +578,6 @@ setArchivoProcesado(true);
   📂 {hoverBoton === 'abrir' && 'Abrir'}
 </button>
   </div>
-
-</div>
-
-        
-    
-
 
         
         {true && (
