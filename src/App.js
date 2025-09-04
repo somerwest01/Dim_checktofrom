@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -305,7 +306,7 @@ const calcularRuta = (start, end) => {
   setArchivoProcesado(false);
 };
 
-   const handle = () => {
+   const handleGuardar = () => {
        const data = JSON.stringify(lines);
        const blob = new Blob([data], { type: 'application/json' });
        saveAs(blob, 'dibujo_guardado.json');
