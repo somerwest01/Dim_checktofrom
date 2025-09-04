@@ -489,7 +489,7 @@ setArchivoProcesado(true);
   };
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', fontFamily: 'Segoe UI', 'Roboto', 'Inter', sans-serif }}>
       <div style={{ width: '300px', padding: '10px', borderRight: '2px solid gray' }}>
         <h3>Caculadora de dimensiones</h3>
 
