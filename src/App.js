@@ -30,6 +30,7 @@ function App() {
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
   const [mostrarExtremos, setMostrarExtremos] = useState(false);
+  const [mostrarExcel, setMostrarExcel] = useState(false);
 
   const botonBase = {
   display: 'inline-flex',
@@ -493,6 +494,19 @@ setArchivoProcesado(true);
 
       
 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+    
+    <button
+  onMouseEnter={() => setHoverBoton('excel')}
+  onMouseLeave={() => setHoverBoton(null)}
+  onClick={() => setMostrarExcel(!mostrarExcel)}
+  style={{
+    ...botonBase,
+    ...(hoverBoton === 'excel' ? botonExpandido : {})
+  }}
+>
+  📁 {hoverBoton === 'excel' && 'Excel'}
+</button>
+  
 <button
   onMouseEnter={() => setHoverBoton('diseño')}
   onMouseLeave={() => setHoverBoton(null)}
@@ -653,14 +667,18 @@ setArchivoProcesado(true);
           </>
         )}
 
-        <h4>📁 Importar / Exportar Excel</h4>
-          <input type="file" accept=".xlsx" onChange={handleImportExcel} />
-          <br /><br />
-          <button onClick={handleExportExcel} disabled={lines.length === 0}>
-            📤 Exportar archivo procesado
-          </button>
-          <br /><br />
-          <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
+        {mostrarExcel && (
+  <>
+    <h4>📁 Importar / Exportar Excel</h4>
+    <input type="file" accept=".xlsx" onChange={handleImportExcel} />
+    <br /><br />
+    <button onClick={handleExportExcel} disabled={lines.length === 0}>
+      📤 Exportar archivo procesado
+    </button>
+    <br /><br />
+    <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
+  </>
+)}
       </div>
 
       <div style={{ position: 'relative' }}>
