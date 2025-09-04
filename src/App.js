@@ -734,7 +734,7 @@ setArchivoProcesado(true);
                 />
                 <Text
   x={(line.p1.x + line.p2.x) / 2} 
-  y={(line.p1.y + line.p2.y) / 2 - 10} 
+  y={(line.p1.y + line.p2.y) / 2 - 5} 
   text={`${line.dimension_mm ?? ''}`} 
   fontSize={9} 
   fill="blue" 
