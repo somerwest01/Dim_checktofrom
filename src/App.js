@@ -550,7 +550,7 @@ setArchivoProcesado(true);
   onClick={handleGuardar}
   style={{
     ...botonBase,
-    ...(hoverBoton === 'guardar' ? botonExpandido : {})
+    ...(hoverBoton === 'Guardar' ? botonExpandido : {})
   }}
 >
   💾 {hoverBoton === 'guardar' && 'Guardar'}
