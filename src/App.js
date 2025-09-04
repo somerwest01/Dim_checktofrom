@@ -29,6 +29,7 @@ function App() {
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
+  const [mostrarExtremos, setMostrarExtremos] = useState(false);
 
   const botonBase = {
   display: 'inline-flex',
@@ -492,10 +493,10 @@ setArchivoProcesado(true);
 
       
 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
-  <button
+<button
   onMouseEnter={() => setHoverBoton('diseño')}
   onMouseLeave={() => setHoverBoton(null)}
-  onClick={() => setMode('design')}
+  onClick={() => setMostrarExtremos(!mostrarExtremos)}
   style={{
     ...botonBase,
     ...(hoverBoton === 'diseño' ? botonExpandido : {})
