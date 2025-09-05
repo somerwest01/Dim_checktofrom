@@ -685,7 +685,7 @@ setArchivoProcesado(true);
       updated[index].nombre_obj1 = e.target.value;
       setLines(updated);
     }}
-    style={{ width: '80px', textAlign: 'center' }}
+    style={{ width: '50px', textAlign: 'center' }}
   />
 </td>
 
@@ -698,7 +698,7 @@ setArchivoProcesado(true);
                 updated[index].deduce1 = e.target.value;
                 setLines(updated);
               }}
-              style={{ width: '60px', textAlign: 'center' }}
+              style={{ width: '50px', textAlign: 'center' }}
             />
           </td>
           
@@ -711,7 +711,7 @@ setArchivoProcesado(true);
       updated[index].nombre_obj2 = e.target.value;
       setLines(updated);
     }}
-    style={{ width: '80px', textAlign: 'center' }}
+    style={{ width: '50px', textAlign: 'center' }}
   />
 </td>
 
@@ -724,7 +724,7 @@ setArchivoProcesado(true);
                 updated[index].deduce2 = e.target.value;
                 setLines(updated);
               }}
-              style={{ width: '60px', textAlign: 'center' }}
+              style={{ width: '50px', textAlign: 'center' }}
             />
           </td>
           
@@ -737,7 +737,7 @@ setArchivoProcesado(true);
       updated[index].dimension_mm = e.target.value;
       setLines(updated);
     }}
-    style={{ width: '80px', textAlign: 'center' }}
+    style={{ width: '50px', textAlign: 'center' }}
   />
 </td>
 
