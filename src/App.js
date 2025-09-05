@@ -675,7 +675,20 @@ setArchivoProcesado(true);
       {lines.map((line, index) => (
         <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white' }}>
           <td style={{ border: '1px solid gray' }}>{index + 1}</td>
-          <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
+          
+<td style={{ border: '1px solid gray' }}>
+  <input
+    type="text"
+    value={line.nombre_obj1}
+    onChange={(e) => {
+      const updated = [...lines];
+      updated[index].nombre_obj1 = e.target.value;
+      setLines(updated);
+    }}
+    style={{ width: '80px', textAlign: 'center' }}
+  />
+</td>
+
           <td style={{ border: '1px solid gray' }}>
             <input
               type="number"
@@ -688,7 +701,20 @@ setArchivoProcesado(true);
               style={{ width: '60px', textAlign: 'center' }}
             />
           </td>
-          <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
+          
+<td style={{ border: '1px solid gray' }}>
+  <input
+    type="text"
+    value={line.nombre_obj2}
+    onChange={(e) => {
+      const updated = [...lines];
+      updated[index].nombre_obj2 = e.target.value;
+      setLines(updated);
+    }}
+    style={{ width: '80px', textAlign: 'center' }}
+  />
+</td>
+
           <td style={{ border: '1px solid gray' }}>
             <input
               type="number"
@@ -701,7 +727,20 @@ setArchivoProcesado(true);
               style={{ width: '60px', textAlign: 'center' }}
             />
           </td>
-          <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+          
+<td style={{ border: '1px solid gray' }}>
+  <input
+    type="number"
+    value={line.dimension_mm}
+    onChange={(e) => {
+      const updated = [...lines];
+      updated[index].dimension_mm = e.target.value;
+      setLines(updated);
+    }}
+    style={{ width: '80px', textAlign: 'center' }}
+  />
+</td>
+
         </tr>
       ))}
     </tbody>
