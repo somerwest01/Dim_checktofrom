@@ -92,16 +92,17 @@ const botonExpandido = {
         }
       } else {
         const newLine = {
-          p1: points[0],
-          p2: pos,
-          obj1,
-          obj2,
-          nombre_obj1: '',
-          nombre_obj2: '',
-          dimension_mm: null,
-deduce: '',
-          item: null
-        };
+        p1: points[0],
+        p2: pos,
+        obj1,
+        obj2,
+        nombre_obj1: '',
+        nombre_obj2: '',
+        dimension_mm: null,
+        deduce1: '',
+        deduce2: '',
+        item: null
+      };
         setTempLine(newLine);
         setInputPos(pos);
         setShowInput(true);
@@ -403,19 +404,23 @@ for (let i = 2; i < updatedSheet.length; i++) {
 
   // ✅ Sumar todos los deduce relacionados con los extremos
   let deduceTotal = 0;
-  lines.forEach(line => {
-    if (
-      line.nombre_obj1 === from_item ||
-      line.nombre_obj2 === from_item ||
-      line.nombre_obj1 === to_item ||
-      line.nombre_obj2 === to_item
-    ) {
-      const valor = parseFloat(line.deduce);
-      if (!isNaN(valor)) {
-        deduceTotal += valor;
-      }
+  const extremosProcesados = new Set();
+  
+  
+lines.forEach(line => {
+  const extremos = [
+    { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+    { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+  ];
+
+  extremos.forEach(({ nombre, valor }) => {
+    if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
+      extremosProcesados.add(nombre);
+      if (!isNaN(valor)) deduceTotal += valor;
     }
   });
+});
+
 
   updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
   updatedSheet[i][23] = 'Sí';
@@ -646,18 +651,44 @@ setArchivoProcesado(true);
     <tr>
       <th style={{ border: '1px solid black' }}>#</th>
       <th style={{ border: '1px solid black' }}>Extremo 1</th>
+      <th style={{ border: '1px solid black' }}>Deduce 1</th>
       <th style={{ border: '1px solid black' }}>Extremo 2</th>
-      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th><th style={{ border: '1px solid black' }}>Deduce</th>
+      <th style={{ border: '1px solid black' }}>Deduce 2</th>
+      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
     </tr>
   </thead>
   <tbody>
     {lines.map((line, index) => (
       <tr key={index}>
-        <td style={{ border: '1px solid gray' }}>{index + 1}</td>
-        <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
-        <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
-        <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td><td style={{ border: '1px solid gray' }}><input type="number" value={line.deduce} onChange={(e) => { const updated = [...lines]; updated[index].deduce = e.target.value; setLines(updated); }} style={{ width: '60px' }} /></td>
-      </tr>
+  <td style={{ border: '1px solid gray' }}>{index + 1}</td>
+  <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
+  <td style={{ border: '1px solid gray' }}>
+    <input
+      type="number"
+      value={line.deduce1}
+      onChange={(e) => {
+        const updated = [...lines];
+        updated[index].deduce1 = e.target.value;
+        setLines(updated);
+      }}
+      style={{ width: '60px' }}
+    />
+  </td>
+  <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
+  <td style={{ border: '1px solid gray' }}>
+    <input
+      type="number"
+      value={line.deduce2}
+      onChange={(e) => {
+        const updated = [...lines];
+        updated[index].deduce2 = e.target.value;
+        setLines(updated);
+      }}
+      style={{ width: '60px' }}
+    />
+  </td>
+  <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
+</tr>
     ))}
   </tbody>
 </table>
