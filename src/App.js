@@ -664,11 +664,11 @@ setArchivoProcesado(true);
     <thead>
       <tr>
         <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>#</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Extremo 1</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Deduce 1</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Extremo 2</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Deduce 2</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Dimensión (mm)</th>
+        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 1</th>
+        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>D1</th>
+        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 2</th>
+        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>D2</th>
+        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Dim (mm)</th>
       </tr>
     </thead>
     <tbody>
