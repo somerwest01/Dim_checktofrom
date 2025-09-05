@@ -646,20 +646,20 @@ setArchivoProcesado(true);
         )}
 
           <h4>Tabla de líneas dibujadas</h4>
-<table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
+<table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', textAlign: 'center' }}>
   <thead>
     <tr>
-      <th style={{ border: '1px solid black' }}>#</th>
-      <th style={{ border: '1px solid black' }}>Extremo 1</th>
-      <th style={{ border: '1px solid black' }}>Deduce 1</th>
-      <th style={{ border: '1px solid black' }}>Extremo 2</th>
-      <th style={{ border: '1px solid black' }}>Deduce 2</th>
-      <th style={{ border: '1px solid black' }}>Dimensión (mm)</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>#</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Extremo 1</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Deduce 1</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Extremo 2</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Deduce 2</th>
+      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Dimensión (mm)</th>
     </tr>
   </thead>
   <tbody>
     {lines.map((line, index) => (
-      <tr key={index}>
+      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white' }}>
   <td style={{ border: '1px solid gray' }}>{index + 1}</td>
   <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
   <td style={{ border: '1px solid gray' }}>
