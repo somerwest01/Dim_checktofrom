@@ -495,8 +495,8 @@ setArchivoProcesado(true);
 
   return (
     <div style={{ display: 'flex'}}>
-      <div style={{ width: '320px', padding: '10px', borderRight: '2px solid gray', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
-        <h3>Caculadora de dimensiones</h3>
+      <div style={{ width: '350px', padding: '10px', borderRight: '2px solid gray', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
+        <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Caculadora de dimensiones</h3>
 
       
 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
@@ -591,7 +591,7 @@ setArchivoProcesado(true);
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
 {mostrarExtremos && (
   <>
-    <h4>Seleccione los extremos</h4>
+    <h4 style= {{textAlign: 'center' }}>Seleccione los extremos</h4>
     <label>Tipo de extremo 1:</label>
     <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
       <option>Ninguno</option>
@@ -620,7 +620,7 @@ setArchivoProcesado(true);
               
             {mostrarCalculadora && (
   <>
-    <h4>Calcular distancia por circuito</h4>
+    <h4 style= {{textAlign: 'center' }}>Calcular distancia por circuito</h4>
     <label>Nombre extremo 1:</label>
     <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
     <br />
@@ -645,7 +645,7 @@ setArchivoProcesado(true);
           </>
         )}
 
-          <h4>Tabla de líneas dibujadas</h4>
+          <h4 style= {{textAlign: 'center' }}>Tabla de líneas dibujadas</h4>
 
 <table style={{
   width: '100%',
@@ -706,7 +706,7 @@ setArchivoProcesado(true);
 
         {mostrarExcel && (
   <>
-    <h4>📁 Importar / Exportar Excel</h4>
+    <h4 style= {{textAlign: 'center' }}>Importar / Exportar Excel</h4>
     <input type="file" accept=".xlsx" onChange={handleImportExcel} />
     <br /><br />
     <button onClick={handleExportExcel} disabled={lines.length === 0}>
