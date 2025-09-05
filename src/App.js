@@ -650,8 +650,9 @@ setArchivoProcesado(true);
 <div style={{
   maxHeight: '300px',
   overflowY: 'auto',
+  overflowX: 'hidden',
   border: '1px solid #ccc',
-  paddingRight: '5px'
+  boxSizing: 'border-box'
 }}>
   <table style={{
     width: '100%',
@@ -659,7 +660,7 @@ setArchivoProcesado(true);
     borderCollapse: 'collapse',
     textAlign: 'center',
     fontFamily: 'Segoe UI, Roboto, sans-serif',
-    maxWidth: '280px'
+    tableLayout: 'fixed'
   }}>
     <thead>
       <tr>
