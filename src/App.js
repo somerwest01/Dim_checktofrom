@@ -592,7 +592,7 @@ setArchivoProcesado(true);
 {mostrarExtremos && (
   <>
     <h4 style= {{textAlign: 'center' }}>Seleccione los extremos</h4>
-    <label>Tipo de extremo 1:</label>
+    <label style= {{fontSize: '12px'}}>Tipo de extremo 1:  </label>
     <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
       <option>Ninguno</option>
       <option>Conector</option>
@@ -600,7 +600,7 @@ setArchivoProcesado(true);
       <option>SPL</option>
     </select>
     <br /><br />
-    <label>Tipo de extremo 2:</label>
+    <label style= {{fontSize: '12px'}}>Tipo de extremo 2:  </label>
     <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
       <option>Ninguno</option>
       <option>Conector</option>
@@ -621,10 +621,10 @@ setArchivoProcesado(true);
             {mostrarCalculadora && (
   <>
     <h4 style= {{textAlign: 'center' }}>Calcular distancia por circuito</h4>
-    <label>Nombre extremo 1:</label>
+    <label style= {{fontSize: '12px'}}>Nombre extremo 1:  </label>
     <input type="text" value={nameInput1} onChange={(e) => setNameInput1(e.target.value)} />
     <br />
-    <label>Nombre extremo 2:</label>
+    <label style= {{fontSize: '12px'}}>Nombre extremo 2:  </label>
     <input type="text" value={nameInput2} onChange={(e) => setNameInput2(e.target.value)} />
     <br />
     <button onClick={calcularRutaReal}>Calcular ruta</button>
