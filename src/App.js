@@ -646,32 +646,41 @@ setArchivoProcesado(true);
         )}
 
           <h4>Tabla de líneas dibujadas</h4>
-<table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', textAlign: 'center' }}>
+
+<table style={{
+  width: '100%',
+  fontSize: '11px',
+  borderCollapse: 'collapse',
+  textAlign: 'center',
+  fontFamily: 'Segoe UI, Roboto, sans-serif',
+  maxWidth: '280px'
+}}>
   <thead>
     <tr>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>#</th>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Extremo 1</th>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Deduce 1</th>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Extremo 2</th>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Deduce 2</th>
-      <th style={{ backgroundColor: '#4B0082', color: 'white', border: '1px solid black', padding: '5px' }}>Dimensión (mm)</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>#</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Extremo 1</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Deduce 1</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Extremo 2</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Deduce 2</th>
+      <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Dimensión (mm)</th>
     </tr>
   </thead>
   <tbody>
     {lines.map((line, index) => (
-      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : 'white' }}>
+      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f5f5f5' : 'white' }}>
   <td style={{ border: '1px solid gray' }}>{index + 1}</td>
   <td style={{ border: '1px solid gray' }}>{line.nombre_obj1 || '❌'}</td>
   <td style={{ border: '1px solid gray' }}>
-    <input
-      type="number"
+               
+    <input 
+      type="number" 
       value={line.deduce1}
       onChange={(e) => {
         const updated = [...lines];
         updated[index].deduce1 = e.target.value;
         setLines(updated);
       }}
-      style={{ width: '60px' }}
+      style={{ width: '60px', textAlign: 'center' }}
     />
   </td>
   <td style={{ border: '1px solid gray' }}>{line.nombre_obj2 || '❌'}</td>
@@ -684,7 +693,7 @@ setArchivoProcesado(true);
         updated[index].deduce2 = e.target.value;
         setLines(updated);
       }}
-      style={{ width: '60px' }}
+      style={{ width: '60px', textAlign: 'center' }}
     />
   </td>
   <td style={{ border: '1px solid gray' }}>{line.dimension_mm || '❌'}</td>
