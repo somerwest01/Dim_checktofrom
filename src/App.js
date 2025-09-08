@@ -75,14 +75,14 @@ const botonExpandido = {
   width: '150px'
 };
   
-  const handleImportDXF = (event) => {
+ const handleImportDXF = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const parser = new DxfParser();
+      const parser = new window.DxfParser(); // ← Usamos la versión global
       const dxf = parser.parseSync(e.target.result);
 
       const nuevasLineas = [];
@@ -114,6 +114,7 @@ const botonExpandido = {
 
   reader.readAsText(file);
 };
+
 
 
   const [hoverBoton, setHoverBoton] = useState(null);
