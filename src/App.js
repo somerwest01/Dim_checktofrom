@@ -36,6 +36,8 @@ function App() {
   const [procesandoExcel, setProcesandoExcel] = useState(false);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
+  const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
+
 
 
 
@@ -104,7 +106,7 @@ const botonExpandido = {
         const snap = getClosestEndpoint(pos);
         if (snap) {
           setPoints([snap.point]);
-          setObj1(snap.obj);
+          //setObj1(snap.obj);
         } else {
           setPoints([pos]);
         }
@@ -134,7 +136,18 @@ const botonExpandido = {
     if (pencilMode && points.length === 1 && !eraserMode) {
       const stage = e.target.getStage();
       const pos = stage.getPointerPosition();
-      setMousePos(pos);
+     if (modoAnguloRecto && points.length === 1) {
+  const p1 = points[0];
+  const dx = Math.abs(pos.x - p1.x);
+  const dy = Math.abs(pos.y - p1.y);
+  if (dx > dy) {
+    pos.y = p1.y; // Horizontal
+  } else {
+    pos.x = p1.x; // Vertical
+  }
+}
+setMousePos(pos);
+
     }
   };
 
@@ -838,7 +851,21 @@ lines.forEach((line) => {
 
       <div style={{ position: 'relative' }}>
           
-       
+<div style={{ marginBottom: '5px', textAlign: 'center' }}>
+  <button
+    onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
+    style={{
+      backgroundColor: modoAnguloRecto ? 'lightblue' : 'white',
+      border: '1px solid gray',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      cursor: 'pointer'
+    }}
+  >
+    {modoAnguloRecto ? '🔒 Ángulo recto activado' : '🔓 Ángulo libre'}
+  </button>
+</div>
+  
 <div
   id="canvas-container"
   style={{
