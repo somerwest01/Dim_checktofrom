@@ -369,7 +369,10 @@ const handleImportExcel = (e) => {
 
     if (updatedSheet[1]) {
       updatedSheet[1][22] = 'Dimension calculada';
-      updatedSheet[1][23] = 'Ruta encontrada';
+      
+updatedSheet[1][23] = 'Ruta encontrada';
+updatedSheet[1][24] = 'Deduce Lado 1';
+updatedSheet[1][25] = 'Deduce Lado 2';
     }
 
     const graph = {};
@@ -427,6 +430,19 @@ const handleImportExcel = (e) => {
       }
 
       const distancia = dijkstra(from_item, to_item);
+      updatedSheet[i][24] = '';
+updatedSheet[i][25] = '';
+lines.forEach((line) => {
+  const extremos = [
+    { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+    { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+  ];
+  extremos.forEach(({ nombre, valor }) => {
+    if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
+    if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
+  });
+});
+
       if (distancia === null) {
         updatedSheet[i][22] = 'Ruta no encontrada';
         updatedSheet[i][23] = 'No';
@@ -448,7 +464,7 @@ const handleImportExcel = (e) => {
         });
       });
 
-      updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
+      updatedSheet[i][22] = distancia.toFixed(2);
       updatedSheet[i][23] = 'Sí';
     } catch (error) {
       updatedSheet[i][22] = 'Error en fila';
