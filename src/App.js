@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
-import DxfParser from 'dxf-parser';
 
 
 
