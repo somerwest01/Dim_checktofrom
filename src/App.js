@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import './App.css';
 
 
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
@@ -32,6 +33,8 @@ function App() {
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
   const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
+  const [procesandoExcel, setProcesandoExcel] = useState(false);
+
 
   const botonBase = {
   display: 'inline-flex',
@@ -48,6 +51,17 @@ function App() {
   backgroundColor: '#f0f0f0',
   cursor: 'pointer'
 };
+  
+const spinnerStyle = {
+  border: '4px solid #f3f3f3',
+  borderTop: '4px solid #3f51b5',
+  borderRadius: '50%',
+  width: '30px',
+  height: '30px',
+  animation: 'spin 1s linear infinite',
+  margin: '10px auto'
+};
+
 
 const botonExpandido = {
   width: '150px'
@@ -331,6 +345,8 @@ const calcularRuta = (start, end) => {
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
+  setProcesandoExcel(true); // ⏳ Mostrar spinner
+
   const file = e.target.files[0];
   if (!file) return;
 
@@ -386,8 +402,9 @@ const handleImportExcel = (e) => {
     };
 
     let i = 2;
+    const chunkSize = 100;
+
     const processChunk = () => {
-      const chunkSize = 100;
       const end = Math.min(i + chunkSize, updatedSheet.length);
 
       for (; i < end; i++) {
@@ -429,7 +446,7 @@ const handleImportExcel = (e) => {
       }
 
       if (i < updatedSheet.length) {
-        setTimeout(processChunk, 0); // Deja respirar al navegador
+        setTimeout(processChunk, 0); // ⏳ Procesar siguiente bloque
       } else {
         // ✅ Finaliza y descarga
         const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
@@ -440,6 +457,7 @@ const handleImportExcel = (e) => {
         saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
         setStatusMessage('✅ Archivo procesado y listo para descargar.');
         setArchivoProcesado(true);
+        setProcesandoExcel(false); // ✅ Ocultar spinner
       }
     };
 
@@ -448,8 +466,6 @@ const handleImportExcel = (e) => {
 
   reader.readAsArrayBuffer(file);
 };
-
-
   
 
   const handleExportExcel = () => {
@@ -771,6 +787,14 @@ const handleImportExcel = (e) => {
     </button>
     <br /><br />
     <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
+
+        {procesandoExcel && (
+  <div style={{ textAlign: 'center' }}>
+    <div style={spinnerStyle}></div>
+    <p style={{ fontStyle: 'italic', color: 'orange' }}>Procesando archivo Excel... Por favor espera.</p>
+  </div>
+)}
+
   </>
 )}
       </div>
