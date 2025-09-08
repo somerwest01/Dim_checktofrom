@@ -82,7 +82,7 @@ const botonExpandido = {
   reader.onload = (e) => {
     try {
       const parser = new window.DxfParser(); // ← Usamos la versión global
-      const dxf = parser.parseSync(e.target.result);
+      const dxf = parser.parseSync(new TextDecoder().decode(e.target.result));
 
       const nuevasLineas = [];
 
@@ -111,7 +111,7 @@ const botonExpandido = {
     }
   };
 
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 };
 
 
