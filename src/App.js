@@ -34,6 +34,9 @@ function App() {
   const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
   const [procesandoExcel, setProcesandoExcel] = useState(false);
+  const [totalCircuitos, setTotalCircuitos] = useState(0);
+  const [circuitosProcesados, setCircuitosProcesados] = useState(0);
+
 
 
 
@@ -360,6 +363,10 @@ const handleImportExcel = (e) => {
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
+    setTotalCircuitos(updatedSheet.length - 2); // Asumiendo que las filas empiezan en la fila 2
+    setCircuitosProcesados(0);
+
+
     if (updatedSheet[1]) {
       updatedSheet[1][22] = 'Dimension calculada';
       updatedSheet[1][23] = 'Ruta encontrada';
@@ -444,6 +451,9 @@ const handleImportExcel = (e) => {
 
         updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
         updatedSheet[i][23] = 'Sí';
+
+        setCircuitosProcesados(prev => prev + 1);
+
       }
 
       if (i < updatedSheet.length) {
@@ -793,6 +803,12 @@ const handleImportExcel = (e) => {
   <div style={{ textAlign: 'center' }}>
     <div style={spinnerStyle}></div>
     <p style={{ fontStyle: 'italic', color: 'orange' }}>Procesando archivo Excel... Por favor espera.</p>
+          
+    <p style={{ fontStyle: 'italic', color: 'green' }}>
+    Circuitos totales: {totalCircuitos} <br />
+    Circuitos procesados: {circuitosProcesados}
+</p>
+
   </div>
 )}
 
