@@ -329,9 +329,11 @@ const calcularRuta = (start, end) => {
        reader.readAsText(file);
    };
 
-  const handleImportExcel = (e) => {
+const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
   const file = e.target.files[0];
+  if (!file) return;
+
   const reader = new FileReader();
   reader.onload = (evt) => {
     const data = new Uint8Array(evt.target.result);
@@ -339,38 +341,38 @@ const calcularRuta = (start, end) => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
     const updatedSheet = [...jsonData];
+
     if (updatedSheet[1]) {
       updatedSheet[1][22] = 'Dimension calculada';
       updatedSheet[1][23] = 'Ruta encontrada';
     }
 
-    const buildGraph = () => {
-      const graph = {};
-      lines.forEach((line) => {
-        const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-        if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
-        if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
-        if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-        graph[nombre_obj1][nombre_obj2] = dimension_mm;
-        graph[nombre_obj2][nombre_obj1] = dimension_mm;
-      });
-      return graph;
-    };
+    const graph = {};
+    lines.forEach((line) => {
+      const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+      if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+      if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+      if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+      graph[nombre_obj1][nombre_obj2] = dimension_mm;
+      graph[nombre_obj2][nombre_obj1] = dimension_mm;
+    });
 
-    const dijkstra = (graph, start, end) => {
+    const dijkstra = (start, end) => {
       const distances = {};
       const visited = new Set();
       const queue = [];
+
       for (const node in graph) distances[node] = Infinity;
       distances[start] = 0;
       queue.push({ node: start, dist: 0 });
+
       while (queue.length > 0) {
         queue.sort((a, b) => a.dist - b.dist);
         const { node } = queue.shift();
         if (visited.has(node)) continue;
         visited.add(node);
+
         for (const neighbor in graph[node]) {
           const newDist = distances[node] + graph[node][neighbor];
           if (newDist < distances[neighbor]) {
@@ -379,66 +381,74 @@ const calcularRuta = (start, end) => {
           }
         }
       }
+
       return distances[end] !== Infinity ? distances[end] : null;
     };
 
-    const graph = buildGraph();
+    let i = 2;
+    const processChunk = () => {
+      const chunkSize = 100;
+      const end = Math.min(i + chunkSize, updatedSheet.length);
 
-for (let i = 2; i < updatedSheet.length; i++) {
-  const row = updatedSheet[i];
-  const to_item = row[8];
-  const from_item = row[15];
+      for (; i < end; i++) {
+        const row = updatedSheet[i];
+        const to_item = row[8];
+        const from_item = row[15];
 
-  if (!from_item || !to_item) {
-    updatedSheet[i][22] = 'Extremos faltantes';
-    updatedSheet[i][23] = 'No';
-    continue;
-  }
+        if (!from_item || !to_item) {
+          updatedSheet[i][22] = 'Extremos faltantes';
+          updatedSheet[i][23] = 'No';
+          continue;
+        }
 
-  const distancia = dijkstra(graph, from_item, to_item);
-  if (distancia === null) {
-    updatedSheet[i][22] = 'Ruta no encontrada';
-    updatedSheet[i][23] = 'No';
-    continue;
-  }
+        const distancia = dijkstra(from_item, to_item);
+        if (distancia === null) {
+          updatedSheet[i][22] = 'Ruta no encontrada';
+          updatedSheet[i][23] = 'No';
+          continue;
+        }
 
-  // ✅ Sumar todos los deduce relacionados con los extremos
-  let deduceTotal = 0;
-  const extremosProcesados = new Set();
-  
-  
-lines.forEach(line => {
-  const extremos = [
-    { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-    { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-  ];
+        let deduceTotal = 0;
+        const extremosProcesados = new Set();
 
-  extremos.forEach(({ nombre, valor }) => {
-    if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
-      extremosProcesados.add(nombre);
-      if (!isNaN(valor)) deduceTotal += valor;
-    }
-  });
-});
+        lines.forEach((line) => {
+          const extremos = [
+            { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+            { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+          ];
+          extremos.forEach(({ nombre, valor }) => {
+            if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
+              extremosProcesados.add(nombre);
+              if (!isNaN(valor)) deduceTotal += valor;
+            }
+          });
+        });
 
+        updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
+        updatedSheet[i][23] = 'Sí';
+      }
 
-  updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
-  updatedSheet[i][23] = 'Sí';
-}
+      if (i < updatedSheet.length) {
+        setTimeout(processChunk, 0); // Deja respirar al navegador
+      } else {
+        // ✅ Finaliza y descarga
+        const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
+        const newWorkbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
+        const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
+        setStatusMessage('✅ Archivo procesado y listo para descargar.');
+        setArchivoProcesado(true);
+      }
+    };
 
-// ✅ Generar y descargar el archivo
-const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
-const newWorkbook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
-const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
-const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
-setStatusMessage('Archivo procesado y listo para descargar.');
-setArchivoProcesado(true);
-
+    processChunk();
   };
+
   reader.readAsArrayBuffer(file);
 };
+
 
   
 
