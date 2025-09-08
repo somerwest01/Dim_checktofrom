@@ -413,52 +413,56 @@ const handleImportExcel = (e) => {
     const chunkSize = 100;
 
     const processChunk = () => {
-      const end = Math.min(i + chunkSize, updatedSheet.length);
+  const end = Math.min(i + chunkSize, updatedSheet.length);
+  for (; i < end; i++) {
+    try {
+      const row = updatedSheet[i];
+      const to_item = row[8];
+      const from_item = row[15];
 
-      for (; i < end; i++) {
-        const row = updatedSheet[i];
-        const to_item = row[8];
-        const from_item = row[15];
-
-        if (!from_item || !to_item) {
-          updatedSheet[i][22] = 'Extremos faltantes';
-          updatedSheet[i][23] = 'No';
-          continue;
-        }
-
-        const distancia = dijkstra(from_item, to_item);
-        if (distancia === null) {
-          updatedSheet[i][22] = 'Ruta no encontrada';
-          updatedSheet[i][23] = 'No';
-          continue;
-        }
-
-        let deduceTotal = 0;
-        const extremosProcesados = new Set();
-
-        lines.forEach((line) => {
-          const extremos = [
-            { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-            { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-          ];
-          extremos.forEach(({ nombre, valor }) => {
-            if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
-              extremosProcesados.add(nombre);
-              if (!isNaN(valor)) deduceTotal += valor;
-            }
-          });
-        });
-
-        updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
-        updatedSheet[i][23] = 'Sí';
-
-        setCircuitosProcesados(prev => prev + 1);
-
+      if (!from_item || !to_item) {
+        updatedSheet[i][22] = 'Extremos faltantes';
+        updatedSheet[i][23] = 'No';
+        continue;
       }
 
-      if (i < updatedSheet.length) {
-        setTimeout(processChunk, 0); // ⏳ Procesar siguiente bloque
-      } else {
+      const distancia = dijkstra(from_item, to_item);
+      if (distancia === null) {
+        updatedSheet[i][22] = 'Ruta no encontrada';
+        updatedSheet[i][23] = 'No';
+        continue;
+      }
+
+      let deduceTotal = 0;
+      const extremosProcesados = new Set();
+      lines.forEach((line) => {
+        const extremos = [
+          { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+          { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+        ];
+        extremos.forEach(({ nombre, valor }) => {
+          if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
+            extremosProcesados.add(nombre);
+            if (!isNaN(valor)) deduceTotal += valor;
+          }
+        });
+      });
+
+      updatedSheet[i][22] = (distancia + deduceTotal).toFixed(2);
+      updatedSheet[i][23] = 'Sí';
+    } catch (error) {
+      updatedSheet[i][22] = 'Error en fila';
+      updatedSheet[i][23] = 'No';
+      console.error(`Error en fila ${i}:`, error);
+    }
+  }
+
+  // ✅ Actualiza el contador una sola vez por bloque
+  setCircuitosProcesados(i - 2);
+
+  if (i < updatedSheet.length) {
+    setTimeout(processChunk, 0);
+  } else {
         // ✅ Finaliza y descarga
         const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
         const newWorkbook = XLSX.utils.book_new();
