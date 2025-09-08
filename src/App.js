@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
+import DxfParser from 'dxf-parser';
+
 
 
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
@@ -72,6 +74,47 @@ const spinnerStyle = {
 const botonExpandido = {
   width: '150px'
 };
+  
+  const handleImportDXF = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parser = new DxfParser();
+      const dxf = parser.parseSync(e.target.result);
+
+      const nuevasLineas = [];
+
+      dxf.entities.forEach((ent) => {
+        if (ent.type === 'LINE') {
+          nuevasLineas.push({
+            p1: { x: ent.start.x, y: ent.start.y },
+            p2: { x: ent.end.x, y: ent.end.y },
+            obj1: 'Ninguno',
+            obj2: 'Ninguno',
+            nombre_obj1: '',
+            nombre_obj2: '',
+            dimension_mm: null,
+            deduce1: '',
+            deduce2: '',
+            item: null
+          });
+        }
+      });
+
+      setLines([...lines, ...nuevasLineas]);
+      setStatusMessage('✅ Plano base importado desde DXF.');
+    } catch (error) {
+      console.error('Error al procesar DXF:', error);
+      setStatusMessage('❌ Error al importar archivo DXF.');
+    }
+  };
+
+  reader.readAsText(file);
+};
+
 
   const [hoverBoton, setHoverBoton] = useState(null);
 
@@ -619,6 +662,24 @@ lines.forEach((line) => {
   🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
 </button>
 </div>
+ 
+  <input
+  type="file"
+  accept=".dxf"
+  id="importarDXF"
+  onChange={handleImportDXF}
+  style={{ display: 'none' }}
+/>
+<button
+  onClick={() => document.getElementById('importarDXF').click()}
+  style={{
+    ...botonBase,
+    ...{ width: '150px', marginTop: '5px' }
+  }}
+>
+  📐 Importar DXF
+</button>
+
 <div style={{ marginTop: '10px' }}>
   <button
   onMouseEnter={() => setHoverBoton('Guardar')}
