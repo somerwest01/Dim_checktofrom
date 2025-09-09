@@ -36,8 +36,8 @@ function App() {
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
-
-
+  const [selectorPos, setSelectorPos] = useState(null); // posición del panel flotante
+  const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionado
 
 
 
@@ -598,9 +598,13 @@ lines.forEach((line) => {
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
-        if (!eraserMode) {
-          setSelectedEnd({ lineIndex: index, end });
-          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+      
+  if (!eraserMode && !pencilMode) {
+    setSelectedEnd({ lineIndex: index, end });
+    setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+    setSelectorPos({ x, y });
+    setSelectorEnd({ lineIndex: index, end });
+
         }
       },
     };
@@ -1094,6 +1098,48 @@ lines.forEach((line) => {
             <button onClick={confirmDimension}>OK</button>
           </div>
         )}
+          {selectorPos && selectorEnd && !pencilMode && (
+  <div style={{
+    position: 'absolute',
+    left: selectorPos.x,
+    top: selectorPos.y,
+    backgroundColor: 'white',
+    border: '1px solid gray',
+    padding: '5px',
+    borderRadius: '5px',
+    zIndex: 20
+  }}>
+    <p style={{ marginBottom: '5px' }}>Cambiar tipo de extremo:</p>
+    {['Conector', 'BRK', 'SPL'].map(tipo => (
+      <button
+        key={tipo}
+        onClick={() => {
+          const updated = [...lines];
+          const line = updated[selectorEnd.lineIndex];
+          if (selectorEnd.end === 'p1') {
+            line.obj1 = tipo;
+          } else {
+            line.obj2 = tipo;
+          }
+          setLines(updated);
+          setSelectorPos(null);
+          setSelectorEnd(null);
+        }}
+        style={{
+          marginRight: '5px',
+          padding: '5px 10px',
+          border: '1px solid gray',
+          borderRadius: '5px',
+          backgroundColor: '#f0f0f0',
+          cursor: 'pointer'
+        }}
+      >
+        {tipo}
+      </button>
+    ))}
+  </div>
+)}
+
       </div>
     </div>
   );
