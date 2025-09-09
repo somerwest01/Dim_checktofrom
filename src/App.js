@@ -81,13 +81,18 @@ const botonExpandido = {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const parser = new window.DxfParser(); // ← Usamos la versión global
+      const parser = new window.DxfParser();
       const dxf = parser.parseSync(new TextDecoder().decode(e.target.result));
-
       const nuevasLineas = [];
 
       dxf.entities.forEach((ent) => {
-        if (ent.type === 'LINE') {
+        if (
+          ent.type === 'LINE' &&
+          ent.start?.x !== undefined &&
+          ent.start?.y !== undefined &&
+          ent.end?.x !== undefined &&
+          ent.end?.y !== undefined
+        ) {
           nuevasLineas.push({
             p1: { x: ent.start.x, y: ent.start.y },
             p2: { x: ent.end.x, y: ent.end.y },
@@ -103,8 +108,12 @@ const botonExpandido = {
         }
       });
 
-      setLines([...lines, ...nuevasLineas]);
-      setStatusMessage('✅ Plano base importado desde DXF.');
+      if (nuevasLineas.length === 0) {
+        setStatusMessage('⚠️ No se encontraron líneas válidas en el archivo DXF.');
+      } else {
+        setLines([...lines, ...nuevasLineas]);
+        setStatusMessage('✅ Plano base importado desde DXF.');
+      }
     } catch (error) {
       console.error('Error al procesar DXF:', error);
       setStatusMessage('❌ Error al importar archivo DXF.');
