@@ -968,7 +968,21 @@ lines.forEach((line) => {
   >
     ✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}
   </button>
+
+  <button
+    onClick={() => setEraserMode(!eraserMode)}
+    style={{
+      backgroundColor: eraserMode ? 'lightcoral' : 'white',
+      border: '1px solid gray',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      cursor: 'pointer'
+    }}
+  >
+    🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
+  </button>
 </div>
+
 
   
 <div
