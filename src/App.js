@@ -744,6 +744,7 @@ lines.forEach((line) => {
         {true && (
           <>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
+            <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
 {mostrarExtremos && (
   <>
@@ -771,9 +772,10 @@ lines.forEach((line) => {
       🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
     </button>
     <br /><br />
+    <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
               
             {mostrarCalculadora && (
   <>
@@ -787,10 +789,12 @@ lines.forEach((line) => {
     <button onClick={calcularRutaReal}>Calcular ruta</button>
     {distanciaRuta !== null && (
       <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
+
+    <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
     )}
   </>
 )}
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
 
               {selectedEnd && (
           <>
@@ -798,9 +802,11 @@ lines.forEach((line) => {
             <label>Nombre:</label>
             <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
             <button onClick={updateNombre}>Asignar</button>
+
+            <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
           </>
         )}
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
 
          
 <h4 style={{textAlign: 'center'}}>Tabla de líneas dibujadas</h4>
@@ -903,9 +909,10 @@ lines.forEach((line) => {
     </tbody>
   </table>
 </div>
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
           </>
         )}
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
 
         {mostrarExcel && (
   <>
@@ -929,11 +936,12 @@ lines.forEach((line) => {
 </p>
 
   </div>
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 )}
 
   </>
 )}
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
 
   
       </div>
