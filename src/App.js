@@ -582,6 +582,10 @@ lines.forEach((line) => {
 
     setStatusMessage('✅ Archivo listo para descargar.');
     setArchivoProcesado(true);
+    setMostrarExcel(false);      // Oculta el panel de Excel
+    setArchivoProcesado(false);  // Limpia el estado del archivo procesado
+    setStatusMessage('');        // Borra el mensaje de estado
+
   };
 
   const renderObjeto = (tipo, x, y, key, index, end) => {
