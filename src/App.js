@@ -614,7 +614,7 @@ lines.forEach((line) => {
   };
 
   return (
-    <div style={{ display: 'flex'}}>
+    <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
       
 <div style={{
   position: 'absolute',
