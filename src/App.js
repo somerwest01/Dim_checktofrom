@@ -725,10 +725,14 @@ lines.forEach((line) => {
 </button>
   </div>
 
-        
+ <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+
         {true && (
           <>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
+
+          </div>
+
 {mostrarExtremos && (
   <>
     <h4 style= {{textAlign: 'center' }}>Seleccione los extremos</h4>
