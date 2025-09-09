@@ -789,9 +789,8 @@ lines.forEach((line) => {
     <button onClick={calcularRutaReal}>Calcular ruta</button>
     {distanciaRuta !== null && (
       <p>📏 Distancia total: {distanciaRuta.toFixed(2)} mm<br />🧭 Ruta: {rutaCalculada.join(' → ')}</p>
-
-    <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
     )}
+  <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
 
