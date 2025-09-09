@@ -4,8 +4,6 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
 
-
-
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
 
 function App() {
