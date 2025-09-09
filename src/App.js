@@ -616,18 +616,15 @@ lines.forEach((line) => {
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
       
+
 <div style={{
-  position: 'absolute',
-  top: '20px',
-  left: '20px',
   width: '330px',
   padding: '15px',
   backgroundColor: 'white',
   border: '2px solid gray',
   borderRadius: '15px',
   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  fontFamily: 'Segoe UI, Roboto, sans-serif',
-  zIndex: 10
+  fontFamily: 'Segoe UI, Roboto, sans-serif'
 }}>
 
         <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Caculadora de dimensiones</h3>
@@ -965,9 +962,12 @@ lines.forEach((line) => {
 <div
   id="canvas-container"
   style={{
+    backgroundColor: 'white',
+    border: '2px solid gray',
+    borderRadius: '15px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
     resize: 'both',
     overflow: 'hidden',
-    border: '1px solid black',
     width: canvasSize.width,
     height: canvasSize.height,
     minWidth: '400px',
