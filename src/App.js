@@ -615,8 +615,23 @@ lines.forEach((line) => {
 
   return (
     <div style={{ display: 'flex'}}>
-      <div style={{ width: '350px', padding: '10px', borderRight: '2px solid gray', fontFamily: 'Segoe UI, Roboto, sans-serif' }}>
+      
+<div style={{
+  position: 'absolute',
+  top: '20px',
+  left: '20px',
+  width: '330px',
+  padding: '15px',
+  backgroundColor: 'white',
+  border: '2px solid gray',
+  borderRadius: '15px',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  fontFamily: 'Segoe UI, Roboto, sans-serif',
+  zIndex: 10
+}}>
+
         <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Caculadora de dimensiones</h3>
+        <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
       
 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
@@ -722,13 +737,13 @@ lines.forEach((line) => {
   📂 {hoverBoton === 'abrir' && 'Abrir'}
 </button>
   </div>
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
 
 
         {true && (
           <>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
-          
 
 {mostrarExtremos && (
   <>
@@ -758,6 +773,7 @@ lines.forEach((line) => {
     <br /><br />
   </>
 )}
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
               
             {mostrarCalculadora && (
   <>
@@ -774,8 +790,7 @@ lines.forEach((line) => {
     )}
   </>
 )}
-
-          
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
               {selectedEnd && (
           <>
@@ -785,6 +800,7 @@ lines.forEach((line) => {
             <button onClick={updateNombre}>Asignar</button>
           </>
         )}
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
          
 <h4 style={{textAlign: 'center'}}>Tabla de líneas dibujadas</h4>
@@ -887,10 +903,9 @@ lines.forEach((line) => {
     </tbody>
   </table>
 </div>
-
-
           </>
         )}
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
         {mostrarExcel && (
   <>
@@ -918,6 +933,9 @@ lines.forEach((line) => {
 
   </>
 )}
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
+
+  
       </div>
 
       <div style={{ position: 'relative' }}>
