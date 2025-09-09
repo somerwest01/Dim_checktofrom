@@ -740,8 +740,6 @@ lines.forEach((line) => {
 
         {true && (
           <>
-            <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
-            <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
 {mostrarExtremos && (
   <>
@@ -944,7 +942,7 @@ lines.forEach((line) => {
 
       <div style={{ position: 'relative' }}>
           
-<div style={{ marginBottom: '5px', textAlign: 'center' }}>
+<div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '10px' }}>
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
     style={{
@@ -957,7 +955,21 @@ lines.forEach((line) => {
   >
     {modoAnguloRecto ? '🔒 Ángulo recto activado' : '🔓 Ángulo libre'}
   </button>
+
+  <button
+    onClick={() => setPencilMode(!pencilMode)}
+    style={{
+      backgroundColor: pencilMode ? 'lightgreen' : 'white',
+      border: '1px solid gray',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      cursor: 'pointer'
+    }}
+  >
+    ✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}
+  </button>
 </div>
+
   
 <div
   id="canvas-container"
