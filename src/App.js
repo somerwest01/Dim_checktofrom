@@ -935,8 +935,8 @@ lines.forEach((line) => {
 </p>
 
   </div>
-<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 )}
+<hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
   </>
 )}
