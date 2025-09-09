@@ -618,7 +618,7 @@ lines.forEach((line) => {
       
 
 <div style={{
-  width: '330px',
+  width: '345px',
   padding: '15px',
   backgroundColor: 'white',
   border: '2px solid gray',
