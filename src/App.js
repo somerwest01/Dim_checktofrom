@@ -125,7 +125,7 @@ const botonExpandido = {
 
   const [hoverBoton, setHoverBoton] = useState(null);
 
-  const proximityThreshold = 25;
+  const proximityThreshold = 35;
 
   const getClosestEndpoint = (pos) => {
     let closest = null;
