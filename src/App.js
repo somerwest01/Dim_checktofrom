@@ -723,13 +723,13 @@ lines.forEach((line) => {
 </button>
   </div>
 
- <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+
 
         {true && (
           <>
+           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
             <button onClick={() => setPencilMode(!pencilMode)} style={{ backgroundColor: pencilMode ? 'lightgreen' : 'white' }}>✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}</button><br /><br />
-
-          </div>
+           </div>
 
 {mostrarExtremos && (
   <>
