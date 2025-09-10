@@ -185,24 +185,27 @@ const botonExpandido = {
     }
   };
 
-  const handleMouseMove = (e) => {
-    if (pencilMode && points.length === 1 && !eraserMode) {
-      const stage = e.target.getStage();
-      const pos = stage.getPointerPosition();
-     if (modoAnguloRecto && points.length === 1) {
-  const p1 = points[0];
-  const dx = Math.abs(pos.x - p1.x);
-  const dy = Math.abs(pos.y - p1.y);
-  if (dx > dy) {
-    pos.y = p1.y; // Horizontal
-  } else {
-    pos.x = p1.x; // Vertical
-  }
-}
-setMousePos(pos);
+const handleMouseMove = (e) => {
+  if (pencilMode && points.length === 1 && !eraserMode) {
+    const stage = e.target.getStage();
+    const pos = stage.getPointerPosition();
+    const p1 = points[0];
+    let adjustedPos = { ...pos };
 
+    if (modoAnguloRecto) {
+      const dx = Math.abs(pos.x - p1.x);
+      const dy = Math.abs(pos.y - p1.y);
+      if (dx > dy) {
+        adjustedPos.y = p1.y; // Horizontal
+      } else {
+        adjustedPos.x = p1.x; // Vertical
+      }
     }
-  };
+
+    setMousePos(adjustedPos);
+  }
+};
+
 
   const confirmDimension = () => {
     if (tempLine) {
