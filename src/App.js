@@ -321,68 +321,71 @@ const calcularRuta = (start, end) => {
   
   
   
-  const calcularRutaReal = () => {
-    const graph = {};
+const calcularRutaReal = () => {
+  const graph = {};
 
-    lines.forEach((line) => {
-      const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-      if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+  lines.forEach((line) => {
+    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
 
-      if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
-      if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
+    if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
+    if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
 
-      graph[nombre_obj1][nombre_obj2] = dimension_mm;
-      graph[nombre_obj2][nombre_obj1] = dimension_mm;
-    });
+    graph[nombre_obj1][nombre_obj2] = dimension_mm;
+    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+  });
 
-    const dijkstra = (start, end) => {
-      const distances = {};
-      const prev = {};
-      const visited = new Set();
-      const queue = [];
+  const dijkstra = (start, end) => {
+    const distances = {};
+    const prev = {};
+    const visited = new Set();
+    const queue = [];
 
-      for (const node in graph) {
-        distances[node] = Infinity;
-      }
-      distances[start] = 0;
-      queue.push({ node: start, dist: 0 });
+    for (const node in graph) {
+      distances[node] = Infinity;
+    }
+    distances[start] = 0;
+    queue.push({ node: start, dist: 0 });
 
-      while (queue.length > 0) {
-        queue.sort((a, b) => a.dist - b.dist);
-        const { node } = queue.shift();
-        if (visited.has(node)) continue;
-        visited.add(node);
+    while (queue.length > 0) {
+      queue.sort((a, b) => a.dist - b.dist);
+      const { node } = queue.shift();
+      if (visited.has(node)) continue;
+      visited.add(node);
 
-        for (const neighbor in graph[node]) {
-          const newDist = distances[node] + graph[node][neighbor];
-          if (newDist < distances[neighbor]) {
-            distances[neighbor] = newDist;
-            prev[neighbor] = node;
-            queue.push({ node: neighbor, dist: newDist });
-          }
+      for (const neighbor in graph[node]) {
+        const newDist = distances[node] + graph[node][neighbor];
+        if (newDist < distances[neighbor]) {
+          distances[neighbor] = newDist;
+          prev[neighbor] = node;
+          queue.push({ node: neighbor, dist: newDist });
         }
       }
-
-      const path = [];
-      let current = end;
-      while (current) {
-        path.unshift(current);
-        current = prev[current];
-      }
-
-      return distances[end] !== Infinity ? { distance: distances[end], path } : null;
-    };
-
-    const result = dijkstra(nameInput1, nameInput2);
-    if (result) {
-      setDistanciaRuta(result.distance);
-      setRutaCalculada(result.path);
-    } else {
-      alert("No hay ruta entre los objetos ingresados.");
-      setDistanciaRuta(null);
-      setRutaCalculada([]);
     }
+
+    const path = [];
+    let current = end;
+    while (current) {
+      path.unshift(current);
+      current = prev[current];
+    }
+
+    return distances[end] !== Infinity ? { distance: distances[end], path } : null;
   };
+
+  // ✅ Corrección aquí
+  const result = dijkstra(nameInput1, nameInput2);
+  if (!result || !result.path || result.path.length === 0) {
+    alert("⚠️ No hay ruta entre los objetos ingresados.");
+    setDistanciaRuta(null);
+    setRutaCalculada([]);
+    return;
+  }
+
+  setDistanciaRuta(result.distance);
+  setRutaCalculada(result.path);
+};
+
   
   const handleResetApp = () => {
   setLines([]);
