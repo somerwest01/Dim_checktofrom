@@ -164,18 +164,31 @@ const botonExpandido = {
           setPoints([pos]);
         }
       } else {
-        const newLine = {
-        p1: points[0],
-        p2: pos,
-        obj1,
-        obj2,
-        nombre_obj1: '',
-        nombre_obj2: '',
-        dimension_mm: null,
-        deduce1: '',
-        deduce2: '',
-        item: null
-      };
+      let adjustedPos = { ...pos };
+if (modoAnguloRecto) {
+  const p1 = points[0];
+  const dx = Math.abs(pos.x - p1.x);
+  const dy = Math.abs(pos.y - p1.y);
+  if (dx > dy) {
+    adjustedPos.y = p1.y; // Horizontal
+  } else {
+    adjustedPos.x = p1.x; // Vertical
+  }
+}
+
+const newLine = {
+  p1: points[0],
+  p2: adjustedPos,
+  obj1,
+  obj2,
+  nombre_obj1: '',
+  nombre_obj2: '',
+  dimension_mm: null,
+  deduce1: '',
+  deduce2: '',
+  item: null
+};
+
         setTempLine(newLine);
         setInputPos(pos);
         setShowInput(true);
