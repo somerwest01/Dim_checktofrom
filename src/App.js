@@ -37,7 +37,8 @@ function App() {
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
   const [selectorPos, setSelectorPos] = useState(null); // posición del panel flotante
-  const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionado
+  const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
+
 
 
 
@@ -124,6 +125,8 @@ const botonExpandido = {
 
 
   const [hoverBoton, setHoverBoton] = useState(null);
+  const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
+
 
   const proximityThreshold = 35;
 
@@ -989,6 +992,20 @@ lines.forEach((line) => {
   >
     🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
   </button>
+    
+    <button
+  onClick={() => setModoModificarExtremos(!modoModificarExtremos)}
+  style={{
+    backgroundColor: modoModificarExtremos ? 'khaki' : 'white',
+    border: '1px solid gray',
+    padding: '5px 10px',
+    borderRadius: '5px',
+    cursor: 'pointer'
+  }}
+>
+  🔧 {modoModificarExtremos ? 'Modificar activos' : 'Modificar extremos'}
+</button>
+
 </div>
 
 
@@ -1098,7 +1115,7 @@ lines.forEach((line) => {
             <button onClick={confirmDimension}>OK</button>
           </div>
         )}
-          {selectorPos && selectorEnd && !pencilMode && (
+          {selectorPos && selectorEnd && !pencilMode && modoModificarExtremos && (
   <div style={{
     position: 'absolute',
     left: selectorPos.x,
