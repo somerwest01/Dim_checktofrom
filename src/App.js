@@ -236,39 +236,31 @@ const updateNombre = () => {
     const updatedLines = [...lines];
     const targetLine = updatedLines[selectedEnd.lineIndex];
     const newName = nameInput;
+    const targetPos = targetLine[selectedEnd.end];
 
+    // Asignar nombre al extremo seleccionado
     if (selectedEnd.end === 'p1') {
       targetLine.nombre_obj1 = newName;
     } else {
       targetLine.nombre_obj2 = newName;
     }
 
-    // Propagate name to matching endpoints in other lines
-    updatedLines.forEach((line, idx) => {
-      if (idx === selectedEnd.lineIndex) return;
-      if (Math.abs(line.p1.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p1.y - targetLine[selectedEnd.end].y) < 1) {
+    // Propagar nombre a extremos cercanos
+    updatedLines.forEach((line) => {
+      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
         line.nombre_obj1 = newName;
       }
-      if (Math.abs(line.p2.x - targetLine[selectedEnd.end].x) < 1 && Math.abs(line.p2.y - targetLine[selectedEnd.end].y) < 1) {
+      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
         line.nombre_obj2 = newName;
       }
     });
-   const targetPos = targetLine[selectedEnd.end];
-
-updatedLines.forEach((line) => {
-  if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-    line.nombre_obj1 = newName;
-  }
-  if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-    line.nombre_obj2 = newName;
-  }
-});
 
     setLines(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
   }
 };
+
 
 
   const handleLineClick = (index) => {
