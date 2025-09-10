@@ -375,15 +375,24 @@ const calcularRutaReal = () => {
 
   // ✅ Corrección aquí
   const result = dijkstra(nameInput1, nameInput2);
-  if (!result || !result.path || result.path.length === 0) {
-    alert("⚠️ No hay ruta entre los objetos ingresados.");
-    setDistanciaRuta(null);
-    setRutaCalculada([]);
-    return;
-  }
 
-  setDistanciaRuta(result.distance);
-  setRutaCalculada(result.path);
+if (!graph[nameInput1] || !graph[nameInput2]) {
+  alert("⚠️ Uno o ambos extremos no existen en el plano.");
+  setDistanciaRuta(null);
+  setRutaCalculada([]);
+  return;
+}
+
+if (!result || !result.path || result.path.length === 0) {
+  alert("⚠️ No hay ruta entre los objetos ingresados.");
+  setDistanciaRuta(null);
+  setRutaCalculada([]);
+  return;
+}
+
+setDistanciaRuta(result.distance);
+setRutaCalculada(result.path);
+
 };
 
   
