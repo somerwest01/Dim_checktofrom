@@ -116,6 +116,14 @@ const handleMouseMovePan = (e) => {
   setLastPos({ x: e.evt.clientX, y: e.evt.clientY });
 };
 
+  const getRelativePointerPosition = (stage) => {
+  const transform = stage.getAbsoluteTransform().copy();
+  transform.invert();
+  const pos = stage.getPointerPosition();
+  return transform.point(pos);
+};
+
+
   
  const handleImportDXF = (event) => {
   const file = event.target.files[0];
@@ -196,7 +204,8 @@ const handleStageClick = (e) => {
   if (e.evt.button !== 0) return; // 👈 ignora todo excepto clic izquierdo
 
   const stage = e.target.getStage();
-  const pos = stage.getPointerPosition();
+  const pos = getRelativePointerPosition(stage);
+
 
   if (pencilMode) {
     if (eraserMode) return;
@@ -247,7 +256,7 @@ const handleStageClick = (e) => {
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
     const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
+    const pos = getRelativePointerPosition(stage);
     const p1 = points[0];
     let adjustedPos = { ...pos };
 
