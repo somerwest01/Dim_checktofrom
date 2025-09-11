@@ -38,6 +38,8 @@ function App() {
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
   const [selectorPos, setSelectorPos] = useState(null); // posición del panel flotante
   const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPos, setLastPos] = useState(null);
 
 
 
@@ -72,6 +74,32 @@ const spinnerStyle = {
 const botonExpandido = {
   width: '150px'
 };
+  const handleMouseDown = (e) => {
+  if (e.evt.button === 1) { // botón central (scroll)
+    setIsPanning(true);
+    setLastPos({ x: e.evt.clientX, y: e.evt.clientY });
+  }
+};
+
+const handleMouseUp = (e) => {
+  if (e.evt.button === 1) {
+    setIsPanning(false);
+  }
+};
+
+const handleMouseMovePan = (e) => {
+  if (!isPanning) return;
+  const stage = e.target.getStage();
+  const dx = e.evt.clientX - lastPos.x;
+  const dy = e.evt.clientY - lastPos.y;
+
+  stage.x(stage.x() + dx);
+  stage.y(stage.y() + dy);
+  stage.batchDraw();
+
+  setLastPos({ x: e.evt.clientX, y: e.evt.clientY });
+};
+
   
  const handleImportDXF = (event) => {
   const file = event.target.files[0];
@@ -584,6 +612,29 @@ lines.forEach((line) => {
   reader.readAsArrayBuffer(file);
 };
   
+  const handleWheel = (e) => {
+  e.evt.preventDefault();
+  const stage = e.target.getStage();
+  const oldScale = stage.scaleX();
+
+  const scaleBy = 1.1; // factor de zoom
+  const mousePointTo = {
+    x: stage.getPointerPosition().x / oldScale - stage.x() / oldScale,
+    y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale,
+  };
+
+  const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+  stage.scale({ x: newScale, y: newScale });
+
+  const newPos = {
+    x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
+    y: -(mousePointTo.y - stage.getPointerPosition().y / newScale) * newScale,
+  };
+  stage.position(newPos);
+  stage.batchDraw();
+};
+
+  
 
   const handleExportExcel = () => {
     setStatusMessage('📤 Procesando archivo para exportar...');
@@ -1070,10 +1121,13 @@ lines.forEach((line) => {
 }}
 >
   <Stage
-    width={canvasSize.width}
-    height={canvasSize.height}
-    onClick={handleStageClick}
-    onMouseMove={handleMouseMove}
+  width={canvasSize.width}
+  height={canvasSize.height}
+  onClick={handleStageClick}
+  onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
+  onMouseDown={handleMouseDown}
+  onMouseUp={handleMouseUp}
+  onWheel={handleWheel}
   >
           <Layer>
             {lines.map((line, i) => (
