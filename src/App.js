@@ -1087,19 +1087,21 @@ lines.forEach((line) => {
                 <Label
                 x={(line.p1.x + line.p2.x) / 2}
                 y={(line.p1.y + line.p2.y) / 2}
+                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
+                offsetY={6} // centra verticalmente
                 >
                 <Tag
                 fill="white"        // Fondo blanco para simular corte de la línea
                 pointerDirection="none"
                 cornerRadius={2}    // Bordes redondeados
-                  stroke="black"      // Borde negro opcional
-    strokeWidth={0.5}
+                stroke="white"      // Borde negro opcional
+                strokeWidth={0.5}
   />
   <Text
     text={`${line.dimension_mm ?? ''}`}
-    fontSize={12}
-    fill="blue"
-    padding={2}         // Espacio entre texto y fondo
+    fontSize={11}
+    fill="black"
+    padding={1}         // Espacio entre texto y fondo
     align="center"
   />
 </Label>
