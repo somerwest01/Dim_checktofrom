@@ -617,7 +617,7 @@ lines.forEach((line) => {
       key,
       x,
       y,
-      fill: isHovered ? 'yellow' : tipo === 'Conector' ? 'orange' : tipo === 'BRK' ? 'red' : 'green',
+      fill: isHovered ? 'green' : tipo === 'Conector' ? 'purple' : tipo === 'BRK' ? 'black' : 'green',
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
@@ -636,7 +636,7 @@ lines.forEach((line) => {
       case 'Conector':
         return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
       case 'BRK':
-        return <Circle {...commonProps} radius={6} />;
+        return <Circle {...commonProps} radius={4} />;
       case 'SPL':
         return <RegularPolygon {...commonProps} sides={3} radius={7} />;
       default:
