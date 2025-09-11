@@ -671,6 +671,7 @@ lines.forEach((line) => {
       nombre_obj2: line.nombre_obj2,
       dimension_mm: parseFloat(
       (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(0)
+        ),
       deduce: line.deduce,
     }));
 
