@@ -605,7 +605,7 @@ lines.forEach((line) => {
         });
       });
 
-      updatedSheet[i][22] = distancia.toFixed(2);
+      updatedSheet[i][22] = parseFloat(distancia.toFixed(0));
       updatedSheet[i][23] = 'Sí';
     } catch (error) {
       updatedSheet[i][22] = 'Error en fila';
@@ -669,7 +669,8 @@ lines.forEach((line) => {
       item: index + 1,
       nombre_obj1: line.nombre_obj1,
       nombre_obj2: line.nombre_obj2,
-      dimension_mm: (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(2),
+      dimension_mm: parseFloat(
+      (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(0)
       deduce: line.deduce,
     }));
 
