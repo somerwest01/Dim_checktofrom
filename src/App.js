@@ -176,55 +176,57 @@ const handleMouseMovePan = (e) => {
     return closest;
   };
 
-  const handleStageClick = (e) => {
-    const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
+const handleStageClick = (e) => {
+  if (e.evt.button !== 0) return; // 👈 ignora todo excepto clic izquierdo
 
-    if (pencilMode) {
-      if (eraserMode) return;
+  const stage = e.target.getStage();
+  const pos = stage.getPointerPosition();
 
-      if (points.length === 0) {
-        const snap = getClosestEndpoint(pos);
-        if (snap) {
-          setPoints([snap.point]);
-          //setObj1(snap.obj);
-        } else {
-          setPoints([pos]);
-        }
+  if (pencilMode) {
+    if (eraserMode) return;
+
+    if (points.length === 0) {
+      const snap = getClosestEndpoint(pos);
+      if (snap) {
+        setPoints([snap.point]);
       } else {
+        setPoints([pos]);
+      }
+    } else {
       let adjustedPos = { ...pos };
-if (modoAnguloRecto) {
-  const p1 = points[0];
-  const dx = Math.abs(pos.x - p1.x);
-  const dy = Math.abs(pos.y - p1.y);
-  if (dx > dy) {
-    adjustedPos.y = p1.y; // Horizontal
-  } else {
-    adjustedPos.x = p1.x; // Vertical
-  }
-}
+      if (modoAnguloRecto) {
+        const p1 = points[0];
+        const dx = Math.abs(pos.x - p1.x);
+        const dy = Math.abs(pos.y - p1.y);
+        if (dx > dy) {
+          adjustedPos.y = p1.y; // Horizontal
+        } else {
+          adjustedPos.x = p1.x; // Vertical
+        }
+      }
 
-const newLine = {
-  p1: points[0],
-  p2: adjustedPos,
-  obj1,
-  obj2,
-  nombre_obj1: '',
-  nombre_obj2: '',
-  dimension_mm: null,
-  deduce1: '',
-  deduce2: '',
-  item: null
+      const newLine = {
+        p1: points[0],
+        p2: adjustedPos,
+        obj1,
+        obj2,
+        nombre_obj1: '',
+        nombre_obj2: '',
+        dimension_mm: null,
+        deduce1: '',
+        deduce2: '',
+        item: null
+      };
+
+      setTempLine(newLine);
+      setInputPos(pos);
+      setShowInput(true);
+      setPoints([]);
+      setMousePos(null);
+    }
+  }
 };
 
-        setTempLine(newLine);
-        setInputPos(pos);
-        setShowInput(true);
-        setPoints([]);
-        setMousePos(null);
-      }
-    }
-  };
 
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
