@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
+import { useEffect } from 'react';
 
 import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon, Label, Tag } from 'react-konva';
 
@@ -86,6 +87,21 @@ const handleMouseUp = (e) => {
     setIsPanning(false);
   }
 };
+
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setPoints([]);       // borra puntos en espera
+      setTempLine(null);   // limpia la línea temporal
+      setMousePos(null);   // quita el preview
+      setShowInput(false); // oculta el input flotante de dimensión
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  return () => window.removeEventListener("keydown", handleKeyDown);
+}, []);
+
 
 const handleMouseMovePan = (e) => {
   if (!isPanning) return;
