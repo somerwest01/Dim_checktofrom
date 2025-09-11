@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
 
-import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon } from 'react-konva';
+import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon, Label, Tag } from 'react-konva';
 
 function App() {
   const [mode, setMode] = useState('design');
@@ -1084,15 +1084,25 @@ lines.forEach((line) => {
                   strokeWidth={2}
                   onClick={() => handleLineClick(i)}
                 />
-                <Text
-  x={(line.p1.x + line.p2.x) / 2} 
-  y={(line.p1.y + line.p2.y) / 2 - 10} 
-  text={`${line.dimension_mm ?? ''}`} 
-  fontSize={10} 
-  fill="blue" 
-  align="center"
-  verticalAlign="middle"
-/>
+                <Label
+                x={(line.p1.x + line.p2.x) / 2}
+                y={(line.p1.y + line.p2.y) / 2}
+                >
+                <Tag
+                fill="white"        // Fondo blanco para simular corte de la línea
+                pointerDirection="none"
+                cornerRadius={2}    // Bordes redondeados
+                  stroke="black"      // Borde negro opcional
+    strokeWidth={0.5}
+  />
+  <Text
+    text={`${line.dimension_mm ?? ''}`}
+    fontSize={12}
+    fill="blue"
+    padding={2}         // Espacio entre texto y fondo
+    align="center"
+  />
+</Label>
                 {line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
