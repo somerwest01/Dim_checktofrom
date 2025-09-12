@@ -751,25 +751,33 @@ lines.forEach((line) => {
   const updated = [...lines];
   const line = updated[lineIndex];
 
+  // el otro extremo de la línea (para proyectar)
+  const anchor = end === 'p1' ? line.p2 : line.p1;
+
+  // proyectamos el punto pos sobre el segmento [anchor, SPL]
+  const proj = projectPointOnLine(anchor, end === 'p1' ? line.p1 : line.p2, pos);
+
+  const snappedPos = { x: proj.x, y: proj.y };
+
   if (end === 'p1') {
-    line.p1 = pos;
+    line.p1 = snappedPos;
   } else if (end === 'p2') {
-    line.p2 = pos;
+    line.p2 = snappedPos;
   }
 
   // buscar línea vecina que comparte el SPL
   const siblingIndex = updated.findIndex(
     (l, i) =>
       i !== lineIndex &&
-      ((end === 'p1' && l.obj2 === 'SPL' && l.p2.x === line.p1.x && l.p2.y === line.p1.y) ||
-       (end === 'p2' && l.obj1 === 'SPL' && l.p1.x === line.p2.x && l.p1.y === line.p2.y))
+      ((end === 'p1' && l.obj2 === 'SPL') ||
+       (end === 'p2' && l.obj1 === 'SPL'))
   );
 
   if (siblingIndex !== -1) {
     if (end === 'p1') {
-      updated[siblingIndex].p2 = pos;
+      updated[siblingIndex].p2 = snappedPos;
     } else {
-      updated[siblingIndex].p1 = pos;
+      updated[siblingIndex].p1 = snappedPos;
     }
   }
 
@@ -786,6 +794,7 @@ lines.forEach((line) => {
 
   setLines(updated);
 };
+
 
 const handleSPLDragEnd = (e, lineIndex, end) => {
   // aquí podrías guardar historial de cambios si lo implementas
