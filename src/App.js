@@ -820,7 +820,7 @@ const handleSPLDragEnd = (e, lineIndex, end) => {
 
   };
 
-const renderObjeto = (tipo, x, y, key, index, end) => {
+const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
   const isHovered = hoveredObj === key;
   const commonProps = {
     key,
@@ -852,6 +852,12 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
     return <Circle {...commonProps} radius={4} />;
   }
   if (tipo === 'SPL') {
+    const keySPL = `${x}-${y}`;
+    if (renderedSPLs.has(keySPL)) {
+      return null; // ❌ ya dibujamos este SPL, no lo repetimos
+    }
+    renderedSPLs.add(keySPL); // ✅ marcamos este SPL como dibujado
+
     return (
       <RegularPolygon
         {...commonProps}
@@ -859,7 +865,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         radius={7}
         draggable
         onDragMove={(e) => handleSPLDrag(e, index, end)}
-        onDragEnd={(e) => handleSPLDragEnd(e, index, end)}
       />
     );
   }
@@ -1317,6 +1322,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
   >
           <Layer>
             {lines.map((line, i) => (
+              const renderedSPLs = new Set();   // ✅ aquí inicializamos el Set
+              return lines.map((line, i) => (
               <React.Fragment key={i}>
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
