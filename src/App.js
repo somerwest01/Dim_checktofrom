@@ -41,6 +41,8 @@ function App() {
   const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
+  const [previewSplit, setPreviewSplit] = useState(null);
+
 
 
 
@@ -70,6 +72,23 @@ const spinnerStyle = {
   animation: 'spin 1s linear infinite',
   margin: '10px auto'
 };
+
+  function projectPointOnLine(p1, p2, pos) {
+  const A = { x: p1.x, y: p1.y };
+  const B = { x: p2.x, y: p2.y };
+  const P = { x: pos.x, y: pos.y };
+
+  const AB = { x: B.x - A.x, y: B.y - A.y };
+  const AP = { x: P.x - A.x, y: P.y - A.y };
+
+  const ab2 = AB.x * AB.x + AB.y * AB.y;
+  const ap_ab = AP.x * AB.x + AP.y * AB.y;
+  let t = ap_ab / ab2;
+  t = Math.max(0, Math.min(1, t)); // lo limitamos dentro del segmento
+
+  return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
+}
+
 
 
 const botonExpandido = {
@@ -487,6 +506,31 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
+  
+  const handleSPLDrag = (e, lineIndex) => {
+  const stage = e.target.getStage();
+  const pos = e.target.position(); // posición actual del drag
+  const line = lines[lineIndex];
+
+  // proyectamos el SPL a la línea
+  const projected = projectPointOnLine(line.p1, line.p2, pos);
+
+  // forzamos que el SPL se pegue a la línea
+  e.target.position({ x: projected.x, y: projected.y });
+
+  // calcular dimensiones nuevas
+  const totalDim = line.dimension_mm || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+  const dim1 = totalDim * projected.t;
+  const dim2 = totalDim * (1 - projected.t);
+
+  // guardamos un estado temporal de preview
+  setPreviewSplit({
+    lineIndex,
+    splitPoint: { x: projected.x, y: projected.y },
+    dim1,
+    dim2
+  });
+};
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -717,10 +761,17 @@ lines.forEach((line) => {
         return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
       case 'BRK':
         return <Circle {...commonProps} radius={4} />;
-      case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
-      default:
-        return null;
+case 'SPL':
+  return (
+    <RegularPolygon
+      {...commonProps}
+      sides={3}
+      radius={7}
+      draggable
+      onDragMove={(e) => handleSPLDrag(e, index)}   // 👈 función para mover
+      onDragEnd={(e) => handleSPLDrop(e, index)}   // 👈 función para soltar
+    />
+  );
     }
   };
 
