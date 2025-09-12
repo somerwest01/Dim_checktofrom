@@ -275,8 +275,8 @@ const handleStageClick = (e) => {
       dimension_mm: dim1, // ✅ ya calculada
       deduce1: original.deduce1 || '',
       deduce2: '',
-      item: original.item || null
-      parent: { start: original.p1, end: original.p2 }, // extremos de la línea original
+      item: original.item || null,
+      parent: { start: original.p1, end: original.p2 } // extremos de la línea original
     };
 
     const lineB = {
@@ -289,8 +289,8 @@ const handleStageClick = (e) => {
       dimension_mm: dim2, // ✅ ya calculada
       deduce1: '',
       deduce2: original.deduce2 || '',
-      item: original.item || null
-      parent: { start: original.p1, end: original.p2 }, // mismos extremos
+      item: original.item || null,
+      parent: { start: original.p1, end: original.p2 } // mismos extremos
     };
 
     // reemplazamos la línea original por las dos nuevas
