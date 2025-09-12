@@ -1203,63 +1203,83 @@ case 'SPL':
   }
 }}
 >
-  <Stage
-  width={canvasSize.width}
-  height={canvasSize.height}
-  onClick={handleStageClick}
-  onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
-  onMouseDown={handleMouseDown}
-  onMouseUp={handleMouseUp}
+<Stage
+  width={window.innerWidth}
+  height={window.innerHeight}
+  onMouseDown={handleStageClick}
+  onMouseMove={handleMouseMove}
   onWheel={handleWheel}
-  >
-          <Layer>
-           {lines.map((line, lineIndex) =>
-  line.nodes.map((n, i) => {
-    if (i < line.nodes.length - 1) {
-      const n1 = line.nodes[i];
-      const n2 = line.nodes[i + 1];
-      const dim = line.dimensiones[i];
+  draggable={isPanning}
+  scaleX={scale}
+  scaleY={scale}
+  x={stagePosition.x}
+  y={stagePosition.y}
+>
+  <Layer>
+    {/* Dibujo de línea temporal mientras el usuario hace click */}
+    {tempLine && (
+      <Line
+        points={[
+          tempLine.nodes[0].x,
+          tempLine.nodes[0].y,
+          tempLine.nodes[1].x,
+          tempLine.nodes[1].y,
+        ]}
+        stroke="red"
+        dash={[4, 4]}
+      />
+    )}
 
-      return (
-        <React.Fragment key={`${lineIndex}-${i}`}>
-          {/* Dibujar la línea entre dos nodos */}
-          <Line
-            points={[n1.x, n1.y, n2.x, n2.y]}
-            stroke="black"
-            strokeWidth={2}
-            onClick={() => handleLineClick(lineIndex)}
-          />
+    {/* Dibujo de las líneas existentes */}
+    {lines.map((line, lineIndex) =>
+      line.nodes.map((n, i) => {
+        if (i < line.nodes.length - 1) {
+          const n1 = line.nodes[i];
+          const n2 = line.nodes[i + 1];
+          const dim = line.dimensiones[i];
 
-          {/* Etiqueta de la dimensión */}
-          <Label
-            x={(n1.x + n2.x) / 2}
-            y={(n1.y + n2.y) / 2}
-            offsetX={(dim?.toString().length || 1) * 3}
-            offsetY={6}
-          >
-            <Tag
-              fill="white"
-              pointerDirection="none"
-              cornerRadius={2}
-              stroke="white"
-              strokeWidth={0.5}
-            />
-            <Text
-              text={`${dim.toFixed(0)} mm`}
-              fontSize={12}
-              fill="blue"
-              padding={2}
-            />
-          </Label>
+          return (
+            <React.Fragment key={`${lineIndex}-${i}`}>
+              {/* Segmento de línea */}
+              <Line
+                points={[n1.x, n1.y, n2.x, n2.y]}
+                stroke="black"
+                strokeWidth={2}
+                onClick={() => handleLineClick(lineIndex)}
+              />
 
-          {/* Objeto en el nodo final */}
-          {renderObjeto(n2, lineIndex, i + 1)}
-        </React.Fragment>
-      );
-    }
-    return null;
-  })
-)}
+              {/* Etiqueta de la dimensión */}
+              <Label
+                x={(n1.x + n2.x) / 2}
+                y={(n1.y + n2.y) / 2}
+                offsetX={(dim?.toString().length || 1) * 3}
+                offsetY={6}
+              >
+                <Tag
+                  fill="white"
+                  pointerDirection="none"
+                  cornerRadius={2}
+                  stroke="white"
+                  strokeWidth={0.5}
+                />
+                <Text
+                  text={`${dim.toFixed(0)} mm`}
+                  fontSize={12}
+                  fill="blue"
+                  padding={2}
+                />
+              </Label>
+
+              {/* Objeto en el nodo final */}
+              {renderObjeto(n2, lineIndex, i + 1)}
+            </React.Fragment>
+          );
+        }
+        return null;
+      })
+    )}
+  </Layer>
+</Stage>
 
   <Text
     text={`${line.dimension_mm ?? ''}`}
@@ -1268,9 +1288,7 @@ case 'SPL':
     padding={1}         // Espacio entre texto y fondo
     align="center"
   />
-</Label>
- </Layer>
-</Stage>
+  </Label>
                 {line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
