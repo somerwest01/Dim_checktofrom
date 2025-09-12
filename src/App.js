@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -41,8 +40,6 @@ function App() {
   const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
-  const [previewSplit, setPreviewSplit] = useState(null);
-
 
 
 
@@ -72,23 +69,6 @@ const spinnerStyle = {
   animation: 'spin 1s linear infinite',
   margin: '10px auto'
 };
-
-  function projectPointOnLine(p1, p2, pos) {
-  const A = { x: p1.x, y: p1.y };
-  const B = { x: p2.x, y: p2.y };
-  const P = { x: pos.x, y: pos.y };
-
-  const AB = { x: B.x - A.x, y: B.y - A.y };
-  const AP = { x: P.x - A.x, y: P.y - A.y };
-
-  const ab2 = AB.x * AB.x + AB.y * AB.y;
-  const ap_ab = AP.x * AB.x + AP.y * AB.y;
-  let t = ap_ab / ab2;
-  t = Math.max(0, Math.min(1, t)); // lo limitamos dentro del segmento
-
-  return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
-}
-
 
 
 const botonExpandido = {
@@ -163,17 +143,18 @@ const handleMouseMovePan = (e) => {
           ent.end?.x !== undefined &&
           ent.end?.y !== undefined
         ) {
-nuevasLineas.push({
-  nodes: [
-    { x: 100, y: 200, tipo: 'BRK', nombre: '' },
-    { x: 500, y: 200, tipo: 'BRK', nombre: '' }
-  ],
-  dimensiones: [1000], // calculadas entre cada par de nodos
-  deduce1: '',
-  deduce2: '',
-  item: null
-});
-
+          nuevasLineas.push({
+            p1: { x: ent.start.x, y: ent.start.y },
+            p2: { x: ent.end.x, y: ent.end.y },
+            obj1: 'Ninguno',
+            obj2: 'Ninguno',
+            nombre_obj1: '',
+            nombre_obj2: '',
+            dimension_mm: null,
+            deduce1: '',
+            deduce2: '',
+            item: null
+          });
         }
       });
 
@@ -249,15 +230,18 @@ const handleStageClick = (e) => {
       }
 
       const newLine = {
-  nodes: [
-    { x: points[0].x, y: points[0].y, tipo: obj1, nombre: '' },
-    { x: adjustedPos.x, y: adjustedPos.y, tipo: obj2, nombre: '' }
-  ],
-  dimensiones: [] // lo llenaremos con calcularDimensiones()
-};
+        p1: points[0],
+        p2: adjustedPos,
+        obj1,
+        obj2,
+        nombre_obj1: '',
+        nombre_obj2: '',
+        dimension_mm: null,
+        deduce1: '',
+        deduce2: '',
+        item: null
+      };
 
-      newLine.dimensiones = calcularDimensiones(newLine.nodes);
-      
       setTempLine(newLine);
       setInputPos(pos);
       setShowInput(true);
@@ -288,6 +272,8 @@ const handleMouseMove = (e) => {
     setMousePos(adjustedPos);
   }
 };
+
+
   const confirmDimension = () => {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
@@ -500,40 +486,6 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-  
-  const handleSPLDrag = (e, lineIndex) => {
-  const stage = e.target.getStage();
-  const pos = e.target.position(); // posición actual del drag
-  const line = lines[lineIndex];
-
-  // proyectamos el SPL a la línea
-  const projected = projectPointOnLine(line.p1, line.p2, pos);
-
-  // forzamos que el SPL se pegue a la línea
-  e.target.position({ x: projected.x, y: projected.y });
-
-  // calcular dimensiones nuevas
-  const totalDim = line.dimension_mm || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-  const dim1 = totalDim * projected.t;
-  const dim2 = totalDim * (1 - projected.t);
-
-  // guardamos un estado temporal de preview
-  setPreviewSplit({
-    lineIndex,
-    splitPoint: { x: projected.x, y: projected.y },
-    dim1,
-    dim2
-  });
-};
-function calcularDimensiones(nodes) {
-  const dims = [];
-  for (let i = 0; i < nodes.length - 1; i++) {
-    const dx = nodes[i+1].x - nodes[i].x;
-    const dy = nodes[i+1].y - nodes[i].y;
-    dims.push(Math.hypot(dx, dy));
-  }
-  return dims;
-}
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -652,7 +604,7 @@ lines.forEach((line) => {
         });
       });
 
-      updatedSheet[i][22] = parseFloat(distancia.toFixed(0));
+      updatedSheet[i][22] = distancia.toFixed(2);
       updatedSheet[i][23] = 'Sí';
     } catch (error) {
       updatedSheet[i][22] = 'Error en fila';
@@ -716,9 +668,7 @@ lines.forEach((line) => {
       item: index + 1,
       nombre_obj1: line.nombre_obj1,
       nombre_obj2: line.nombre_obj2,
-      dimension_mm: parseFloat(
-      (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(0)
-        ),
+      dimension_mm: (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(2),
       deduce: line.deduce,
     }));
 
@@ -764,17 +714,10 @@ lines.forEach((line) => {
         return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
       case 'BRK':
         return <Circle {...commonProps} radius={4} />;
-case 'SPL':
-  return (
-    <RegularPolygon
-      {...commonProps}
-      sides={3}
-      radius={7}
-      draggable
-      onDragMove={(e) => handleSPLDrag(e, index)}   // 👈 función para mover
-      onDragEnd={(e) => handleSPLDrop(e, index)}   // 👈 función para soltar
-    />
-  );
+      case 'SPL':
+        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+      default:
+        return null;
     }
   };
 
@@ -1203,84 +1146,37 @@ case 'SPL':
   }
 }}
 >
-<Stage
-  width={window.innerWidth}
-  height={window.innerHeight}
-  onMouseDown={handleStageClick}
-  onMouseMove={handleMouseMove}
+  <Stage
+  width={canvasSize.width}
+  height={canvasSize.height}
+  onClick={handleStageClick}
+  onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
+  onMouseDown={handleMouseDown}
+  onMouseUp={handleMouseUp}
   onWheel={handleWheel}
-  draggable={isPanning}
-  scaleX={scale}
-  scaleY={scale}
-  x={stagePosition.x}
-  y={stagePosition.y}
->
-  <Layer>
-    {/* Dibujo de línea temporal mientras el usuario hace click */}
-    {tempLine && (
-      <Line
-        points={[
-          tempLine.nodes[0].x,
-          tempLine.nodes[0].y,
-          tempLine.nodes[1].x,
-          tempLine.nodes[1].y,
-        ]}
-        stroke="red"
-        dash={[4, 4]}
-      />
-    )}
-
-    {/* Dibujo de las líneas existentes */}
-    {lines.map((line, lineIndex) =>
-      line.nodes.map((n, i) => {
-        if (i < line.nodes.length - 1) {
-          const n1 = line.nodes[i];
-          const n2 = line.nodes[i + 1];
-          const dim = line.dimensiones[i];
-
-          return (
-            <React.Fragment key={`${lineIndex}-${i}`}>
-              {/* Segmento de línea */}
-              <Line
-                points={[n1.x, n1.y, n2.x, n2.y]}
-                stroke="black"
-                strokeWidth={2}
-                onClick={() => handleLineClick(lineIndex)}
-              />
-
-              {/* Etiqueta de la dimensión */}
-              <Label
-                x={(n1.x + n2.x) / 2}
-                y={(n1.y + n2.y) / 2}
-                offsetX={(dim?.toString().length || 1) * 3}
-                offsetY={6}
-              >
+  >
+          <Layer>
+            {lines.map((line, i) => (
+              <React.Fragment key={i}>
+                <Line
+                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+                  stroke="black"
+                  strokeWidth={2}
+                  onClick={() => handleLineClick(i)}
+                />
+                <Label
+                x={(line.p1.x + line.p2.x) / 2}
+                y={(line.p1.y + line.p2.y) / 2}
+                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
+                offsetY={6} // centra verticalmente
+                >
                 <Tag
-                  fill="white"
-                  pointerDirection="none"
-                  cornerRadius={2}
-                  stroke="white"
-                  strokeWidth={0.5}
-                />
-                <Text
-                  text={`${dim.toFixed(0)} mm`}
-                  fontSize={12}
-                  fill="blue"
-                  padding={2}
-                />
-              </Label>
-
-              {/* Objeto en el nodo final */}
-              {renderObjeto(n2, lineIndex, i + 1)}
-            </React.Fragment>
-          );
-        }
-        return null;
-      })
-    )}
-  </Layer>
-</Stage>
-
+                fill="white"        // Fondo blanco para simular corte de la línea
+                pointerDirection="none"
+                cornerRadius={2}    // Bordes redondeados
+                stroke="white"      // Borde negro opcional
+                strokeWidth={0.5}
+  />
   <Text
     text={`${line.dimension_mm ?? ''}`}
     fontSize={11}
@@ -1288,7 +1184,7 @@ case 'SPL':
     padding={1}         // Espacio entre texto y fondo
     align="center"
   />
-  </Label>
+</Label>
                 {line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
