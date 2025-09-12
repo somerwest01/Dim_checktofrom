@@ -265,6 +265,7 @@ const handleStageClick = (e) => {
     const dim2 = Math.round(totalDim * (1 - proj.t));
 
     // crear las dos nuevas líneas que reemplazarán a la original
+    const parentInfo = original.parent || { start: original.p1, end: original.p2 };
     const lineA = {
       p1: { ...original.p1 },
       p2: { x: proj.x, y: proj.y },
@@ -276,7 +277,7 @@ const handleStageClick = (e) => {
       deduce1: original.deduce1 || '',
       deduce2: '',
       item: original.item || null,
-      parent: { start: original.p1, end: { x: proj.x, y: proj.y } }, // ✅ tramo A
+      parent: parentInfo, // ✅ hereda el segmento total
     };
 
     const lineB = {
@@ -290,7 +291,7 @@ const handleStageClick = (e) => {
       deduce1: '',
       deduce2: original.deduce2 || '',
       item: original.item || null,
-      parent: { start: { x: proj.x, y: proj.y }, end: original.p2 }, // ✅ tramo B
+      parent: parentInfo, // ✅ hereda el segmento total
     };
 
     // reemplazamos la línea original por las dos nuevas
@@ -762,46 +763,29 @@ const handleSPLDrag = (e, lineIndex) => {
   const updated = [...lines];
   const line = updated[lineIndex];
 
-  // usamos el segmento real del tramo
-  const { start, end } = line.parent;
+  // usar el segmento completo (del BRK al BRK)
+  const { start, end } = line.parent || { start: line.p1, end: line.p2 };
 
-  // proyectar sobre este segmento
   const proj = projectPointOnLine(start, end, pos);
   const snappedPos = { x: proj.x, y: proj.y };
 
   e.target.position(snappedPos);
 
-  // actualizar extremos según corresponda
+  // mover el SPL en ambas líneas que lo contienen
   if (line.obj1 === 'SPL') line.p1 = snappedPos;
   if (line.obj2 === 'SPL') line.p2 = snappedPos;
 
-  // actualizar línea hermana
-  const siblingIndex = updated.findIndex(
-    (l, i) => i !== lineIndex &&
-      ((line.obj1 === 'SPL' && l.obj2 === 'SPL') ||
-       (line.obj2 === 'SPL' && l.obj1 === 'SPL'))
-  );
-  if (siblingIndex !== -1) {
-    if (updated[siblingIndex].obj1 === 'SPL') updated[siblingIndex].p1 = snappedPos;
-    if (updated[siblingIndex].obj2 === 'SPL') updated[siblingIndex].p2 = snappedPos;
-  }
-
-  // recalcular dimensiones
-  line.dimension_mm = Math.round(
-    Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y)
-  );
-  if (siblingIndex !== -1) {
-    const sibling = updated[siblingIndex];
-    sibling.dimension_mm = Math.round(
-      Math.hypot(sibling.p2.x - sibling.p1.x, sibling.p2.y - sibling.p1.y)
-    );
-  }
+  updated.forEach((l) => {
+    if (l.parent === line.parent) {
+      // recalcular dimensiones de cada tramo de este parent
+      l.dimension_mm = Math.round(
+        Math.hypot(l.p2.x - l.p1.x, l.p2.y - l.p1.y)
+      );
+    }
+  });
 
   setLines(updated);
 };
-
-
-
 
 const handleSPLDragEnd = (e, lineIndex, end) => {
   // aquí podrías guardar historial de cambios si lo implementas
