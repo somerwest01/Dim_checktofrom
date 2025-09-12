@@ -41,6 +41,8 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
+  const [spls, setSpls] = useState([]);
+
 
 
 
@@ -255,6 +257,11 @@ const handleStageClick = (e) => {
     const { lineIndex, proj } = found;
     const original = lines[lineIndex];
 
+    const newSpl = { id: `spl-${Date.now()}`, x: proj.x, y: proj.y };
+
+// 2. Guardarlo en el estado de spls
+    setSpls((prev) => [...prev, newSpl]);
+
     // dimensión total (si existe dimension_mm la usamos, si no, calculamos la distancia geométrica)
     const totalDim =
       parseFloat(original.dimension_mm) ||
@@ -268,7 +275,7 @@ const handleStageClick = (e) => {
     const parentInfo = original.parent || { start: original.p1, end: original.p2 };
     const lineA = {
       p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
+      p2: { splId: newSpl.id },   // ✅ referencia al SP
       obj1: original.obj1,
       obj2: 'SPL',
       nombre_obj1: original.nombre_obj1 || '',
@@ -281,7 +288,7 @@ const handleStageClick = (e) => {
     };
 
     const lineB = {
-      p1: { x: proj.x, y: proj.y },
+      p1: { splId: newSpl.id },   // ✅ referencia al SP
       p2: { ...original.p2 },
       obj1: 'SPL',
       obj2: original.obj2,
