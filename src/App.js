@@ -133,14 +133,17 @@ function projectPointOnLine(p1, p2, pos) {
   const AP = { x: P.x - A.x, y: P.y - A.y };
 
   const ab2 = AB.x * AB.x + AB.y * AB.y;
-  if (ab2 === 0) return { x: A.x, y: A.y, t: 0 };
+  if (ab2 === 0) return { x: A.x, y: A.y };
 
   const ap_ab = AP.x * AB.x + AP.y * AB.y;
   let t = ap_ab / ab2;
+
+  // limitar al rango [0,1] para que no se salga del segmento
   t = Math.max(0, Math.min(1, t));
 
-  return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
+  return { x: A.x + AB.x * t, y: A.y + AB.y * t };
 }
+
 
 // busca el segmento (línea) más cercano al punto `pos`.
 // devuelve { lineIndex, proj: {x,y,t}, distance } o null si no hay líneas
@@ -746,32 +749,31 @@ lines.forEach((line) => {
   stage.position(newPos);
   stage.batchDraw();
 };
-  const handleSPLDrag = (e, lineIndex, end) => {
+const handleSPLDrag = (e, lineIndex, end) => {
   const pos = e.target.position();
   const updated = [...lines];
   const line = updated[lineIndex];
 
-  // el otro extremo de la línea (para proyectar)
-  const anchor = end === 'p1' ? line.p2 : line.p1;
-
-  // proyectamos el punto pos sobre el segmento [anchor, SPL]
-  const proj = projectPointOnLine(anchor, end === 'p1' ? line.p1 : line.p2, pos);
+  // el segmento siempre es toda la línea (p1->p2)
+  const proj = projectPointOnLine(line.p1, line.p2, pos);
   const snappedPos = { x: proj.x, y: proj.y };
 
+  // 👇 Forzar visualmente el SPL a quedarse en la línea
   e.target.position(snappedPos);
-    
+
+  // actualizar el extremo movido
   if (end === 'p1') {
     line.p1 = snappedPos;
-  } else if (end === 'p2') {
+  } else {
     line.p2 = snappedPos;
   }
 
-  // buscar línea vecina que comparte el SPL
+  // buscar línea hermana que comparte el SPL
   const siblingIndex = updated.findIndex(
     (l, i) =>
       i !== lineIndex &&
-      ((end === 'p1' && l.obj2 === 'SPL') ||
-       (end === 'p2' && l.obj1 === 'SPL'))
+      ((end === 'p1' && l.obj2 === 'SPL' && l.p2.x === line.p1.x && l.p2.y === line.p1.y) ||
+       (end === 'p2' && l.obj1 === 'SPL' && l.p1.x === line.p2.x && l.p1.y === line.p2.y))
   );
 
   if (siblingIndex !== -1) {
@@ -782,7 +784,7 @@ lines.forEach((line) => {
     }
   }
 
-  // recalcular dimensiones
+  // recalcular dimensiones de ambas líneas
   line.dimension_mm = Math.round(
     Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y)
   );
@@ -795,6 +797,7 @@ lines.forEach((line) => {
 
   setLines(updated);
 };
+
 
 
 const handleSPLDragEnd = (e, lineIndex, end) => {
