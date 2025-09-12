@@ -1269,6 +1269,8 @@ case 'SPL':
     align="center"
   />
 </Label>
+ </Layer>
+</Stage>
                 {line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
