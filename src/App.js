@@ -276,7 +276,7 @@ const handleStageClick = (e) => {
       deduce1: original.deduce1 || '',
       deduce2: '',
       item: original.item || null,
-      parent: { start: original.p1, end: original.p2 } // extremos de la línea original
+      parent: { start: original.p1, end: { x: proj.x, y: proj.y } }, // ✅ tramo A
     };
 
     const lineB = {
@@ -290,7 +290,7 @@ const handleStageClick = (e) => {
       deduce1: '',
       deduce2: original.deduce2 || '',
       item: original.item || null,
-      parent: { start: original.p1, end: original.p2 } // mismos extremos
+      parent: { start: { x: proj.x, y: proj.y }, end: original.p2 }, // ✅ tramo B
     };
 
     // reemplazamos la línea original por las dos nuevas
@@ -757,33 +757,30 @@ lines.forEach((line) => {
   stage.position(newPos);
   stage.batchDraw();
 };
-const handleSPLDrag = (e, lineIndex, end) => {
+const handleSPLDrag = (e, lineIndex) => {
   const pos = e.target.position();
   const updated = [...lines];
   const line = updated[lineIndex];
 
-  // usamos los extremos fijos de la línea original
-  const { start, end: fixedEnd } = line.parent;
+  // usamos el segmento real del tramo
+  const { start, end } = line.parent;
 
-  // proyectamos el cursor sobre el segmento original
-  const proj = projectPointOnLine(start, fixedEnd, pos);
+  // proyectar sobre este segmento
+  const proj = projectPointOnLine(start, end, pos);
   const snappedPos = { x: proj.x, y: proj.y };
 
-  // forzar posición visual
   e.target.position(snappedPos);
 
-  // actualizar coordenadas en esta línea
+  // actualizar extremos según corresponda
   if (line.obj1 === 'SPL') line.p1 = snappedPos;
   if (line.obj2 === 'SPL') line.p2 = snappedPos;
 
-  // buscar línea hermana y actualizarla también
+  // actualizar línea hermana
   const siblingIndex = updated.findIndex(
-    (l, i) =>
-      i !== lineIndex &&
+    (l, i) => i !== lineIndex &&
       ((line.obj1 === 'SPL' && l.obj2 === 'SPL') ||
        (line.obj2 === 'SPL' && l.obj1 === 'SPL'))
   );
-
   if (siblingIndex !== -1) {
     if (updated[siblingIndex].obj1 === 'SPL') updated[siblingIndex].p1 = snappedPos;
     if (updated[siblingIndex].obj2 === 'SPL') updated[siblingIndex].p2 = snappedPos;
