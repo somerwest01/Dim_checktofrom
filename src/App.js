@@ -255,11 +255,14 @@ const handleStageClick = (e) => {
     const { lineIndex, proj } = found;
     const original = lines[lineIndex];
 
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+    // dimensión total (si existe dimension_mm la usamos, si no, calculamos la distancia geométrica)
+    const totalDim =
+      parseFloat(original.dimension_mm) ||
+      Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-const dim1 = Math.round(totalDim * proj.t);
-const dim2 = Math.round(totalDim * (1 - proj.t));
+    // calculamos las dimensiones de cada lado del nuevo SPL
+    const dim1 = Math.round(totalDim * proj.t);
+    const dim2 = Math.round(totalDim * (1 - proj.t));
 
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
@@ -269,7 +272,7 @@ const dim2 = Math.round(totalDim * (1 - proj.t));
       obj2: 'SPL',
       nombre_obj1: original.nombre_obj1 || '',
       nombre_obj2: '', // el SPL por ahora no tiene nombre
-      dimension_mm: dim1,
+      dimension_mm: dim1, // ✅ ya calculada
       deduce1: original.deduce1 || '',
       deduce2: '',
       item: original.item || null
@@ -282,15 +285,17 @@ const dim2 = Math.round(totalDim * (1 - proj.t));
       obj2: original.obj2,
       nombre_obj1: '',
       nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2,
+      dimension_mm: dim2, // ✅ ya calculada
       deduce1: '',
       deduce2: original.deduce2 || '',
       item: original.item || null
     };
 
+    // reemplazamos la línea original por las dos nuevas
     const updated = [...lines];
     updated.splice(lineIndex, 1, lineA, lineB);
     setLines(updated);
+
     setAddingSPL(false);
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
@@ -341,6 +346,7 @@ const dim2 = Math.round(totalDim * (1 - proj.t));
     }
   }
 };
+
 
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
@@ -754,37 +760,34 @@ const handleSPLDrag = (e, lineIndex, end) => {
   const updated = [...lines];
   const line = updated[lineIndex];
 
-  // el segmento siempre es toda la línea (p1->p2)
-  const proj = projectPointOnLine(line.p1, line.p2, pos);
+  // 1. Identificar extremos fijos
+  const fixedStart = line.obj1 !== 'SPL' ? line.p1 : line.p2;
+  const fixedEnd   = line.obj2 !== 'SPL' ? line.p2 : line.p1;
+
+  // 2. Proyectar la posición sobre el segmento fijo
+  const proj = projectPointOnLine(fixedStart, fixedEnd, pos);
   const snappedPos = { x: proj.x, y: proj.y };
 
-  // 👇 Forzar visualmente el SPL a quedarse en la línea
+  // 3. Forzar visual del nodo
   e.target.position(snappedPos);
 
-  // actualizar el extremo movido
-  if (end === 'p1') {
-    line.p1 = snappedPos;
-  } else {
-    line.p2 = snappedPos;
-  }
+  // 4. Actualizar en la línea arrastrada
+  if (end === 'p1') line.p1 = snappedPos;
+  else line.p2 = snappedPos;
 
-  // buscar línea hermana que comparte el SPL
+  // 5. Buscar la línea hermana y actualizarla también
   const siblingIndex = updated.findIndex(
     (l, i) =>
       i !== lineIndex &&
-      ((end === 'p1' && l.obj2 === 'SPL' && l.p2.x === line.p1.x && l.p2.y === line.p1.y) ||
-       (end === 'p2' && l.obj1 === 'SPL' && l.p1.x === line.p2.x && l.p1.y === line.p2.y))
+      ((end === 'p1' && l.obj2 === 'SPL') ||
+       (end === 'p2' && l.obj1 === 'SPL'))
   );
-
   if (siblingIndex !== -1) {
-    if (end === 'p1') {
-      updated[siblingIndex].p2 = snappedPos;
-    } else {
-      updated[siblingIndex].p1 = snappedPos;
-    }
+    if (end === 'p1') updated[siblingIndex].p2 = snappedPos;
+    else updated[siblingIndex].p1 = snappedPos;
   }
 
-  // recalcular dimensiones de ambas líneas
+  // 6. Recalcular dimensiones
   line.dimension_mm = Math.round(
     Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y)
   );
