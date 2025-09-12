@@ -1322,7 +1322,7 @@ const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
   >
 <Layer>
   {(() => {
-    const renderedSPLs = new Set();  // ✅ se crea una sola vez
+    const renderedSPLs = new Set();   // ✅ aquí se crea UNA sola vez por render
 
     return lines.map((line, i) => (
       <React.Fragment key={i}>
@@ -1332,47 +1332,65 @@ const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
           strokeWidth={2}
           onClick={() => handleLineClick(i)}
         />
-                <Label
-                x={(line.p1.x + line.p2.x) / 2}
-                y={(line.p1.y + line.p2.y) / 2}
-                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
-                offsetY={6} // centra verticalmente
-                >
-                <Tag
-                fill="white"        // Fondo blanco para simular corte de la línea
-                pointerDirection="none"
-                cornerRadius={2}    // Bordes redondeados
-                stroke="white"      // Borde negro opcional
-                strokeWidth={0.5}
-  />
-  <Text
-    text={`${line.dimension_mm ? Math.round(line.dimension_mm) : ''}`}
-    fontSize={11}
-    fill="black"
-    padding={1}         // Espacio entre texto y fondo
-    align="center"
-  />
-</Label>
-                {line.nombre_obj1 && (
-                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
-                )}
-                {line.nombre_obj2 && (
-                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
-                )}
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
-              </React.Fragment>
-            ))}
 
-            {points.length === 1 && mousePos && !eraserMode && (
-              <Line
-                points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
-                stroke="gray"
-                dash={[4, 4]}
-                strokeWidth={1}
-              />
-            )}
-          </Layer>
+        <Label
+          x={(line.p1.x + line.p2.x) / 2}
+          y={(line.p1.y + line.p2.y) / 2}
+          offsetX={(line.dimension_mm?.toString().length || 1) * 3}
+          offsetY={6}
+        >
+          <Tag
+            fill="white"
+            pointerDirection="none"
+            cornerRadius={2}
+            stroke="white"
+            strokeWidth={0.5}
+          />
+          <Text
+            text={`${line.dimension_mm ? Math.round(line.dimension_mm) : ''}`}
+            fontSize={11}
+            fill="black"
+            padding={1}
+            align="center"
+          />
+        </Label>
+
+        {line.nombre_obj1 && (
+          <Text
+            x={line.p1.x + 5}
+            y={line.p1.y - 15}
+            text={line.nombre_obj1}
+            fontSize={10}
+            fill="black"
+          />
+        )}
+        {line.nombre_obj2 && (
+          <Text
+            x={line.p2.x + 5}
+            y={line.p2.y - 15}
+            text={line.nombre_obj2}
+            fontSize={10}
+            fill="black"
+          />
+        )}
+
+        {/* ✅ aquí pasamos renderedSPLs */}
+        {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', renderedSPLs)}
+        {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', renderedSPLs)}
+      </React.Fragment>
+    ));
+  })()}
+
+  {points.length === 1 && mousePos && !eraserMode && (
+    <Line
+      points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
+      stroke="gray"
+      dash={[4, 4]}
+      strokeWidth={1}
+    />
+  )}
+</Layer>
+
         </Stage>
                   </div>
 
