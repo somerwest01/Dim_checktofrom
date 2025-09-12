@@ -276,6 +276,7 @@ const handleStageClick = (e) => {
       deduce1: original.deduce1 || '',
       deduce2: '',
       item: original.item || null
+      parent: { start: original.p1, end: original.p2 }, // extremos de la línea original
     };
 
     const lineB = {
@@ -289,6 +290,7 @@ const handleStageClick = (e) => {
       deduce1: '',
       deduce2: original.deduce2 || '',
       item: original.item || null
+      parent: { start: original.p1, end: original.p2 }, // mismos extremos
     };
 
     // reemplazamos la línea original por las dos nuevas
@@ -760,34 +762,34 @@ const handleSPLDrag = (e, lineIndex, end) => {
   const updated = [...lines];
   const line = updated[lineIndex];
 
-  // 1. Identificar extremos fijos
-  const fixedStart = line.obj1 !== 'SPL' ? line.p1 : line.p2;
-  const fixedEnd   = line.obj2 !== 'SPL' ? line.p2 : line.p1;
+  // usamos los extremos fijos de la línea original
+  const { start, end: fixedEnd } = line.parent;
 
-  // 2. Proyectar la posición sobre el segmento fijo
-  const proj = projectPointOnLine(fixedStart, fixedEnd, pos);
+  // proyectamos el cursor sobre el segmento original
+  const proj = projectPointOnLine(start, fixedEnd, pos);
   const snappedPos = { x: proj.x, y: proj.y };
 
-  // 3. Forzar visual del nodo
+  // forzar posición visual
   e.target.position(snappedPos);
 
-  // 4. Actualizar en la línea arrastrada
-  if (end === 'p1') line.p1 = snappedPos;
-  else line.p2 = snappedPos;
+  // actualizar coordenadas en esta línea
+  if (line.obj1 === 'SPL') line.p1 = snappedPos;
+  if (line.obj2 === 'SPL') line.p2 = snappedPos;
 
-  // 5. Buscar la línea hermana y actualizarla también
+  // buscar línea hermana y actualizarla también
   const siblingIndex = updated.findIndex(
     (l, i) =>
       i !== lineIndex &&
-      ((end === 'p1' && l.obj2 === 'SPL') ||
-       (end === 'p2' && l.obj1 === 'SPL'))
+      ((line.obj1 === 'SPL' && l.obj2 === 'SPL') ||
+       (line.obj2 === 'SPL' && l.obj1 === 'SPL'))
   );
+
   if (siblingIndex !== -1) {
-    if (end === 'p1') updated[siblingIndex].p2 = snappedPos;
-    else updated[siblingIndex].p1 = snappedPos;
+    if (updated[siblingIndex].obj1 === 'SPL') updated[siblingIndex].p1 = snappedPos;
+    if (updated[siblingIndex].obj2 === 'SPL') updated[siblingIndex].p2 = snappedPos;
   }
 
-  // 6. Recalcular dimensiones
+  // recalcular dimensiones
   line.dimension_mm = Math.round(
     Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y)
   );
@@ -800,6 +802,7 @@ const handleSPLDrag = (e, lineIndex, end) => {
 
   setLines(updated);
 };
+
 
 
 
