@@ -41,8 +41,6 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
-  const [spls, setSpls] = useState([]);
-
 
 
 
@@ -135,17 +133,14 @@ function projectPointOnLine(p1, p2, pos) {
   const AP = { x: P.x - A.x, y: P.y - A.y };
 
   const ab2 = AB.x * AB.x + AB.y * AB.y;
-  if (ab2 === 0) return { x: A.x, y: A.y };
+  if (ab2 === 0) return { x: A.x, y: A.y, t: 0 };
 
   const ap_ab = AP.x * AB.x + AP.y * AB.y;
   let t = ap_ab / ab2;
-
-  // limitar al rango [0,1] para que no se salga del segmento
   t = Math.max(0, Math.min(1, t));
 
-  return { x: A.x + AB.x * t, y: A.y + AB.y * t };
+  return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
 }
-
 
 // busca el segmento (línea) más cercano al punto `pos`.
 // devuelve { lineIndex, proj: {x,y,t}, distance } o null si no hay líneas
@@ -257,55 +252,42 @@ const handleStageClick = (e) => {
     const { lineIndex, proj } = found;
     const original = lines[lineIndex];
 
-    const newSpl = { id: `spl-${Date.now()}`, x: proj.x, y: proj.y };
+    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
+    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-// 2. Guardarlo en el estado de spls
-    setSpls((prev) => [...prev, newSpl]);
-
-    // dimensión total (si existe dimension_mm la usamos, si no, calculamos la distancia geométrica)
-    const totalDim =
-      parseFloat(original.dimension_mm) ||
-      Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-    // calculamos las dimensiones de cada lado del nuevo SPL
-    const dim1 = Math.round(totalDim * proj.t);
-    const dim2 = Math.round(totalDim * (1 - proj.t));
+    const dim1 = parseFloat((totalDim * proj.t).toFixed(2));
+    const dim2 = parseFloat((totalDim * (1 - proj.t)).toFixed(2));
 
     // crear las dos nuevas líneas que reemplazarán a la original
-    const parentInfo = original.parent || { start: original.p1, end: original.p2 };
     const lineA = {
       p1: { ...original.p1 },
-      p2: { splId: newSpl.id },   // ✅ referencia al SP
+      p2: { x: proj.x, y: proj.y },
       obj1: original.obj1,
       obj2: 'SPL',
       nombre_obj1: original.nombre_obj1 || '',
       nombre_obj2: '', // el SPL por ahora no tiene nombre
-      dimension_mm: dim1, // ✅ ya calculada
+      dimension_mm: dim1,
       deduce1: original.deduce1 || '',
       deduce2: '',
-      item: original.item || null,
-      parent: parentInfo, // ✅ hereda el segmento total
+      item: original.item || null
     };
 
     const lineB = {
-      p1: { splId: newSpl.id },   // ✅ referencia al SP
+      p1: { x: proj.x, y: proj.y },
       p2: { ...original.p2 },
       obj1: 'SPL',
       obj2: original.obj2,
       nombre_obj1: '',
       nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2, // ✅ ya calculada
+      dimension_mm: dim2,
       deduce1: '',
       deduce2: original.deduce2 || '',
-      item: original.item || null,
-      parent: parentInfo, // ✅ hereda el segmento total
+      item: original.item || null
     };
 
-    // reemplazamos la línea original por las dos nuevas
     const updated = [...lines];
     updated.splice(lineIndex, 1, lineA, lineB);
     setLines(updated);
-
     setAddingSPL(false);
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
@@ -356,7 +338,6 @@ const handleStageClick = (e) => {
     }
   }
 };
-
 
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
@@ -765,39 +746,6 @@ lines.forEach((line) => {
   stage.position(newPos);
   stage.batchDraw();
 };
-const handleSPLDrag = (e, lineIndex) => {
-  const pos = e.target.position();
-  const updated = [...lines];
-  const line = updated[lineIndex];
-
-  // usar el segmento completo (del BRK al BRK)
-  const { start, end } = line.parent || { start: line.p1, end: line.p2 };
-
-  const proj = projectPointOnLine(start, end, pos);
-  const snappedPos = { x: proj.x, y: proj.y };
-
-  e.target.position(snappedPos);
-
-  // mover el SPL en ambas líneas que lo contienen
-  if (line.obj1 === 'SPL') line.p1 = snappedPos;
-  if (line.obj2 === 'SPL') line.p2 = snappedPos;
-
-  updated.forEach((l) => {
-    if (l.parent === line.parent) {
-      // recalcular dimensiones de cada tramo de este parent
-      l.dimension_mm = Math.round(
-        Math.hypot(l.p2.x - l.p1.x, l.p2.y - l.p1.y)
-      );
-    }
-  });
-
-  setLines(updated);
-};
-
-const handleSPLDragEnd = (e, lineIndex, end) => {
-  // aquí podrías guardar historial de cambios si lo implementas
-};
-
 
   
 
@@ -827,57 +775,38 @@ const handleSPLDragEnd = (e, lineIndex, end) => {
 
   };
 
-const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
-  const isHovered = hoveredObj === key;
-  const commonProps = {
-    key,
-    x,
-    y,
-    fill: isHovered
-      ? 'green'
-      : tipo === 'Conector'
-      ? 'purple'
-      : tipo === 'BRK'
-      ? 'black'
-      : 'green',
-    onMouseEnter: () => setHoveredObj(key),
-    onMouseLeave: () => setHoveredObj(null),
-    onClick: () => {
-      if (!eraserMode && !pencilMode) {
-        setSelectedEnd({ lineIndex: index, end });
-        setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-        setSelectorPos({ x, y });
-        setSelectorEnd({ lineIndex: index, end });
-      }
-    },
-  };
+  const renderObjeto = (tipo, x, y, key, index, end) => {
+    const isHovered = hoveredObj === key;
+    const commonProps = {
+      key,
+      x,
+      y,
+      fill: isHovered ? 'green' : tipo === 'Conector' ? 'purple' : tipo === 'BRK' ? 'black' : 'green',
+      onMouseEnter: () => setHoveredObj(key),
+      onMouseLeave: () => setHoveredObj(null),
+      onClick: () => {
+      
+  if (!eraserMode && !pencilMode) {
+    setSelectedEnd({ lineIndex: index, end });
+    setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+    setSelectorPos({ x, y });
+    setSelectorEnd({ lineIndex: index, end });
 
-  if (tipo === 'Conector') {
-    return <Rect {...commonProps} width={10} height={10} offsetX={5} offsetY={5} />;
-  }
-  if (tipo === 'BRK') {
-    return <Circle {...commonProps} radius={4} />;
-  }
-  if (tipo === 'SPL') {
-    const keySPL = `${x}-${y}`;
-    if (renderedSPLs.has(keySPL)) {
-      return null; // ❌ ya dibujamos este SPL, no lo repetimos
+        }
+      },
+    };
+
+    switch (tipo) {
+      case 'Conector':
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
+      case 'BRK':
+        return <Circle {...commonProps} radius={4} />;
+      case 'SPL':
+        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+      default:
+        return null;
     }
-    renderedSPLs.add(keySPL); // ✅ marcamos este SPL como dibujado
-
-    return (
-      <RegularPolygon
-        {...commonProps}
-        sides={3}
-        radius={7}
-        draggable
-        onDragMove={(e) => handleSPLDrag(e, index, end)}
-      />
-    );
-  }
-  return null;
-};
-
+  };
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
@@ -1327,77 +1256,56 @@ const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
   onMouseUp={handleMouseUp}
   onWheel={handleWheel}
   >
-<Layer>
-  {(() => {
-    const renderedSPLs = new Set();   // ✅ aquí se crea UNA sola vez por render
+          <Layer>
+            {lines.map((line, i) => (
+              <React.Fragment key={i}>
+                <Line
+                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+                  stroke="black"
+                  strokeWidth={2}
+                  onClick={() => handleLineClick(i)}
+                />
+                <Label
+                x={(line.p1.x + line.p2.x) / 2}
+                y={(line.p1.y + line.p2.y) / 2}
+                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
+                offsetY={6} // centra verticalmente
+                >
+                <Tag
+                fill="white"        // Fondo blanco para simular corte de la línea
+                pointerDirection="none"
+                cornerRadius={2}    // Bordes redondeados
+                stroke="white"      // Borde negro opcional
+                strokeWidth={0.5}
+  />
+  <Text
+    text={`${line.dimension_mm ?? ''}`}
+    fontSize={11}
+    fill="black"
+    padding={1}         // Espacio entre texto y fondo
+    align="center"
+  />
+</Label>
+                {line.nombre_obj1 && (
+                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
+                )}
+                {line.nombre_obj2 && (
+                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
+                )}
+                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
+                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+              </React.Fragment>
+            ))}
 
-    return lines.map((line, i) => (
-      <React.Fragment key={i}>
-        <Line
-          points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-          stroke="black"
-          strokeWidth={2}
-          onClick={() => handleLineClick(i)}
-        />
-
-        <Label
-          x={(line.p1.x + line.p2.x) / 2}
-          y={(line.p1.y + line.p2.y) / 2}
-          offsetX={(line.dimension_mm?.toString().length || 1) * 3}
-          offsetY={6}
-        >
-          <Tag
-            fill="white"
-            pointerDirection="none"
-            cornerRadius={2}
-            stroke="white"
-            strokeWidth={0.5}
-          />
-          <Text
-            text={`${line.dimension_mm ? Math.round(line.dimension_mm) : ''}`}
-            fontSize={11}
-            fill="black"
-            padding={1}
-            align="center"
-          />
-        </Label>
-
-        {line.nombre_obj1 && (
-          <Text
-            x={line.p1.x + 5}
-            y={line.p1.y - 15}
-            text={line.nombre_obj1}
-            fontSize={10}
-            fill="black"
-          />
-        )}
-        {line.nombre_obj2 && (
-          <Text
-            x={line.p2.x + 5}
-            y={line.p2.y - 15}
-            text={line.nombre_obj2}
-            fontSize={10}
-            fill="black"
-          />
-        )}
-
-        {/* ✅ aquí pasamos renderedSPLs */}
-        {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', renderedSPLs)}
-        {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', renderedSPLs)}
-      </React.Fragment>
-    ));
-  })()}
-
-  {points.length === 1 && mousePos && !eraserMode && (
-    <Line
-      points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
-      stroke="gray"
-      dash={[4, 4]}
-      strokeWidth={1}
-    />
-  )}
-</Layer>
-
+            {points.length === 1 && mousePos && !eraserMode && (
+              <Line
+                points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
+                stroke="gray"
+                dash={[4, 4]}
+                strokeWidth={1}
+              />
+            )}
+          </Layer>
         </Stage>
                   </div>
 
