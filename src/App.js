@@ -164,13 +164,13 @@ const handleMouseMovePan = (e) => {
           ent.end?.y !== undefined
         ) {
           nuevasLineas.push({
-            p1: { x: ent.start.x, y: ent.start.y },
-            p2: { x: ent.end.x, y: ent.end.y },
-            obj1: 'Ninguno',
-            obj2: 'Ninguno',
-            nombre_obj1: '',
-            nombre_obj2: '',
-            dimension_mm: null,
+  nodes: [
+    { x: 100, y: 200, tipo: 'BRK', nombre: '' },
+    { x: 500, y: 200, tipo: 'BRK', nombre: '' }
+  ],
+  dimensiones: [1000] // calculadas entre cada par de nodos
+}
+
             deduce1: '',
             deduce2: '',
             item: null
@@ -250,18 +250,15 @@ const handleStageClick = (e) => {
       }
 
       const newLine = {
-        p1: points[0],
-        p2: adjustedPos,
-        obj1,
-        obj2,
-        nombre_obj1: '',
-        nombre_obj2: '',
-        dimension_mm: null,
-        deduce1: '',
-        deduce2: '',
-        item: null
-      };
+  nodes: [
+    { x: points[0].x, y: points[0].y, tipo: obj1, nombre: '' },
+    { x: adjustedPos.x, y: adjustedPos.y, tipo: obj2, nombre: '' }
+  ],
+  dimensiones: [] // lo llenaremos con calcularDimensiones()
+};
 
+      newLine.dimensiones = calcularDimensiones(newLine.nodes);
+      
       setTempLine(newLine);
       setInputPos(pos);
       setShowInput(true);
@@ -292,8 +289,6 @@ const handleMouseMove = (e) => {
     setMousePos(adjustedPos);
   }
 };
-
-
   const confirmDimension = () => {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
@@ -531,6 +526,15 @@ setRutaCalculada(result.path);
     dim2
   });
 };
+function calcularDimensiones(nodes) {
+  const dims = [];
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const dx = nodes[i+1].x - nodes[i].x;
+    const dy = nodes[i+1].y - nodes[i].y;
+    dims.push(Math.hypot(dx, dy));
+  }
+  return dims;
+}
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -1210,27 +1214,54 @@ case 'SPL':
   onWheel={handleWheel}
   >
           <Layer>
-            {lines.map((line, i) => (
-              <React.Fragment key={i}>
-                <Line
-                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-                  stroke="black"
-                  strokeWidth={2}
-                  onClick={() => handleLineClick(i)}
-                />
-                <Label
-                x={(line.p1.x + line.p2.x) / 2}
-                y={(line.p1.y + line.p2.y) / 2}
-                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
-                offsetY={6} // centra verticalmente
-                >
-                <Tag
-                fill="white"        // Fondo blanco para simular corte de la línea
-                pointerDirection="none"
-                cornerRadius={2}    // Bordes redondeados
-                stroke="white"      // Borde negro opcional
-                strokeWidth={0.5}
-  />
+           {lines.map((line, lineIndex) =>
+  line.nodes.map((n, i) => {
+    if (i < line.nodes.length - 1) {
+      const n1 = line.nodes[i];
+      const n2 = line.nodes[i + 1];
+      const dim = line.dimensiones[i];
+
+      return (
+        <React.Fragment key={`${lineIndex}-${i}`}>
+          {/* Dibujar la línea entre dos nodos */}
+          <Line
+            points={[n1.x, n1.y, n2.x, n2.y]}
+            stroke="black"
+            strokeWidth={2}
+            onClick={() => handleLineClick(lineIndex)}
+          />
+
+          {/* Etiqueta de la dimensión */}
+          <Label
+            x={(n1.x + n2.x) / 2}
+            y={(n1.y + n2.y) / 2}
+            offsetX={(dim?.toString().length || 1) * 3}
+            offsetY={6}
+          >
+            <Tag
+              fill="white"
+              pointerDirection="none"
+              cornerRadius={2}
+              stroke="white"
+              strokeWidth={0.5}
+            />
+            <Text
+              text={`${dim.toFixed(0)} mm`}
+              fontSize={12}
+              fill="blue"
+              padding={2}
+            />
+          </Label>
+
+          {/* Objeto en el nodo final */}
+          {renderObjeto(n2, lineIndex, i + 1)}
+        </React.Fragment>
+      );
+    }
+    return null;
+  })
+)}
+
   <Text
     text={`${line.dimension_mm ?? ''}`}
     fontSize={11}
