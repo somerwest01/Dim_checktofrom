@@ -746,6 +746,51 @@ lines.forEach((line) => {
   stage.position(newPos);
   stage.batchDraw();
 };
+  const handleSPLDrag = (e, lineIndex, end) => {
+  const pos = e.target.position();
+  const updated = [...lines];
+  const line = updated[lineIndex];
+
+  if (end === 'p1') {
+    line.p1 = pos;
+  } else if (end === 'p2') {
+    line.p2 = pos;
+  }
+
+  // buscar línea vecina que comparte el SPL
+  const siblingIndex = updated.findIndex(
+    (l, i) =>
+      i !== lineIndex &&
+      ((end === 'p1' && l.obj2 === 'SPL' && l.p2.x === line.p1.x && l.p2.y === line.p1.y) ||
+       (end === 'p2' && l.obj1 === 'SPL' && l.p1.x === line.p2.x && l.p1.y === line.p2.y))
+  );
+
+  if (siblingIndex !== -1) {
+    if (end === 'p1') {
+      updated[siblingIndex].p2 = pos;
+    } else {
+      updated[siblingIndex].p1 = pos;
+    }
+  }
+
+  // recalcular dimensiones
+  line.dimension_mm = Math.round(
+    Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y)
+  );
+  if (siblingIndex !== -1) {
+    const sibling = updated[siblingIndex];
+    sibling.dimension_mm = Math.round(
+      Math.hypot(sibling.p2.x - sibling.p1.x, sibling.p2.y - sibling.p1.y)
+    );
+  }
+
+  setLines(updated);
+};
+
+const handleSPLDragEnd = (e, lineIndex, end) => {
+  // aquí podrías guardar historial de cambios si lo implementas
+};
+
 
   
 
@@ -775,38 +820,52 @@ lines.forEach((line) => {
 
   };
 
-  const renderObjeto = (tipo, x, y, key, index, end) => {
-    const isHovered = hoveredObj === key;
-    const commonProps = {
-      key,
-      x,
-      y,
-      fill: isHovered ? 'green' : tipo === 'Conector' ? 'purple' : tipo === 'BRK' ? 'black' : 'green',
-      onMouseEnter: () => setHoveredObj(key),
-      onMouseLeave: () => setHoveredObj(null),
-      onClick: () => {
-      
-  if (!eraserMode && !pencilMode) {
-    setSelectedEnd({ lineIndex: index, end });
-    setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-    setSelectorPos({ x, y });
-    setSelectorEnd({ lineIndex: index, end });
-
-        }
-      },
-    };
-
-    switch (tipo) {
-      case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
-      case 'BRK':
-        return <Circle {...commonProps} radius={4} />;
-      case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
-      default:
-        return null;
-    }
+const renderObjeto = (tipo, x, y, key, index, end) => {
+  const isHovered = hoveredObj === key;
+  const commonProps = {
+    key,
+    x,
+    y,
+    fill: isHovered
+      ? 'green'
+      : tipo === 'Conector'
+      ? 'purple'
+      : tipo === 'BRK'
+      ? 'black'
+      : 'green',
+    onMouseEnter: () => setHoveredObj(key),
+    onMouseLeave: () => setHoveredObj(null),
+    onClick: () => {
+      if (!eraserMode && !pencilMode) {
+        setSelectedEnd({ lineIndex: index, end });
+        setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+        setSelectorPos({ x, y });
+        setSelectorEnd({ lineIndex: index, end });
+      }
+    },
   };
+
+  if (tipo === 'Conector') {
+    return <Rect {...commonProps} width={10} height={10} offsetX={5} offsetY={5} />;
+  }
+  if (tipo === 'BRK') {
+    return <Circle {...commonProps} radius={4} />;
+  }
+  if (tipo === 'SPL') {
+    return (
+      <RegularPolygon
+        {...commonProps}
+        sides={3}
+        radius={7}
+        draggable
+        onDragMove={(e) => handleSPLDrag(e, index, end)}
+        onDragEnd={(e) => handleSPLDragEnd(e, index, end)}
+      />
+    );
+  }
+  return null;
+};
+
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
