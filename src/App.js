@@ -163,18 +163,17 @@ const handleMouseMovePan = (e) => {
           ent.end?.x !== undefined &&
           ent.end?.y !== undefined
         ) {
-          nuevasLineas.push({
+nuevasLineas.push({
   nodes: [
     { x: 100, y: 200, tipo: 'BRK', nombre: '' },
     { x: 500, y: 200, tipo: 'BRK', nombre: '' }
   ],
-  dimensiones: [1000] // calculadas entre cada par de nodos
-}
+  dimensiones: [1000], // calculadas entre cada par de nodos
+  deduce1: '',
+  deduce2: '',
+  item: null
+});
 
-            deduce1: '',
-            deduce2: '',
-            item: null
-          });
         }
       });
 
