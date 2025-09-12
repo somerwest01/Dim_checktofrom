@@ -756,9 +756,10 @@ lines.forEach((line) => {
 
   // proyectamos el punto pos sobre el segmento [anchor, SPL]
   const proj = projectPointOnLine(anchor, end === 'p1' ? line.p1 : line.p2, pos);
-
   const snappedPos = { x: proj.x, y: proj.y };
 
+  e.target.position(snappedPos);
+    
   if (end === 'p1') {
     line.p1 = snappedPos;
   } else if (end === 'p2') {
