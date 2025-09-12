@@ -1320,17 +1320,18 @@ const renderObjeto = (tipo, x, y, key, index, end, renderedSPLs) => {
   onMouseUp={handleMouseUp}
   onWheel={handleWheel}
   >
-          <Layer>
-            {lines.map((line, i) => (
-              const renderedSPLs = new Set();   // ✅ aquí inicializamos el Set
-              return lines.map((line, i) => (
-              <React.Fragment key={i}>
-                <Line
-                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-                  stroke="black"
-                  strokeWidth={2}
-                  onClick={() => handleLineClick(i)}
-                />
+<Layer>
+  {(() => {
+    const renderedSPLs = new Set();  // ✅ se crea una sola vez
+
+    return lines.map((line, i) => (
+      <React.Fragment key={i}>
+        <Line
+          points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+          stroke="black"
+          strokeWidth={2}
+          onClick={() => handleLineClick(i)}
+        />
                 <Label
                 x={(line.p1.x + line.p2.x) / 2}
                 y={(line.p1.y + line.p2.y) / 2}
