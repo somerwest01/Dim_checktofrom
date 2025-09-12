@@ -40,6 +40,7 @@ function App() {
   const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
+  const [addingSPL, setAddingSPL] = useState(false);
 
 
 
@@ -122,6 +123,40 @@ const handleMouseMovePan = (e) => {
   return transform.point(pos);
 };
 
+// proyecta un punto `pos` sobre el segmento p1-p2 y devuelve {x,y,t} donde t es 0..1
+function projectPointOnLine(p1, p2, pos) {
+  const A = { x: p1.x, y: p1.y };
+  const B = { x: p2.x, y: p2.y };
+  const P = { x: pos.x, y: pos.y };
+
+  const AB = { x: B.x - A.x, y: B.y - A.y };
+  const AP = { x: P.x - A.x, y: P.y - A.y };
+
+  const ab2 = AB.x * AB.x + AB.y * AB.y;
+  if (ab2 === 0) return { x: A.x, y: A.y, t: 0 };
+
+  const ap_ab = AP.x * AB.x + AP.y * AB.y;
+  let t = ap_ab / ab2;
+  t = Math.max(0, Math.min(1, t));
+
+  return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
+}
+
+// busca el segmento (línea) más cercano al punto `pos`.
+// devuelve { lineIndex, proj: {x,y,t}, distance } o null si no hay líneas
+function findClosestSegment(pos) {
+  if (!lines || lines.length === 0) return null;
+  let best = null;
+  lines.forEach((line, idx) => {
+    // línea p1-p2 (todavía modelada en tu app original)
+    const proj = projectPointOnLine(line.p1, line.p2, pos);
+    const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
+    if (!best || dist < best.distance) {
+      best = { lineIndex: idx, proj, distance: dist, line };
+    }
+  });
+  return best;
+}
 
   
  const handleImportDXF = (event) => {
@@ -200,12 +235,65 @@ const handleMouseMovePan = (e) => {
   };
 
 const handleStageClick = (e) => {
-  if (e.evt.button !== 0) return; // 👈 ignora todo excepto clic izquierdo
+  if (e.evt.button !== 0) return; // solo click izquierdo
 
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
 
+  // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
+  if (addingSPL) {
+    const found = findClosestSegment(pos);
+    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
+    if (!found || found.distance > proximityPx) {
+      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+      return;
+    }
 
+    const { lineIndex, proj } = found;
+    const original = lines[lineIndex];
+
+    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
+    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+
+    const dim1 = parseFloat((totalDim * proj.t).toFixed(2));
+    const dim2 = parseFloat((totalDim * (1 - proj.t)).toFixed(2));
+
+    // crear las dos nuevas líneas que reemplazarán a la original
+    const lineA = {
+      p1: { ...original.p1 },
+      p2: { x: proj.x, y: proj.y },
+      obj1: original.obj1,
+      obj2: 'SPL',
+      nombre_obj1: original.nombre_obj1 || '',
+      nombre_obj2: '', // el SPL por ahora no tiene nombre
+      dimension_mm: dim1,
+      deduce1: original.deduce1 || '',
+      deduce2: '',
+      item: original.item || null
+    };
+
+    const lineB = {
+      p1: { x: proj.x, y: proj.y },
+      p2: { ...original.p2 },
+      obj1: 'SPL',
+      obj2: original.obj2,
+      nombre_obj1: '',
+      nombre_obj2: original.nombre_obj2 || '',
+      dimension_mm: dim2,
+      deduce1: '',
+      deduce2: original.deduce2 || '',
+      item: original.item || null
+    };
+
+    const updated = [...lines];
+    updated.splice(lineIndex, 1, lineA, lineB);
+    setLines(updated);
+    setAddingSPL(false);
+    setStatusMessage('🔺 SPL insertado correctamente.');
+    return;
+  }
+
+  // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
   if (pencilMode) {
     if (eraserMode) return;
 
@@ -250,7 +338,6 @@ const handleStageClick = (e) => {
     }
   }
 };
-
 
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
@@ -1102,7 +1189,21 @@ lines.forEach((line) => {
 >
   🔧 {modoModificarExtremos ? 'Modificar activos' : 'Modificar extremos'}
 </button>
-
+  <button
+  onClick={() => {
+    setAddingSPL(!addingSPL);
+    setStatusMessage(!addingSPL ? 'Modo: colocar SPL activo' : '');
+  }}
+  style={{
+    backgroundColor: addingSPL ? 'lightgreen' : 'white',
+    border: '1px solid gray',
+    padding: '5px 10px',
+    borderRadius: '5px',
+    cursor: 'pointer'
+  }}
+>
+  🔺 {addingSPL ? 'SPL: ON' : 'Agregar SPL'}
+</button>
 </div>
 
 
