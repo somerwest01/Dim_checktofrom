@@ -255,9 +255,8 @@ const handleStageClick = (e) => {
     // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
     const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-    const dim1 = parseFloat((totalDim * proj.t).toFixed(2));
-    const dim2 = parseFloat((totalDim * (1 - proj.t)).toFixed(2));
-
+   const dim1 = Math.round(totalDim * proj.t);
+   const dim2 = Math.round(totalDim * (1 - proj.t));
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
