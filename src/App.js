@@ -1297,77 +1297,100 @@ lines.forEach((line) => {
   onWheel={handleWheel}
   >
           <Layer>
-            {lines.map((line, i) => (
-              <React.Fragment key={i}>
-                <Line
-                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-                  stroke="black"
-                  strokeWidth={2}
-                  onClick={() => handleLineClick(i)}
-                />
-                <Label
-                x={(line.p1.x + line.p2.x) / 2}
-                y={(line.p1.y + line.p2.y) / 2}
-                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
-                offsetY={6} // centra verticalmente
-                >
-                <Tag
-                fill="white"        // Fondo blanco para simular corte de la línea
-                pointerDirection="none"
-                cornerRadius={2}    // Bordes redondeados
-                stroke="white"      // Borde negro opcional
-                strokeWidth={0.5}
-  />
-  <Text
-    text={`${line.dimension_mm ?? ''}`}
-    fontSize={11}
-    fill="black"
-    padding={1}         // Espacio entre texto y fondo
-    align="center"
-  />
-</Label>
-                {line.nombre_obj1 && (
-                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
-                )}
-                {line.nombre_obj2 && (
-                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
-                )}
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
-              </React.Fragment>
-            ))}
+  {/* Dibujar todas las líneas */}
+  {lines.map((line, i) => (
+    <React.Fragment key={i}>
+      <Line
+        points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+        stroke="black"
+        strokeWidth={2}
+        onClick={() => handleLineClick(i)}
+      />
+      <Label
+        x={(line.p1.x + line.p2.x) / 2}
+        y={(line.p1.y + line.p2.y) / 2}
+        offsetX={(line.dimension_mm?.toString().length || 1) * 3}
+        offsetY={6}
+      >
+        <Tag
+          fill="white"
+          cornerRadius={2}
+          stroke="white"
+          strokeWidth={0.5}
+        />
+        <Text
+          text={`${line.dimension_mm ?? ''}`}
+          fontSize={11}
+          fill="black"
+          padding={1}
+          align="center"
+        />
+      </Label>
+      {line.nombre_obj1 && (
+        <Text
+          x={line.p1.x + 5}
+          y={line.p1.y - 15}
+          text={line.nombre_obj1}
+          fontSize={10}
+          fill="black"
+        />
+      )}
+      {line.nombre_obj2 && (
+        <Text
+          x={line.p2.x + 5}
+          y={line.p2.y - 15}
+          text={line.nombre_obj2}
+          fontSize={10}
+          fill="black"
+        />
+      )}
+      {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
+      {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+    </React.Fragment>
+  ))}
 
-{/* Renderizar SPLs draggables */}
-{lines.map((line, i) =>
-  (line.spls || []).map((spl, j) => (
-    <RegularPolygon
-      key={`spl-${i}-${j}`}
-      x={spl.x}
-      y={spl.y}
-      sides={3}
-      radius={7}
-      fill="red"
-      draggable
-      onDragMove={(e) => {
-        const pos = { x: e.target.x(), y: e.target.y() };
-        const proj = projectPointOnLine(line.p1, line.p2, pos);
-        e.target.x(proj.x);
-        e.target.y(proj.y);
-      }}
-      onDragEnd={(e) => {
-        const pos = { x: e.target.x(), y: e.target.y() };
-        const proj = projectPointOnLine(line.p1, line.p2, pos);
-
-        const updated = [...lines];
-        updated[i].spls[j] = { x: proj.x, y: proj.y, t: proj.t };
-        updated[i].spls.sort((a, b) => a.t - b.t);
-
-        setLines(updated);
-        recalcularLineas(i);
-      }}
+  {/* Línea gris temporal cuando dibujas */}
+  {points.length === 1 && mousePos && !eraserMode && (
+    <Line
+      points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
+      stroke="gray"
+      dash={[4, 4]}
+      strokeWidth={1}
     />
-  ))
-)}
+  )}
+
+  {/* Renderizar SPLs draggables */}
+  {lines.map((line, i) =>
+    (line.spls || []).map((spl, j) => (
+      <RegularPolygon
+        key={`spl-${i}-${j}`}
+        x={spl.x}
+        y={spl.y}
+        sides={3}
+        radius={7}
+        fill="red"
+        draggable
+        onDragMove={(e) => {
+          const pos = { x: e.target.x(), y: e.target.y() };
+          const proj = projectPointOnLine(line.p1, line.p2, pos);
+          e.target.x(proj.x);
+          e.target.y(proj.y);
+        }}
+        onDragEnd={(e) => {
+          const pos = { x: e.target.x(), y: e.target.y() };
+          const proj = projectPointOnLine(line.p1, line.p2, pos);
+
+          const updated = [...lines];
+          updated[i].spls[j] = { x: proj.x, y: proj.y, t: proj.t };
+          updated[i].spls.sort((a, b) => a.t - b.t);
+
+          setLines(updated);
+          recalcularLineas(i);
+        }}
+      />
+    ))
+  )}
+</Layer>
 
 
             {points.length === 1 && mousePos && !eraserMode && (
@@ -1378,7 +1401,7 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
-          </Layer>
+      //    </Layer>
         </Stage>
                   </div>
 
