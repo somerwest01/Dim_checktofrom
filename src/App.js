@@ -1296,7 +1296,7 @@ lines.forEach((line) => {
   onMouseUp={handleMouseUp}
   onWheel={handleWheel}
   >
-          <Layer>
+<Layer>
   {/* Dibujar todas las líneas */}
   {lines.map((line, i) => (
     <React.Fragment key={i}>
@@ -1391,19 +1391,9 @@ lines.forEach((line) => {
     ))
   )}
 </Layer>
+</Stage>
+</div>
 
-
-            {points.length === 1 && mousePos && !eraserMode && (
-              <Line
-                points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
-                stroke="gray"
-                dash={[4, 4]}
-                strokeWidth={1}
-              />
-            )}
-      //    </Layer>
-        </Stage>
-                  </div>
 
         {showInput && (
           <div style={{
