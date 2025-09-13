@@ -157,6 +157,49 @@ function findClosestSegment(pos) {
   });
   return best;
 }
+const handleAddSPL = (lineIndex, pos) => {
+  const updated = [...lines];
+  if (!updated[lineIndex].spls) updated[lineIndex].spls = [];
+
+  const { proj } = projectPointOnLine(updated[lineIndex].p1, updated[lineIndex].p2, pos);
+
+  updated[lineIndex].spls.push({ x: proj.x, y: proj.y, t: proj.t });
+  updated[lineIndex].spls.sort((a, b) => a.t - b.t);
+
+  setLines(updated);
+  recalcularLineas(lineIndex);
+};
+
+const recalcularLineas = (lineIndex) => {
+  const updated = [...lines];
+  const line = updated[lineIndex];
+  const totalDim = Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+
+  // lista de puntos: inicio -> SPLs -> final
+  const puntos = [line.p1, ...(line.spls || []), line.p2];
+
+  const nuevasLineas = [];
+  for (let i = 0; i < puntos.length - 1; i++) {
+    const pA = puntos[i];
+    const pB = puntos[i + 1];
+    const dim = Math.round(Math.hypot(pB.x - pA.x, pB.y - pA.y));
+
+    nuevasLineas.push({
+      p1: { ...pA },
+      p2: { ...pB },
+      obj1: i === 0 ? line.obj1 : "SPL",
+      obj2: i === puntos.length - 2 ? line.obj2 : "SPL",
+      nombre_obj1: i === 0 ? line.nombre_obj1 : "",
+      nombre_obj2: i === puntos.length - 2 ? line.nombre_obj2 : "",
+      dimension_mm: dim,
+      spls: i === 0 ? line.spls : [], // mantener SPLs solo en la primera parte
+    });
+  }
+
+  // sustituir línea original por las nuevas
+  updated.splice(lineIndex, 1, ...nuevasLineas);
+  setLines(updated);
+};
 
   
  const handleImportDXF = (event) => {
@@ -241,23 +284,21 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
-    if (!found || found.distance > proximityPx) {
-      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
-      return;
-    }
+if (addingSPL) {
+  const found = findClosestSegment(pos);
+  const proximityPx = 12;
+  if (!found || found.distance > proximityPx) {
+    setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+    return;
+  }
 
-    const { lineIndex, proj } = found;
-    const original = lines[lineIndex];
+  const { lineIndex, proj } = found;
+  handleAddSPL(lineIndex, pos); // ✅ usar nueva función
+  setAddingSPL(false);
+  setStatusMessage('🔺 SPL insertado correctamente.');
+  return;
+}
 
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
-    // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
       p2: { x: proj.x, y: proj.y },
@@ -1295,6 +1336,39 @@ lines.forEach((line) => {
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
               </React.Fragment>
             ))}
+
+{/* Renderizar SPLs draggables */}
+{lines.map((line, i) =>
+  (line.spls || []).map((spl, j) => (
+    <RegularPolygon
+      key={`spl-${i}-${j}`}
+      x={spl.x}
+      y={spl.y}
+      sides={3}
+      radius={7}
+      fill="red"
+      draggable
+      onDragMove={(e) => {
+        const pos = { x: e.target.x(), y: e.target.y() };
+        const proj = projectPointOnLine(line.p1, line.p2, pos);
+        e.target.x(proj.x);
+        e.target.y(proj.y);
+      }}
+      onDragEnd={(e) => {
+        const pos = { x: e.target.x(), y: e.target.y() };
+        const proj = projectPointOnLine(line.p1, line.p2, pos);
+
+        const updated = [...lines];
+        updated[i].spls[j] = { x: proj.x, y: proj.y, t: proj.t };
+        updated[i].spls.sort((a, b) => a.t - b.t);
+
+        setLines(updated);
+        recalcularLineas(i);
+      }}
+    />
+  ))
+)}
+
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
