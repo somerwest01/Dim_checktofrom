@@ -157,27 +157,31 @@ function findClosestSegment(pos) {
   });
   return best;
 }
-  const handleSPLMove = (e, lineIndex, end) => {
-  const pos = e.target.position(); // nueva posición del SPL
+const handleSPLMove = (e, lineIndex, end) => {
+  const pos = e.target.position();
   const updated = [...lines];
+  const movedLine = updated[lineIndex];
+  if (!movedLine?.parentId) return;
 
-  // necesitamos identificar qué dos líneas forman el SPL
-  // (la original fue dividida en lineIndex y lineIndex+1)
-  const lineA = updated[lineIndex];
-  const lineB = updated[lineIndex + 1];
+  // encontrar las dos mitades que comparten el mismo parentId
+  const siblings = updated.filter(l => l.parentId === movedLine.parentId);
+  if (siblings.length !== 2) return;
 
-  if (!lineA || !lineB) return;
+  const lineA = siblings[0];
+  const lineB = siblings[1];
 
-  // proyectar el nuevo SPL sobre la línea original
-  const proj = projectPointOnLine(lineA.p1, lineB.p2, pos);
+  // extremos originales = p1 del A y p2 del B
+  const originalP1 = lineA.p1;
+  const originalP2 = lineB.p2;
 
-  // recalcular dimensiones
-  const totalDim =
-    Math.hypot(lineB.p2.x - lineA.p1.x, lineB.p2.y - lineA.p1.y);
+  // proyectar la posición actual sobre la línea original
+  const proj = projectPointOnLine(originalP1, originalP2, pos);
+
+  const totalDim = Math.hypot(originalP2.x - originalP1.x, originalP2.y - originalP1.y);
   const dim1 = Math.round(totalDim * proj.t);
   const dim2 = Math.round(totalDim * (1 - proj.t));
 
-  // actualizar coordenadas del SPL
+  // actualizar coordenadas
   lineA.p2 = { x: proj.x, y: proj.y };
   lineB.p1 = { x: proj.x, y: proj.y };
 
@@ -187,6 +191,7 @@ function findClosestSegment(pos) {
 
   setLines(updated);
 };
+
 
 
   
