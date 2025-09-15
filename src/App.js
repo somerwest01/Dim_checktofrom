@@ -175,7 +175,12 @@ const handleSPLMove = (e, lineIndex, end) => {
   const originalP1 = lineA.p1;
   const originalP2 = lineB.p2;
 
-  const proj = projectPointOnLine(originalP1, originalP2, pos);
+const proj = projectPointOnLine(originalP1, originalP2, pos);
+
+// actualizar posición del SPL
+lineA.splPos = { x: proj.x, y: proj.y };
+lineB.splPos = { x: proj.x, y: proj.y };
+
 
   // recalcular dimensiones
   const totalDim = Math.hypot(originalP2.x - originalP1.x, originalP2.y - originalP1.y);
@@ -295,6 +300,8 @@ const handleStageClick = (e) => {
     const lineA = {
       p1: { ...original.p1 },
       p2: { x: proj.x, y: proj.y },
+      parentId,
+      splPos: { x: proj.x, y: proj.y }, // 👈 guardar la posición del SPL
       obj1: original.obj1,
       obj2: 'SPL',
       nombre_obj1: original.nombre_obj1 || '',
@@ -308,6 +315,8 @@ const handleStageClick = (e) => {
     const lineB = {
       p1: { x: proj.x, y: proj.y },
       p2: { ...original.p2 },
+      parentId,
+      splPos: { x: proj.x, y: proj.y }, // 👈 también aquí
       obj1: 'SPL',
       obj2: original.obj2,
       nombre_obj1: '',
@@ -834,15 +843,17 @@ lines.forEach((line) => {
         return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
       case 'BRK':
         return <Circle {...commonProps} radius={4} />;
-      case 'SPL':
+case 'SPL':
   return (
     <RegularPolygon
       {...commonProps}
+      x={line.splPos?.x || x}
+      y={line.splPos?.y || y}
       sides={3}
       radius={7}
-      onMouseDown={() => setDraggingSPL({ lineIndex: index, end })}
+      onMouseDown={() => setDraggingSPL({ lineIndex: index })}
     />
-
+        
   );
 
       default:
@@ -1293,18 +1304,18 @@ lines.forEach((line) => {
   width={canvasSize.width}
   height={canvasSize.height}
   onClick={handleStageClick}
-  onMouseMove={(e) => {
-    handleMouseMove(e);
-    handleMouseMovePan(e);
-    if (draggingSPL) {
-      handleSPLMove(e, draggingSPL.lineIndex, draggingSPL.end);
-    }
-  }}
-  onMouseDown={handleMouseDown}
-  onMouseUp={(e) => {
-    handleMouseUp(e);
-    setDraggingSPL(null); // soltar el SPL al soltar click
-  }}
+onMouseMove={(e) => {
+  handleMouseMove(e);
+  handleMouseMovePan(e);
+  if (draggingSPL) {
+    handleSPLMove(e, draggingSPL.lineIndex);
+  }
+}}
+onMouseUp={(e) => {
+  handleMouseUp(e);
+  setDraggingSPL(null);
+}}
+
   onWheel={handleWheel}
 >
           <Layer>
