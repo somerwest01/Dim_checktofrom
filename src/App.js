@@ -293,7 +293,7 @@ if (addingSPL) {
   const { lineIndex, proj } = found;
   const original = lines[lineIndex];
 
-  // id único para vincular este par de líneas con el SPL
+  // ✅ declarar aquí el id único
   const parentId = Date.now();
 
   // dimensión total
@@ -305,40 +305,14 @@ if (addingSPL) {
   const dim2 = Math.round(totalDim * (1 - proj.t));
 
   // crear las dos nuevas líneas
-  const lineA = {
-    p1: { ...original.p1 },
-    p2: { x: proj.x, y: proj.y },
-    obj1: original.obj1,
-    obj2: 'SPL',
-    nombre_obj1: original.nombre_obj1 || '',
-    nombre_obj2: '',
-    dimension_mm: dim1,
-    deduce1: original.deduce1 || '',
-    deduce2: '',
-    item: original.item || null,
-    parentId,
-  };
+  const lineA = { ... , parentId };
+  const lineB = { ... , parentId };
 
-  const lineB = {
-    p1: { x: proj.x, y: proj.y },
-    p2: { ...original.p2 },
-    obj1: 'SPL',
-    obj2: original.obj2,
-    nombre_obj1: '',
-    nombre_obj2: original.nombre_obj2 || '',
-    dimension_mm: dim2,
-    deduce1: '',
-    deduce2: original.deduce2 || '',
-    item: original.item || null,
-    parentId,
-  };
-
-  // reemplazar la línea original por las dos nuevas
   const updatedLines = [...lines];
   updatedLines.splice(lineIndex, 1, lineA, lineB);
   setLines(updatedLines);
 
-  // 👇 nuevo: crear el objeto SPL en su estado
+  // 👇 aquí ya sí existe parentId
   const newSPL = {
     id: Date.now(),
     parentId,
