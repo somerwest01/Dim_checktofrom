@@ -350,16 +350,6 @@ if (addingSPL) {
   setStatusMessage('🔺 SPL insertado correctamente.');
   return;
 }
-
-    const newSPL = {
-  id: Date.now(),
-  parentId,
-  pos: { x: proj.x, y: proj.y }
-};
-
-setSpls([...spls, newSPL]);
-
-  }
   
 
   // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
