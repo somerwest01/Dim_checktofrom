@@ -1342,7 +1342,8 @@ onMouseUp={(e) => {
       <Label
         x={(line.p1.x + line.p2.x) / 2}
         y={(line.p1.y + line.p2.y) / 2}
-        ...
+        offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
+        offsetY={6} // centra verticalmente
       >
         <Tag fill="white" cornerRadius={2} stroke="white" strokeWidth={0.5}/>
         <Text text={`${line.dimension_mm ?? ''}`} fontSize={11} fill="black" />
