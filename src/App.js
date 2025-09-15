@@ -41,6 +41,8 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
+  const [draggingSPL, setDraggingSPL] = useState(null);
+
 
 
 
@@ -158,36 +160,30 @@ function findClosestSegment(pos) {
   return best;
 }
 const handleSPLMove = (e, lineIndex, end) => {
-  const pos = e.target.position();
+  const stage = e.target.getStage();
+  const pos = getRelativePointerPosition(stage);
   const updated = [...lines];
   const movedLine = updated[lineIndex];
   if (!movedLine?.parentId) return;
 
-  // encontrar las dos mitades que comparten el mismo parentId
   const siblings = updated.filter(l => l.parentId === movedLine.parentId);
   if (siblings.length !== 2) return;
 
   const lineA = siblings[0];
   const lineB = siblings[1];
 
-  // extremos originales = p1 del A y p2 del B
   const originalP1 = lineA.p1;
   const originalP2 = lineB.p2;
 
-  // proyectar la posición actual sobre la línea original
   const proj = projectPointOnLine(originalP1, originalP2, pos);
 
-  e.target.position({ x: proj.x, y: proj.y });
-
+  // recalcular dimensiones
   const totalDim = Math.hypot(originalP2.x - originalP1.x, originalP2.y - originalP1.y);
   const dim1 = Math.round(totalDim * proj.t);
   const dim2 = Math.round(totalDim * (1 - proj.t));
 
-  // actualizar coordenadas
   lineA.p2 = { x: proj.x, y: proj.y };
   lineB.p1 = { x: proj.x, y: proj.y };
-
-  // actualizar dimensiones
   lineA.dimension_mm = dim1;
   lineB.dimension_mm = dim2;
 
@@ -840,14 +836,12 @@ lines.forEach((line) => {
         return <Circle {...commonProps} radius={4} />;
       case 'SPL':
   return (
-<RegularPolygon
-  {...commonProps}
-  sides={3}
-  radius={7}
-  draggable
-  onDragMove={(e) => handleSPLMove(e, index, end)}
-  onDragEnd={(e) => e.target.stopDrag()} // evita que quede fuera
-/>
+    <RegularPolygon
+      {...commonProps}
+      sides={3}
+      radius={7}
+      onMouseDown={() => setDraggingSPL({ lineIndex: index, end })}
+    />
 
   );
 
@@ -1295,15 +1289,24 @@ lines.forEach((line) => {
   }
 }}
 >
-  <Stage
+<Stage
   width={canvasSize.width}
   height={canvasSize.height}
   onClick={handleStageClick}
-  onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
+  onMouseMove={(e) => {
+    handleMouseMove(e);
+    handleMouseMovePan(e);
+    if (draggingSPL) {
+      handleSPLMove(e, draggingSPL.lineIndex, draggingSPL.end);
+    }
+  }}
   onMouseDown={handleMouseDown}
-  onMouseUp={handleMouseUp}
+  onMouseUp={(e) => {
+    handleMouseUp(e);
+    setDraggingSPL(null); // soltar el SPL al soltar click
+  }}
   onWheel={handleWheel}
-  >
+>
           <Layer>
             {lines.map((line, i) => (
               <React.Fragment key={i}>
