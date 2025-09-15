@@ -845,7 +845,7 @@ lines.forEach((line) => {
         return <RegularPolygon {...commonProps} sides={3} radius={7} />;
       default:
         return null;
-    }
+    
   };
 
   return (
