@@ -177,6 +177,8 @@ const handleSPLMove = (e, lineIndex, end) => {
   // proyectar la posición actual sobre la línea original
   const proj = projectPointOnLine(originalP1, originalP2, pos);
 
+  e.target.position({ x: proj.x, y: proj.y });
+
   const totalDim = Math.hypot(originalP2.x - originalP1.x, originalP2.y - originalP1.y);
   const dim1 = Math.round(totalDim * proj.t);
   const dim2 = Math.round(totalDim * (1 - proj.t));
@@ -838,13 +840,15 @@ lines.forEach((line) => {
         return <Circle {...commonProps} radius={4} />;
       case 'SPL':
   return (
-    <RegularPolygon
-      {...commonProps}
-      sides={3}
-      radius={7}
-      draggable
-      onDragMove={(e) => handleSPLMove(e, index, end)}
-    />
+<RegularPolygon
+  {...commonProps}
+  sides={3}
+  radius={7}
+  draggable
+  onDragMove={(e) => handleSPLMove(e, index, end)}
+  onDragEnd={(e) => e.target.stopDrag()} // evita que quede fuera
+/>
+
   );
 
       default:
