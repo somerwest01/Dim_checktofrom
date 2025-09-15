@@ -282,59 +282,74 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
-    if (!found || found.distance > proximityPx) {
-      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
-      return;
-    }
-
-    const { lineIndex, proj } = found;
-    const original = lines[lineIndex];
-
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
-    // crear las dos nuevas líneas que reemplazarán a la original
-    const lineA = {
-      p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
-      parentId,
-      splPos: { x: proj.x, y: proj.y }, // 👈 guardar la posición del SPL
-      obj1: original.obj1,
-      obj2: 'SPL',
-      nombre_obj1: original.nombre_obj1 || '',
-      nombre_obj2: '', // el SPL por ahora no tiene nombre
-      dimension_mm: dim1,
-      deduce1: original.deduce1 || '',
-      deduce2: '',
-      item: original.item || null
-    };
-
-    const lineB = {
-      p1: { x: proj.x, y: proj.y },
-      p2: { ...original.p2 },
-      parentId,
-      splPos: { x: proj.x, y: proj.y }, // 👈 también aquí
-      obj1: 'SPL',
-      obj2: original.obj2,
-      nombre_obj1: '',
-      nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2,
-      deduce1: '',
-      deduce2: original.deduce2 || '',
-      item: original.item || null
-    };
-
-    const updated = [...lines];
-    updated.splice(lineIndex, 1, lineA, lineB);
-    setLines(updated);
-    setAddingSPL(false);
-    setStatusMessage('🔺 SPL insertado correctamente.');
+if (addingSPL) {
+  const found = findClosestSegment(pos);
+  const proximityPx = 12;
+  if (!found || found.distance > proximityPx) {
+    setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
     return;
+  }
+
+  const { lineIndex, proj } = found;
+  const original = lines[lineIndex];
+
+  // id único para vincular este par de líneas con el SPL
+  const parentId = Date.now();
+
+  // dimensión total
+  const totalDim =
+    parseFloat(original.dimension_mm) ||
+    Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+
+  const dim1 = Math.round(totalDim * proj.t);
+  const dim2 = Math.round(totalDim * (1 - proj.t));
+
+  // crear las dos nuevas líneas
+  const lineA = {
+    p1: { ...original.p1 },
+    p2: { x: proj.x, y: proj.y },
+    obj1: original.obj1,
+    obj2: 'SPL',
+    nombre_obj1: original.nombre_obj1 || '',
+    nombre_obj2: '',
+    dimension_mm: dim1,
+    deduce1: original.deduce1 || '',
+    deduce2: '',
+    item: original.item || null,
+    parentId,
+  };
+
+  const lineB = {
+    p1: { x: proj.x, y: proj.y },
+    p2: { ...original.p2 },
+    obj1: 'SPL',
+    obj2: original.obj2,
+    nombre_obj1: '',
+    nombre_obj2: original.nombre_obj2 || '',
+    dimension_mm: dim2,
+    deduce1: '',
+    deduce2: original.deduce2 || '',
+    item: original.item || null,
+    parentId,
+  };
+
+  // reemplazar la línea original por las dos nuevas
+  const updatedLines = [...lines];
+  updatedLines.splice(lineIndex, 1, lineA, lineB);
+  setLines(updatedLines);
+
+  // 👇 nuevo: crear el objeto SPL en su estado
+  const newSPL = {
+    id: Date.now(),
+    parentId,
+    pos: { x: proj.x, y: proj.y }
+  };
+  setSpls([...spls, newSPL]);
+
+  setAddingSPL(false);
+  setStatusMessage('🔺 SPL insertado correctamente.');
+  return;
+}
 
     const newSPL = {
   id: Date.now(),
