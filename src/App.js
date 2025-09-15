@@ -845,8 +845,8 @@ lines.forEach((line) => {
         return <RegularPolygon {...commonProps} sides={3} radius={7} />;
       default:
         return null;
-    
-  };
+   } 
+ 
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
