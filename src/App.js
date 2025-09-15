@@ -157,6 +157,37 @@ function findClosestSegment(pos) {
   });
   return best;
 }
+  const handleSPLMove = (e, lineIndex, end) => {
+  const pos = e.target.position(); // nueva posición del SPL
+  const updated = [...lines];
+
+  // necesitamos identificar qué dos líneas forman el SPL
+  // (la original fue dividida en lineIndex y lineIndex+1)
+  const lineA = updated[lineIndex];
+  const lineB = updated[lineIndex + 1];
+
+  if (!lineA || !lineB) return;
+
+  // proyectar el nuevo SPL sobre la línea original
+  const proj = projectPointOnLine(lineA.p1, lineB.p2, pos);
+
+  // recalcular dimensiones
+  const totalDim =
+    Math.hypot(lineB.p2.x - lineA.p1.x, lineB.p2.y - lineA.p1.y);
+  const dim1 = Math.round(totalDim * proj.t);
+  const dim2 = Math.round(totalDim * (1 - proj.t));
+
+  // actualizar coordenadas del SPL
+  lineA.p2 = { x: proj.x, y: proj.y };
+  lineB.p1 = { x: proj.x, y: proj.y };
+
+  // actualizar dimensiones
+  lineA.dimension_mm = dim1;
+  lineB.dimension_mm = dim2;
+
+  setLines(updated);
+};
+
 
   
  const handleImportDXF = (event) => {
@@ -801,7 +832,16 @@ lines.forEach((line) => {
       case 'BRK':
         return <Circle {...commonProps} radius={4} />;
       case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+  return (
+    <RegularPolygon
+      {...commonProps}
+      sides={3}
+      radius={7}
+      draggable
+      onDragMove={(e) => handleSPLMove(e, index, end)}
+    />
+  );
+
       default:
         return null;
     }
