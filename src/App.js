@@ -253,41 +253,50 @@ if (addingSPL) {
   const { lineIndex, proj } = found;
   const original = lines[lineIndex];
 
-  // 🔎 buscar si ya hay acotaciones previas de esta línea
-  let segmentos = acotaciones.filter(a => a.lineaIndex === lineIndex);
-  if (segmentos.length === 0) {
-    // si no existen acotaciones, usamos la línea completa como segmento base
-    segmentos = [{
-      lineaIndex: lineIndex,
-      p1: { ...original.p1 },
-      p2: { ...original.p2 },
-      nombre_obj1: original.nombre_obj1,
-      nombre_obj2: original.nombre_obj2,
-      dim: parseFloat(original.dimension_mm) 
-            || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y),
-      spl: false
-    }];
-  }
+  // calcular dimensiones proporcionales
+  const totalDim = parseFloat(original.dimension_mm) 
+                   || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-  // calcular sobre qué segmento cayó el click
-  let bestSeg = null;
-  let bestProj = null;
-  let bestDist = Infinity;
+  const dim1 = Math.round(totalDim * proj.t);
+  const dim2 = Math.round(totalDim * (1 - proj.t));
 
-  segmentos.forEach(seg => {
-    const projSeg = projectPointOnLine(seg.p1, seg.p2, pos);
-    const dist = Math.hypot(projSeg.x - pos.x, projSeg.y - pos.y);
-    if (dist < bestDist) {
-      bestSeg = seg;
-      bestProj = projSeg;
-      bestDist = dist;
-    }
-  });
+  // 📍 crear nuevas líneas con SPL como nodo
+  const lineA = {
+    p1: { ...original.p1 },
+    p2: { x: proj.x, y: proj.y },
+    obj1: original.obj1,
+    obj2: "SPL",
+    nombre_obj1: original.nombre_obj1,
+    nombre_obj2: "", // el SPL se nombra después
+    dimension_mm: dim1,
+    deduce1: original.deduce1,
+    deduce2: "",
+    item: null
+  };
 
-  if (!bestSeg) {
-    setStatusMessage("❌ No se encontró segmento válido.");
-    return;
-  }
+  const lineB = {
+    p1: { x: proj.x, y: proj.y },
+    p2: { ...original.p2 },
+    obj1: "SPL",
+    obj2: original.obj2,
+    nombre_obj1: "",
+    nombre_obj2: original.nombre_obj2,
+    dimension_mm: dim2,
+    deduce1: "",
+    deduce2: original.deduce2,
+    item: null
+  };
+
+  // sustituir línea original por las 2 nuevas
+  const updated = [...lines];
+  updated.splice(lineIndex, 1, lineA, lineB);
+
+  setLines(updated);
+  setAddingSPL(false);
+  setStatusMessage("🔺 SPL insertado correctamente.");
+  return;
+}
+
 
   // ✅ partir el segmento en 2 nuevos
   const dim1 = Math.round(bestSeg.dim * bestProj.t);
@@ -832,17 +841,38 @@ lines.forEach((line) => {
       },
     };
 
-    switch (tipo) {
-      case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
-      case 'BRK':
-        return <Circle {...commonProps} radius={4} />;
-      case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
-      default:
-        return null;
-    }
-  };
+switch (tipo) {
+  case 'Conector':
+    return (
+      <Rect
+        {...commonProps}
+        x={x - 5}
+        y={y - 5}
+        width={10}
+        height={10}
+      />
+    );
+  case 'BRK':
+    return (
+      <Circle
+        {...commonProps}
+        radius={4}
+      />
+    );
+  case 'SPL':
+    return (
+      <Circle
+        {...commonProps}
+        radius={6}  // 25% más pequeño
+        stroke="red"
+        strokeWidth={2}
+        fill={isHovered ? "lightblue" : "white"} // hover
+      />
+    );
+  default:
+    return null;
+}
+
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
@@ -1330,6 +1360,33 @@ lines.forEach((line) => {
                 )}
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+{line.obj1 === "SPL" && line.nombre_obj1 && (
+  <Text
+    x={line.p1.x}
+    y={line.p1.y}
+    text={line.nombre_obj1}
+    fontSize={8}
+    fill="black"
+    align="center"
+    verticalAlign="middle"
+    offsetX={line.nombre_obj1.length * 2}
+    offsetY={4}
+  />
+)}
+{line.obj2 === "SPL" && line.nombre_obj2 && (
+  <Text
+    x={line.p2.x}
+    y={line.p2.y}
+    text={line.nombre_obj2}
+    fontSize={8}
+    fill="black"
+    align="center"
+    verticalAlign="middle"
+    offsetX={line.nombre_obj2.length * 2}
+    offsetY={4}
+  />
+)}
+
               </React.Fragment>
             ))}
 
