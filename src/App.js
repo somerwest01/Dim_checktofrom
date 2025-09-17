@@ -291,26 +291,29 @@ if (addingSPL) {
   const dim1 = Math.round(bestSeg.dim * bestProj.t);
   const dim2 = Math.round(bestSeg.dim * (1 - bestProj.t));
 
-  const newSegs = [
-    {
-      lineaIndex: lineIndex,
-      p1: { ...bestSeg.p1 },
-      p2: { x: bestProj.x, y: bestProj.y },
-      nombre_obj1: bestSeg.nombre_obj1,
-      nombre_obj2: 'SPL',
-      dim: dim1,
-      spl: true
-    },
-    {
-      lineaIndex: lineIndex,
-      p1: { x: bestProj.x, y: bestProj.y },
-      p2: { ...bestSeg.p2 },
-      nombre_obj1: 'SPL',
-      nombre_obj2: bestSeg.nombre_obj2,
-      dim: dim2,
-      spl: true
-    }
-  ];
+const newSegs = [
+  {
+    lineaIndex: lineIndex,
+    p1: { ...bestSeg.p1 },
+    p2: { x: bestProj.x, y: bestProj.y },
+    nombre_obj1: bestSeg.nombre_obj1,
+    nombre_obj2: 'SPL',
+    dim: dim1,
+    spl: true,
+    splPos: { x: bestProj.x, y: bestProj.y }  // 📍 guardamos el punto
+  },
+  {
+    lineaIndex: lineIndex,
+    p1: { x: bestProj.x, y: bestProj.y },
+    p2: { ...bestSeg.p2 },
+    nombre_obj1: 'SPL',
+    nombre_obj2: bestSeg.nombre_obj2,
+    dim: dim2,
+    spl: true,
+    splPos: { x: bestProj.x, y: bestProj.y }  // 📍 mismo punto para el otro lado
+  }
+];
+
 
   // quitar el segmento viejo y agregar los nuevos
   const nuevasAcotaciones = acotaciones.filter(a => a !== bestSeg);
@@ -1345,6 +1348,43 @@ lines.forEach((line) => {
     />
   </React.Fragment>
 ))}
+
+{acotaciones.filter(a => a.spl && a.splPos).map((a, i) => {
+  // calcular ángulo de la línea en radianes
+  const dx = a.p2.x - a.p1.x;
+  const dy = a.p2.y - a.p1.y;
+  const angle = Math.atan2(dy, dx); // orientación de la línea
+
+  // tamaño del señalador
+  const radius = 12;
+  const stickLength = 20;
+
+  return (
+    <React.Fragment key={`spl-${i}`}>
+      {/* palito apuntando al SPL */}
+      <Line
+        points={[
+          a.splPos.x,
+          a.splPos.y,
+          a.splPos.x - Math.sin(angle) * stickLength,
+          a.splPos.y + Math.cos(angle) * stickLength
+        ]}
+        stroke="red"
+        strokeWidth={2}
+      />
+      {/* círculo en la punta */}
+      <Circle
+        x={a.splPos.x - Math.sin(angle) * stickLength}
+        y={a.splPos.y + Math.cos(angle) * stickLength}
+        radius={radius}
+        stroke="red"
+        strokeWidth={3}
+        fill="white"
+      />
+    </React.Fragment>
+  );
+})}
+
 
 
             {points.length === 1 && mousePos && !eraserMode && (
