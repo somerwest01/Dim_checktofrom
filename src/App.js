@@ -41,8 +41,7 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
-  const [acotaciones, setAcotaciones] = useState([]);
-  const [hoveredSPL, setHoveredSPL] = useState(null);
+
 
 
 
@@ -242,60 +241,57 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
-if (addingSPL) {
-  const found = findClosestSegment(pos);
-  const proximityPx = 12; 
-  if (!found || found.distance > proximityPx) {
-    setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+  if (addingSPL) {
+    const found = findClosestSegment(pos);
+    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
+    if (!found || found.distance > proximityPx) {
+      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+      return;
+    }
+
+    const { lineIndex, proj } = found;
+    const original = lines[lineIndex];
+
+    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
+    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+
+   const dim1 = Math.round(totalDim * proj.t);
+   const dim2 = Math.round(totalDim * (1 - proj.t));
+    // crear las dos nuevas líneas que reemplazarán a la original
+    const lineA = {
+      p1: { ...original.p1 },
+      p2: { x: proj.x, y: proj.y },
+      obj1: original.obj1,
+      obj2: 'SPL',
+      nombre_obj1: original.nombre_obj1 || '',
+      nombre_obj2: '', // el SPL por ahora no tiene nombre
+      dimension_mm: dim1,
+      deduce1: original.deduce1 || '',
+      deduce2: '',
+      item: original.item || null
+    };
+
+    const lineB = {
+      p1: { x: proj.x, y: proj.y },
+      p2: { ...original.p2 },
+      obj1: 'SPL',
+      obj2: original.obj2,
+      nombre_obj1: '',
+      nombre_obj2: original.nombre_obj2 || '',
+      dimension_mm: dim2,
+      deduce1: '',
+      deduce2: original.deduce2 || '',
+      item: original.item || null
+    };
+
+    const updated = [...lines];
+    updated.splice(lineIndex, 1, lineA, lineB);
+    setLines(updated);
+    setAddingSPL(false);
+    setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
 
-  const { lineIndex, proj } = found;
-  const original = lines[lineIndex];
-
-  // calcular dimensiones proporcionales
-  const totalDim = parseFloat(original.dimension_mm) 
-                   || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-  const dim1 = Math.round(totalDim * proj.t);
-  const dim2 = Math.round(totalDim * (1 - proj.t));
-
-  // 📍 crear nuevas líneas con SPL como nodo
-  const lineA = {
-    p1: { ...original.p1 },
-    p2: { x: proj.x, y: proj.y },
-    obj1: original.obj1,
-    obj2: "SPL",
-    nombre_obj1: original.nombre_obj1,
-    nombre_obj2: "", // el SPL se nombra después
-    dimension_mm: dim1,
-    deduce1: original.deduce1,
-    deduce2: "",
-    item: null
-  };
-
-  const lineB = {
-    p1: { x: proj.x, y: proj.y },
-    p2: { ...original.p2 },
-    obj1: "SPL",
-    obj2: original.obj2,
-    nombre_obj1: "",
-    nombre_obj2: original.nombre_obj2,
-    dimension_mm: dim2,
-    deduce1: "",
-    deduce2: original.deduce2,
-    item: null
-  };
-
-  // sustituir línea original por las 2 nuevas
-  const updated = [...lines];
-  updated.splice(lineIndex, 1, lineA, lineB);
-
-  setLines(updated);
-  setAddingSPL(false);
-  setStatusMessage("🔺 SPL insertado correctamente.");
-  return;
-}
   // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
   if (pencilMode) {
     if (eraserMode) return;
@@ -416,14 +412,13 @@ const updateNombre = () => {
   };
 const calcularRuta = (start, end) => {
   const graph = {};
-[...lines, ...acotaciones].forEach((seg) => {
-  const { nombre_obj1, nombre_obj2 } = seg;
-  const dim = seg.dimension_mm || seg.dim; // usa la que exista
-  if (!nombre_obj1 || !nombre_obj2 || !dim) return;
+  lines.forEach((line) => {
+    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-graph[nombre_obj1][nombre_obj2] = dim;
-graph[nombre_obj2][nombre_obj1] = dim;
+    graph[nombre_obj1][nombre_obj2] = dimension_mm;
+    graph[nombre_obj2][nombre_obj1] = dimension_mm;
   });
 
   const distances = {};
@@ -461,16 +456,15 @@ graph[nombre_obj2][nombre_obj1] = dim;
 const calcularRutaReal = () => {
   const graph = {};
 
-[...lines, ...acotaciones].forEach((seg) => {
-  const { nombre_obj1, nombre_obj2 } = seg;
-  const dim = seg.dimension_mm || seg.dim; // usa la que exista
-  if (!nombre_obj1 || !nombre_obj2 || !dim) return;
+  lines.forEach((line) => {
+    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
+    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
 
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
 
-graph[nombre_obj1][nombre_obj2] = dim;
-graph[nombre_obj2][nombre_obj1] = dim;
+    graph[nombre_obj1][nombre_obj2] = dimension_mm;
+    graph[nombre_obj2][nombre_obj1] = dimension_mm;
   });
 
   const dijkstra = (start, end) => {
@@ -801,40 +795,17 @@ lines.forEach((line) => {
       },
     };
 
-switch (tipo) {
-  case 'Conector':
-    return (
-      <Rect
-        {...commonProps}
-        x={x - 5}
-        y={y - 5}
-        width={10}
-        height={10}
-      />
-    );
-  case 'BRK':
-    return (
-      <Circle
-        {...commonProps}
-        radius={4}
-      />
-    );
-// Reemplaza con este código
-// Reemplaza con este código
-case 'SPL':
-  return (
-    <Circle
-      {...commonProps}
-      radius={6}
-      stroke="red"
-      strokeWidth={1}
-      fill={isHovered ? "lightblue" : "white"}
-    />
-  );
-  default:
-    return null;
-}
-};
+    switch (tipo) {
+      case 'Conector':
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
+      case 'BRK':
+        return <Circle {...commonProps} radius={4} />;
+      case 'SPL':
+        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
@@ -1314,154 +1285,16 @@ case 'SPL':
     align="center"
   />
 </Label>
+                {line.nombre_obj1 && (
+                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
+                )}
+                {line.nombre_obj2 && (
+                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
+                )}
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
-// Reemplaza con este código
-// Reemplaza tus dos bloques de código del Text para SPL con esto
-// Reemplaza tus dos bloques de código del Text para SPL con esto
-{line.obj1 === "SPL" && line.nombre_obj1 && (
-  <Text
-    x={line.p1.x - 6}
-    y={line.p1.y - 6}
-    width={12}
-    height={12}
-    text={line.nombre_obj1}
-    fontSize={Math.min(10, 12 / (line.nombre_obj1.length * 0.6))}
-    fill="black"
-    align="center"
-    verticalAlign="middle"
-    onMouseEnter={e => {
-        const stage = e.target.getStage();
-        stage.container().style.cursor = 'pointer';
-    }}
-    onMouseLeave={e => {
-        const stage = e.target.getStage();
-        stage.container().style.cursor = 'default';
-    }}
-    onClick={() => {
-        if (!eraserMode && !pencilMode) {
-            setSelectedEnd({ lineIndex: index, end: 'p1' });
-            setNameInput(line.nombre_obj1);
-            setSelectorPos({ x: line.p1.x, y: line.p1.y });
-            setSelectorEnd({ lineIndex: index, end: 'p1' });
-        }
-    }}
-  />
-)}
-{line.obj2 === "SPL" && line.nombre_obj2 && (
-  <Text
-    x={line.p2.x - 6}
-    y={line.p2.y - 6}
-    width={12}
-    height={12}
-    text={line.nombre_obj2}
-    fontSize={Math.min(10, 12 / (line.nombre_obj2.length * 0.6))}
-    fill="black"
-    align="center"
-    verticalAlign="middle"
-    onMouseEnter={e => {
-        const stage = e.target.getStage();
-        stage.container().style.cursor = 'pointer';
-    }}
-    onMouseLeave={e => {
-        const stage = e.target.getStage();
-        stage.container().style.cursor = 'default';
-    }}
-    onClick={() => {
-        if (!eraserMode && !pencilMode) {
-            setSelectedEnd({ lineIndex: index, end: 'p2' });
-            setNameInput(line.nombre_obj2);
-            setSelectorPos({ x: line.p2.x, y: line.p2.y });
-            setSelectorEnd({ lineIndex: index, end: 'p2' });
-        }
-    }}
-  />
-)}
               </React.Fragment>
             ))}
-
-{acotaciones.map((a, i) => (
-  <React.Fragment key={`aco-${i}`}>
-    <Line
-      points={[a.p1.x, a.p1.y, a.p2.x, a.p2.y]}
-      stroke="blue"
-      dash={[4, 4]}
-      strokeWidth={1}
-    />
-    <Text
-      x={(a.p1.x + a.p2.x) / 2}
-      y={(a.p1.y + a.p2.y) / 2 - 10}
-      text={`${a.dim ?? ''}`}   // 👈 ya sin "mm"
-      fontSize={11}
-      fill="blue"               // 👈 color azul
-      padding={1}
-      align="center"
-    />
-  </React.Fragment>
-))}
-
-{acotaciones.filter(a => a.spl && a.splPos).map((a, i) => {
-  // calcular ángulo de la línea en radianes
-  const dx = a.p2.x - a.p1.x;
-  const dy = a.p2.y - a.p1.y;
-  const angle = Math.atan2(dy, dx); // orientación de la línea
-
-  // tamaño del señalador
-  const radius = 9;
-  const stickLength = 15;
-
-  return (
-    <React.Fragment key={`spl-${i}`}>
-      {/* palito apuntando al SPL */}
-      <Line
-        points={[
-          a.splPos.x,
-          a.splPos.y,
-          a.splPos.x - Math.sin(angle) * stickLength,
-          a.splPos.y + Math.cos(angle) * stickLength
-        ]}
-        stroke="red"
-        strokeWidth={1}
-      />
-      {/* círculo en la punta */}
-<Circle
-  x={a.splPos.x - Math.sin(angle) * stickLength}
-  y={a.splPos.y + Math.cos(angle) * stickLength}
-  radius={radius}
-  stroke="red"
-  strokeWidth={3}
-  fill={hoveredSPL === i ? "lightblue" : "white"}   // 👈 cambia color al hover
-  onMouseEnter={() => setHoveredSPL(i)}
-  onMouseLeave={() => setHoveredSPL(null)}
-  onClick={() => {
-    setSelectedEnd({
-      type: "SPL",
-      index: i,
-    });
-    setNameInput(a.nombre_obj1 || a.nombre_obj2 || "");
-    setSelectorPos({
-      x: a.splPos.x - Math.sin(angle) * stickLength,
-      y: a.splPos.y + Math.cos(angle) * stickLength,
-    });
-  }}
-/>
-  <Text
-  x={a.splPos.x - Math.sin(angle) * stickLength}
-  y={a.splPos.y + Math.cos(angle) * stickLength}
-  text={a.nombre_obj1 || a.nombre_obj2 || ""}
-  fontSize={radius}       // 👈 el texto se adapta al círculo
-  fill="black"
-  align="center"
-  verticalAlign="middle"
-  offsetX={(a.nombre_obj1 || a.nombre_obj2 || "").length * (radius / 3)}
-  offsetY={radius / 2}
-/>
-
-    </React.Fragment>
-  );
-})}
-
-
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
