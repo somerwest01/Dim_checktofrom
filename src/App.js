@@ -819,16 +819,25 @@ switch (tipo) {
         radius={4}
       />
     );
-  case 'SPL':
-    return (
-      <Circle
-        {...commonProps}
-        radius={6}
-        stroke="red"
-        strokeWidth={1}
-        fill={isHovered ? "lightblue" : "white"}
-      />
-    );
+// Reemplaza con este código
+case 'SPL':
+  return (
+    <Circle
+      {...commonProps}
+      radius={6}
+      stroke="red"
+      strokeWidth={1}
+      fill={isHovered ? "lightblue" : "white"}
+      onClick={() => {
+        if (!eraserMode && !pencilMode) {
+          setSelectedEnd({ lineIndex: index, end });
+          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+          setSelectorPos({ x, y });
+          setSelectorEnd({ lineIndex: index, end });
+        }
+      }}
+    />
+  );
   default:
     return null;
 }
