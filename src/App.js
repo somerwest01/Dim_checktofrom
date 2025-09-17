@@ -235,108 +235,110 @@ function findClosestSegment(pos) {
   };
 
 const handleStageClick = (e) => {
-  if (e.evt.button !== 0) return; // solo click izquierdo
+    if (e.evt.button !== 0) return; // solo click izquierdo
 
-  const stage = e.target.getStage();
-  const pos = getRelativePointerPosition(stage);
+    const stage = e.target.getStage();
+    const pos = getRelativePointerPosition(stage);
 
-  // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
-    if (!found || found.distance > proximityPx) {
-      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+    // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
+    if (addingSPL) {
+      const found = findClosestSegment(pos);
+      const proximityPx = 12; // Ajuste: distancia máxima para "aceptar" el drop
+      if (!found || found.distance > proximityPx) {
+        setStatusMessage('Acércate a una línea y haz clic para colocar el SPL.');
+        return;
+      }
+
+      const { lineIndex, proj } = found;
+      const original = lines[lineIndex];
+
+      const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+      const dim1 = Math.round(totalDim * proj.t);
+      const dim2 = Math.round(totalDim * (1 - proj.t));
+
+      // Generar un nombre único para el nuevo SPL
+      const newSPLName = `SPL_${Math.floor(Math.random() * 10000)}`;
+
+      // crear las dos nuevas líneas que reemplazarán a la original
+      const lineA = {
+        p1: { ...original.p1 },
+        p2: { x: proj.x, y: proj.y },
+        obj1: original.obj1,
+        obj2: 'SPL',
+        nombre_obj1: original.nombre_obj1 || '',
+        nombre_obj2: newSPLName,
+        dimension_mm: dim1,
+        deduce1: original.deduce1 || '',
+        deduce2: '',
+        item: original.item || null
+      };
+
+      const lineB = {
+        p1: { x: proj.x, y: proj.y },
+        p2: { ...original.p2 },
+        obj1: 'SPL',
+        obj2: original.obj2,
+        nombre_obj1: newSPLName,
+        nombre_obj2: original.nombre_obj2 || '',
+        dimension_mm: dim2,
+        deduce1: '',
+        deduce2: original.deduce2 || '',
+        item: original.item || null
+      };
+
+      const updated = [...lines];
+      updated.splice(lineIndex, 1, lineA, lineB);
+      setLines(updated);
+      setAddingSPL(false);
+      setStatusMessage('🔺 SPL insertado correctamente.');
       return;
     }
 
-    const { lineIndex, proj } = found;
-    const original = lines[lineIndex];
+    // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
+    if (pencilMode) {
+      if (eraserMode) return;
 
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
-    // crear las dos nuevas líneas que reemplazarán a la original
-    const lineA = {
-      p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
-      obj1: original.obj1,
-      obj2: 'SPL',
-      nombre_obj1: original.nombre_obj1 || '',
-      nombre_obj2: '', // el SPL por ahora no tiene nombre
-      dimension_mm: dim1,
-      deduce1: original.deduce1 || '',
-      deduce2: '',
-      item: original.item || null
-    };
-
-    const lineB = {
-      p1: { x: proj.x, y: proj.y },
-      p2: { ...original.p2 },
-      obj1: 'SPL',
-      obj2: original.obj2,
-      nombre_obj1: '',
-      nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2,
-      deduce1: '',
-      deduce2: original.deduce2 || '',
-      item: original.item || null
-    };
-
-    const updated = [...lines];
-    updated.splice(lineIndex, 1, lineA, lineB);
-    setLines(updated);
-    setAddingSPL(false);
-    setStatusMessage('🔺 SPL insertado correctamente.');
-    return;
-  }
-
-  // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
-  if (pencilMode) {
-    if (eraserMode) return;
-
-    if (points.length === 0) {
-      const snap = getClosestEndpoint(pos);
-      if (snap) {
-        setPoints([snap.point]);
-      } else {
-        setPoints([pos]);
-      }
-    } else {
-      let adjustedPos = { ...pos };
-      if (modoAnguloRecto) {
-        const p1 = points[0];
-        const dx = Math.abs(pos.x - p1.x);
-        const dy = Math.abs(pos.y - p1.y);
-        if (dx > dy) {
-          adjustedPos.y = p1.y; // Horizontal
+      if (points.length === 0) {
+        const snap = getClosestEndpoint(pos);
+        if (snap) {
+          setPoints([snap.point]);
         } else {
-          adjustedPos.x = p1.x; // Vertical
+          setPoints([pos]);
         }
+      } else {
+        let adjustedPos = { ...pos };
+        if (modoAnguloRecto) {
+          const p1 = points[0];
+          const dx = Math.abs(pos.x - p1.x);
+          const dy = Math.abs(pos.y - p1.y);
+          if (dx > dy) {
+            adjustedPos.y = p1.y; // Horizontal
+          } else {
+            adjustedPos.x = p1.x; // Vertical
+          }
+        }
+
+        const newLine = {
+          p1: points[0],
+          p2: adjustedPos,
+          obj1,
+          obj2,
+          nombre_obj1: '',
+          nombre_obj2: '',
+          dimension_mm: null,
+          deduce1: '',
+          deduce2: '',
+          item: null
+        };
+
+        setTempLine(newLine);
+        setInputPos(pos);
+        setShowInput(true);
+        setPoints([]);
+        setMousePos(null);
       }
-
-      const newLine = {
-        p1: points[0],
-        p2: adjustedPos,
-        obj1,
-        obj2,
-        nombre_obj1: '',
-        nombre_obj2: '',
-        dimension_mm: null,
-        deduce1: '',
-        deduce2: '',
-        item: null
-      };
-
-      setTempLine(newLine);
-      setInputPos(pos);
-      setShowInput(true);
-      setPoints([]);
-      setMousePos(null);
     }
-  }
-};
+  };
 
 const handleMouseMove = (e) => {
   if (pencilMode && points.length === 1 && !eraserMode) {
@@ -372,34 +374,36 @@ const handleMouseMove = (e) => {
 
 
 const updateNombre = () => {
-  if (selectedEnd) {
-    const updatedLines = [...lines];
-    const targetLine = updatedLines[selectedEnd.lineIndex];
-    const newName = nameInput;
-    const targetPos = targetLine[selectedEnd.end];
+    if (selectedEnd) {
+      const updatedLines = [...lines];
+      const targetLine = updatedLines[selectedEnd.lineIndex];
+      const newName = nameInput;
+      const targetPos = targetLine[selectedEnd.end];
 
-    // Asignar nombre al extremo seleccionado
-    if (selectedEnd.end === 'p1') {
-      targetLine.nombre_obj1 = newName;
-    } else {
-      targetLine.nombre_obj2 = newName;
+      // Asignar nombre al extremo seleccionado
+      if (selectedEnd.end === 'p1') {
+        targetLine.nombre_obj1 = newName;
+      } else {
+        targetLine.nombre_obj2 = newName;
+      }
+
+      // Propagar nombre a extremos cercanos
+      updatedLines.forEach((line) => {
+        // Usa una tolerancia para evitar problemas de precisión flotante
+        const tol = 1; 
+        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < tol) {
+          line.nombre_obj1 = newName;
+        }
+        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < tol) {
+          line.nombre_obj2 = newName;
+        }
+      });
+
+      setLines(updatedLines);
+      setSelectedEnd(null);
+      setNameInput('');
     }
-
-    // Propagar nombre a extremos cercanos
-    updatedLines.forEach((line) => {
-      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj1 = newName;
-      }
-      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj2 = newName;
-      }
-    });
-
-    setLines(updatedLines);
-    setSelectedEnd(null);
-    setNameInput('');
-  }
-};
+  };
 
 
 
@@ -774,34 +778,50 @@ lines.forEach((line) => {
 
   };
 
-  const renderObjeto = (tipo, x, y, key, index, end) => {
+const renderObjeto = (tipo, x, y, key, index, end) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
       key,
       x,
       y,
-      fill: isHovered ? 'green' : tipo === 'Conector' ? 'purple' : tipo === 'BRK' ? 'black' : 'green',
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
-      
-  if (!eraserMode && !pencilMode) {
-    setSelectedEnd({ lineIndex: index, end });
-    setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-    setSelectorPos({ x, y });
-    setSelectorEnd({ lineIndex: index, end });
-
+        if (!eraserMode && !pencilMode) {
+          // Abrimos el selector para todos los objetos ahora, incluyendo SPL
+          setSelectedEnd({ lineIndex: index, end });
+          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+          setSelectorPos({ x, y });
+          setSelectorEnd({ lineIndex: index, end });
         }
       },
     };
 
     switch (tipo) {
       case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
       case 'BRK':
-        return <Circle {...commonProps} radius={4} />;
+        return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+        // En lugar de renderizar un RegularPolygon, renderizamos un círculo y un texto
+        const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
+        return (
+          <React.Fragment key={key}>
+            <Circle {...commonProps} radius={7} fill="white" stroke="red" strokeWidth={1.5} />
+            <Text
+              x={x}
+              y={y}
+              text={name}
+              fontSize={8}
+              fill="black"
+              align="center"
+              verticalAlign="middle"
+              // Ajustamos la posición del texto para que esté centrado en el círculo
+              offsetX={Math.round(name.length * 2.2)}
+              offsetY={4}
+            />
+          </React.Fragment>
+        );
       default:
         return null;
     }
