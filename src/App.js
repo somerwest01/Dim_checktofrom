@@ -576,31 +576,60 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-  // Nueva función para manejar el arrastre de SPLs
-  const handleSPLDragMove = (e, lineIndex, end) => {
+const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     const targetLine = updatedLines[lineIndex];
 
-    // Actualizar la posición del SPL en la línea actual
-    if (end === 'p1') {
-      targetLine.p1 = newPos;
-    } else {
-      targetLine.p2 = newPos;
+    // Encontrar la línea "padre" en la que el SPL fue insertado
+    // Buscamos la línea que tiene el mismo nombre de SPL en uno de sus extremos
+    const connectedLines = updatedLines.filter(line => 
+      line.nombre_obj1 === targetLine.nombre_obj2 || line.nombre_obj2 === targetLine.nombre_obj2
+    );
+
+    // Si hay más de una línea conectada (lo que siempre debería ser el caso para un SPL)
+    if (connectedLines.length === 2) {
+      const lineA = connectedLines[0];
+      const lineB = connectedLines[1];
+      
+      const p1 = lineA.p1;
+      const p2 = lineB.p2;
+      const splPoint = newPos;
+
+      // Calcular la proyección del punto del SPL sobre la línea original (p1 a p2)
+      const lineVector = { x: p2.x - p1.x, y: p2.y - p1.y };
+      const pointVector = { x: splPoint.x - p1.x, y: splPoint.y - p1.y };
+
+      const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
+      const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+
+      let t = 0;
+      if (lineLengthSq !== 0) {
+        t = dotProduct / lineLengthSq;
+      }
+      
+      // Asegurarse de que t esté entre 0 y 1 para que el punto se mantenga dentro de la línea
+      t = Math.max(0, Math.min(1, t));
+
+      // Calcular la nueva posición proyectada
+      const projectedX = p1.x + t * lineVector.x;
+      const projectedY = p1.y + t * lineVector.y;
+      const newSPLPos = { x: projectedX, y: projectedY };
+      
+      // Actualizar las posiciones y recalcular las dimensiones
+      lineA.p2 = newSPLPos;
+      lineB.p1 = newSPLPos;
+
+      // Recalcular las dimensiones en milímetros
+      const totalLength = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const newLengthA = Math.hypot(newSPLPos.x - p1.x, newSPLPos.y - p1.y);
+      const newLengthB = Math.hypot(p2.x - newSPLPos.x, p2.y - newSPLPos.y);
+
+      lineA.dimension_mm = Math.round((newLengthA / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
+      lineB.dimension_mm = Math.round((newLengthB / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
+
+      setLines(updatedLines);
     }
-
-    // Actualizar la posición del SPL en la línea conectada (si existe)
-    updatedLines.forEach((line) => {
-      const tol = 1;
-      if (end === 'p1' && Math.hypot(line.p2.x - newPos.x, line.p2.y - newPos.y) < tol) {
-        line.p2 = newPos;
-      }
-      if (end === 'p2' && Math.hypot(line.p1.x - newPos.x, line.p1.y - newPos.y) < tol) {
-        line.p1 = newPos;
-      }
-    });
-
-    setLines(updatedLines);
   };
 
 const handleImportExcel = (e) => {
