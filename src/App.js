@@ -875,7 +875,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 
         return (
           <React.Fragment key={key}>
-            {/* El círculo es el único elemento arrastrable */}
+            {/* El círculo es el único elemento que escuchará el clic y el arrastre */}
             <Circle 
               {...commonProps} 
               radius={fixedRadius} 
@@ -886,9 +886,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
             
-            {/* El texto ya no tiene la propiedad draggable */}
+            {/* El texto ya no tiene la propiedad 'draggable' y le decimos que NO escuche eventos */}
             <Text
-              {...commonProps} 
               x={x}
               y={y}
               text={name}
@@ -900,6 +899,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               height={circleDiameter}
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
+              // Esta propiedad hace que el clic 'atraviese' el texto y llegue al círculo
+              listening={false} 
             />
           </React.Fragment>
         );
