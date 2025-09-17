@@ -806,7 +806,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         const fixedRadius = 7;
         const circleDiameter = fixedRadius * 2;
         
-        // Se calcula un tamaño de fuente que garantice que el texto se ajuste al círculo
         const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
         return (
@@ -814,20 +813,18 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
             {/* El círculo ahora tiene un radio fijo */}
             <Circle {...commonProps} radius={fixedRadius} fill="white" stroke="red" strokeWidth={1.5} />
             
-            {/* El texto se centra utilizando las propiedades de Konva */}
+            {/* Se añade commonProps para que el texto sea también clickeable */}
             <Text
+              {...commonProps} 
               x={x}
               y={y}
               text={name}
               fontSize={calculatedFontSize}
               fill="black"
-              // Se asegura que el texto esté alineado en el centro del componente
               align="center"
               verticalAlign="middle"
-              // Se le da al texto una caja del mismo tamaño que el círculo para que el centrado funcione
               width={circleDiameter}
               height={circleDiameter}
-              // Se ajusta el desplazamiento para que el punto de anclaje de la caja de texto esté en el centro del círculo
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
             />
