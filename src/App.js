@@ -865,7 +865,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 
         return (
           <React.Fragment key={key}>
-            {/* El círculo ahora tiene la propiedad draggable */}
+            {/* El círculo es el único elemento arrastrable */}
             <Circle 
               {...commonProps} 
               radius={fixedRadius} 
@@ -876,7 +876,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
             
-            {/* El texto también tiene la propiedad draggable */}
+            {/* El texto ya no tiene la propiedad draggable */}
             <Text
               {...commonProps} 
               x={x}
@@ -890,8 +890,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               height={circleDiameter}
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
-              draggable={editingSPLMode}
-              onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
           </React.Fragment>
         );
