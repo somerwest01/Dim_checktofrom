@@ -41,8 +41,7 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
-
-
+  const [acotaciones, setAcotaciones] = useState([]);
 
 
   const botonBase = {
@@ -241,56 +240,52 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
-    if (!found || found.distance > proximityPx) {
-      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
-      return;
-    }
-
-    const { lineIndex, proj } = found;
-    const original = lines[lineIndex];
-
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
-    // crear las dos nuevas líneas que reemplazarán a la original
-    const lineA = {
-      p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
-      obj1: original.obj1,
-      obj2: 'SPL',
-      nombre_obj1: original.nombre_obj1 || '',
-      nombre_obj2: '', // el SPL por ahora no tiene nombre
-      dimension_mm: dim1,
-      deduce1: original.deduce1 || '',
-      deduce2: '',
-      item: original.item || null
-    };
-
-    const lineB = {
-      p1: { x: proj.x, y: proj.y },
-      p2: { ...original.p2 },
-      obj1: 'SPL',
-      obj2: original.obj2,
-      nombre_obj1: '',
-      nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2,
-      deduce1: '',
-      deduce2: original.deduce2 || '',
-      item: original.item || null
-    };
-
-    const updated = [...lines];
-    updated.splice(lineIndex, 1, lineA, lineB);
-    setLines(updated);
-    setAddingSPL(false);
-    setStatusMessage('🔺 SPL insertado correctamente.');
+if (addingSPL) {
+  const found = findClosestSegment(pos);
+  const proximityPx = 12; 
+  if (!found || found.distance > proximityPx) {
+    setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
     return;
   }
+
+  const { lineIndex, proj } = found;
+  const original = lines[lineIndex];
+
+  // dimensión total
+  const totalDim = parseFloat(original.dimension_mm) 
+                  || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+
+  const dim1 = Math.round(totalDim * proj.t);
+  const dim2 = Math.round(totalDim * (1 - proj.t));
+
+  // ✅ Guardamos como "acotaciones externas" sin tocar la línea original
+  const newAcotaciones = [
+    {
+      lineaIndex: lineIndex,
+      p1: { ...original.p1 },
+      p2: { x: proj.x, y: proj.y },
+      nombre_obj1: original.nombre_obj1,
+      nombre_obj2: 'SPL',
+      dim: dim1,
+      spl: true
+    },
+    {
+      lineaIndex: lineIndex,
+      p1: { x: proj.x, y: proj.y },
+      p2: { ...original.p2 },
+      nombre_obj1: 'SPL',
+      nombre_obj2: original.nombre_obj2,
+      dim: dim2,
+      spl: true
+    }
+  ];
+
+  setAcotaciones([...acotaciones, ...newAcotaciones]);
+  setAddingSPL(false);
+  setStatusMessage('🔺 SPL acotado correctamente.');
+  return;
+}
+
 
   // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
   if (pencilMode) {
@@ -412,9 +407,10 @@ const updateNombre = () => {
   };
 const calcularRuta = (start, end) => {
   const graph = {};
-  lines.forEach((line) => {
-    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+[...lines, ...acotaciones].forEach((seg) => {
+  const { nombre_obj1, nombre_obj2 } = seg;
+  const dim = seg.dimension_mm || seg.dim; // usa la que exista
+  if (!nombre_obj1 || !nombre_obj2 || !dim) return;
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
     graph[nombre_obj1][nombre_obj2] = dimension_mm;
@@ -456,9 +452,10 @@ const calcularRuta = (start, end) => {
 const calcularRutaReal = () => {
   const graph = {};
 
-  lines.forEach((line) => {
-    const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+[...lines, ...acotaciones].forEach((seg) => {
+  const { nombre_obj1, nombre_obj2 } = seg;
+  const dim = seg.dimension_mm || seg.dim; // usa la que exista
+  if (!nombre_obj1 || !nombre_obj2 || !dim) return;
 
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
@@ -1295,6 +1292,25 @@ lines.forEach((line) => {
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
               </React.Fragment>
             ))}
+
+{acotaciones.map((a, i) => (
+  <React.Fragment key={`aco-${i}`}>
+    <Line
+      points={[a.p1.x, a.p1.y, a.p2.x, a.p2.y]}
+      stroke="blue"
+      dash={[4, 4]}
+      strokeWidth={1}
+    />
+    <Text
+      x={(a.p1.x + a.p2.x) / 2}
+      y={(a.p1.y + a.p2.y) / 2 - 10}
+      text={`${a.dim} mm`}
+      fontSize={10}
+      fill="blue"
+    />
+  </React.Fragment>
+))}
+
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
