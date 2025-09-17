@@ -1325,15 +1325,16 @@ case 'SPL':
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
 {line.obj1 === "SPL" && line.nombre_obj1 && (
   <Text
-    x={line.p1.x - 6} // Desplazamos a la izquierda por el radio
-    y={line.p1.y - 6} // Desplazamos hacia arriba por el radio
-    width={12}       // El ancho del texto es el diámetro del círculo
-    height={12}      // La altura del texto es el diámetro del círculo
+    x={line.p1.x - 6}
+    y={line.p1.y - 6}
+    width={12}
+    height={12}
     text={line.nombre_obj1}
-    fontSize={Math.min(10, 12 / (line.nombre_obj1.length * 0.6))} // Ajuste dinámico de la fuente
+    fontSize={Math.min(10, 12 / (line.nombre_obj1.length * 0.6))}
     fill="black"
-    align="center"      // Centra horizontalmente el texto
-    verticalAlign="middle" // Centra verticalmente el texto
+    align="center"
+    verticalAlign="middle"
+    listening={false} // ¡Este es el cambio clave!
   />
 )}
 {line.obj2 === "SPL" && line.nombre_obj2 && (
@@ -1347,6 +1348,7 @@ case 'SPL':
     fill="black"
     align="center"
     verticalAlign="middle"
+    listening={false} // ¡Y aquí también!
   />
 )}
 
