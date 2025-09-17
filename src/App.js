@@ -820,6 +820,7 @@ switch (tipo) {
       />
     );
 // Reemplaza con este código
+// Reemplaza con este código
 case 'SPL':
   return (
     <Circle
@@ -828,14 +829,6 @@ case 'SPL':
       stroke="red"
       strokeWidth={1}
       fill={isHovered ? "lightblue" : "white"}
-      onClick={() => {
-        if (!eraserMode && !pencilMode) {
-          setSelectedEnd({ lineIndex: index, end });
-          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-          setSelectorPos({ x, y });
-          setSelectorEnd({ lineIndex: index, end });
-        }
-      }}
     />
   );
   default:
@@ -1323,6 +1316,7 @@ case 'SPL':
 </Label>
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+// Reemplaza con este código
 {line.obj1 === "SPL" && line.nombre_obj1 && (
   <Text
     x={line.p1.x - 6}
@@ -1334,7 +1328,22 @@ case 'SPL':
     fill="black"
     align="center"
     verticalAlign="middle"
-    listening={false} // ¡Este es el cambio clave!
+    onMouseEnter={e => {
+        const stage = e.target.getStage();
+        stage.container().style.cursor = 'pointer';
+    }}
+    onMouseLeave={e => {
+        const stage = e.target.getStage();
+        stage.container().style.cursor = 'default';
+    }}
+    onClick={() => {
+        if (!eraserMode && !pencilMode) {
+            setSelectedEnd({ lineIndex: i, end: 'p1' });
+            setNameInput(line.nombre_obj1);
+            setSelectorPos({ x: line.p1.x, y: line.p1.y });
+            setSelectorEnd({ lineIndex: i, end: 'p1' });
+        }
+    }}
   />
 )}
 {line.obj2 === "SPL" && line.nombre_obj2 && (
@@ -1348,10 +1357,24 @@ case 'SPL':
     fill="black"
     align="center"
     verticalAlign="middle"
-    listening={false} // ¡Y aquí también!
+    onMouseEnter={e => {
+        const stage = e.target.getStage();
+        stage.container().style.cursor = 'pointer';
+    }}
+    onMouseLeave={e => {
+        const stage = e.target.getStage();
+        stage.container().style.cursor = 'default';
+    }}
+    onClick={() => {
+        if (!eraserMode && !pencilMode) {
+            setSelectedEnd({ lineIndex: i, end: 'p2' });
+            setNameInput(line.nombre_obj2);
+            setSelectorPos({ x: line.p2.x, y: line.p2.y });
+            setSelectorEnd({ lineIndex: i, end: 'p2' });
+        }
+    }}
   />
 )}
-
               </React.Fragment>
             ))}
 
