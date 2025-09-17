@@ -42,6 +42,8 @@ function App() {
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [acotaciones, setAcotaciones] = useState([]);
+  const [hoveredSPL, setHoveredSPL] = useState(null);
+
 
 
   const botonBase = {
@@ -1342,9 +1344,11 @@ lines.forEach((line) => {
     <Text
       x={(a.p1.x + a.p2.x) / 2}
       y={(a.p1.y + a.p2.y) / 2 - 10}
-      text={`${a.dim} mm`}
-      fontSize={10}
-      fill="blue"
+      text={`${a.dim ?? ''}`}   // 👈 ya sin "mm"
+      fontSize={11}
+      fill="blue"               // 👈 color azul
+      padding={1}
+      align="center"
     />
   </React.Fragment>
 ))}
@@ -1356,8 +1360,8 @@ lines.forEach((line) => {
   const angle = Math.atan2(dy, dx); // orientación de la línea
 
   // tamaño del señalador
-  const radius = 12;
-  const stickLength = 20;
+  const radius = 9;
+  const stickLength = 15;
 
   return (
     <React.Fragment key={`spl-${i}`}>
@@ -1373,14 +1377,39 @@ lines.forEach((line) => {
         strokeWidth={1}
       />
       {/* círculo en la punta */}
-      <Circle
-        x={a.splPos.x - Math.sin(angle) * stickLength}
-        y={a.splPos.y + Math.cos(angle) * stickLength}
-        radius={radius}
-        stroke="red"
-        strokeWidth={1}
-        fill="white"
-      />
+<Circle
+  x={a.splPos.x - Math.sin(angle) * stickLength}
+  y={a.splPos.y + Math.cos(angle) * stickLength}
+  radius={radius}
+  stroke="red"
+  strokeWidth={3}
+  fill={hoveredSPL === i ? "lightblue" : "white"}   // 👈 cambia color al hover
+  onMouseEnter={() => setHoveredSPL(i)}
+  onMouseLeave={() => setHoveredSPL(null)}
+  onClick={() => {
+    setSelectedEnd({
+      type: "SPL",
+      index: i,
+    });
+    setNameInput(a.nombre_obj1 || a.nombre_obj2 || "");
+    setSelectorPos({
+      x: a.splPos.x - Math.sin(angle) * stickLength,
+      y: a.splPos.y + Math.cos(angle) * stickLength,
+    });
+  }}
+/>
+  <Text
+  x={a.splPos.x - Math.sin(angle) * stickLength}
+  y={a.splPos.y + Math.cos(angle) * stickLength}
+  text={a.nombre_obj1 || a.nombre_obj2 || ""}
+  fontSize={radius}       // 👈 el texto se adapta al círculo
+  fill="black"
+  align="center"
+  verticalAlign="middle"
+  offsetX={(a.nombre_obj1 || a.nombre_obj2 || "").length * (radius / 3)}
+  offsetY={radius / 2}
+/>
+
     </React.Fragment>
   );
 })}
