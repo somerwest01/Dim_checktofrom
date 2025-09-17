@@ -832,7 +832,7 @@ switch (tipo) {
   default:
     return null;
 }
-
+};
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
