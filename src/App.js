@@ -1306,16 +1306,11 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
     align="center"
   />
 </Label>
-               // {line.nombre_obj1 && (
-                 // <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
-                //)}
-                //{line.nombre_obj2 && (
-                 // <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
-                //)}
+
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
               </React.Fragment>
-            ))}
+            }
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
