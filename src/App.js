@@ -576,6 +576,32 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
+  // Nueva función para manejar el arrastre de SPLs
+  const handleSPLDragMove = (e, lineIndex, end) => {
+    const newPos = { x: e.target.x(), y: e.target.y() };
+    const updatedLines = [...lines];
+    const targetLine = updatedLines[lineIndex];
+
+    // Actualizar la posición del SPL en la línea actual
+    if (end === 'p1') {
+      targetLine.p1 = newPos;
+    } else {
+      targetLine.p2 = newPos;
+    }
+
+    // Actualizar la posición del SPL en la línea conectada (si existe)
+    updatedLines.forEach((line) => {
+      const tol = 1;
+      if (end === 'p1' && Math.hypot(line.p2.x - newPos.x, line.p2.y - newPos.y) < tol) {
+        line.p2 = newPos;
+      }
+      if (end === 'p2' && Math.hypot(line.p1.x - newPos.x, line.p1.y - newPos.y) < tol) {
+        line.p1 = newPos;
+      }
+    });
+
+    setLines(updatedLines);
+  };
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -805,15 +831,22 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
         const fixedRadius = 7;
         const circleDiameter = fixedRadius * 2;
-        
         const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
         return (
           <React.Fragment key={key}>
-            {/* El círculo ahora tiene un radio fijo */}
-            <Circle {...commonProps} radius={fixedRadius} fill="white" stroke="red" strokeWidth={1.5} />
+            <Circle 
+              {...commonProps} 
+              radius={fixedRadius} 
+              fill="white" 
+              stroke="red" 
+              strokeWidth={1.5} 
+              // Se hace el SPL arrastrable si estamos en modo de edición
+              draggable={editingSPLMode}
+              // Manejador para el movimiento
+              onDragMove={(e) => handleSPLDragMove(e, index, end)}
+            />
             
-            {/* Se añade commonProps para que el texto sea también clickeable */}
             <Text
               {...commonProps} 
               x={x}
