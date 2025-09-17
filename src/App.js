@@ -576,30 +576,31 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex, end) => {
+const handleSPLDragMove = (e, lineIndex) => {
+    // La nueva posición es la del Group que se está arrastrando
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
-    // Identificar el nombre del SPL que se está moviendo
-    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
+    // Identificar el nombre del SPL que se está moviendo a través del lineIndex
+    const targetLine = updatedLines[lineIndex];
+    const splName = targetLine.obj1 === 'SPL' ? targetLine.nombre_obj1 : targetLine.nombre_obj2;
 
-    // Encontrar ambas líneas que se unen en este SPL
+    // Encontrar las dos líneas que se unen en este SPL
     const connectedLines = updatedLines.filter(line => 
       line.nombre_obj1 === splName || line.nombre_obj2 === splName
     );
 
-    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
     if (connectedLines.length === 2) {
       const lineA = connectedLines[0];
       const lineB = connectedLines[1];
       
-      // Encontrar los puntos fijos de la línea combinada
+      // Encontrar los puntos fijos de la línea original
       const p1Original = lineA.obj1 === 'SPL' ? lineA.p2 : lineA.p1;
       const p2Original = lineB.obj2 === 'SPL' ? lineB.p1 : lineB.p2;
 
       // Calcular la proyección del punto del SPL sobre la línea original
       const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
 
       const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
       const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
@@ -617,20 +618,15 @@ const handleSPLDragMove = (e, lineIndex, end) => {
       const projectedY = p1Original.y + t * lineVector.y;
       const newSPLPos = { x: projectedX, y: projectedY };
       
-      // Actualizar la posición del SPL en ambas líneas
-      if (lineA.obj1 === 'SPL') {
-          lineA.p1 = newSPLPos;
-      } else {
+      // Actualizar la posición de los puntos de las dos líneas
+      if (lineA.obj2 === 'SPL') {
           lineA.p2 = newSPLPos;
       }
-      
-      if (lineB.obj2 === 'SPL') {
-          lineB.p2 = newSPLPos;
-      } else {
+      if (lineB.obj1 === 'SPL') {
           lineB.p1 = newSPLPos;
       }
       
-      // Recalcular las dimensiones en milímetros
+      // Recalcular las dimensiones
       const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
       const newLengthA = Math.hypot(newSPLPos.x - p1Original.x, newSPLPos.y - p1Original.y);
       const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
@@ -641,7 +637,7 @@ const handleSPLDragMove = (e, lineIndex, end) => {
       setLines(updatedLines);
     }
   };
-
+  
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
   setProcesandoExcel(true); // ⏳ Mostrar spinner
@@ -874,22 +870,31 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
         return (
-          <React.Fragment key={key}>
-            {/* El círculo es el único elemento que escuchará el clic y el arrastre */}
+          // Usamos un Group para que el círculo y el texto se muevan juntos
+          <Group 
+            key={key} 
+            x={x} 
+            y={y} 
+            draggable={editingSPLMode}
+            onDragMove={(e) => handleSPLDragMove(e, index, end)}
+            onClick={() => {
+                if (!eraserMode && !pencilMode) {
+                  setSelectedEnd({ lineIndex: index, end });
+                  setNameInput(name);
+                  setSelectorPos({ x, y });
+                  setSelectorEnd({ lineIndex: index, end });
+                }
+            }}
+          >
+            {/* El círculo está en la posición 0,0 relativa al Group */}
             <Circle 
-              {...commonProps} 
               radius={fixedRadius} 
               fill="white" 
               stroke="red" 
               strokeWidth={1.5} 
-              draggable={editingSPLMode}
-              onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
-            
-            {/* El texto ya no tiene la propiedad 'draggable' y le decimos que NO escuche eventos */}
+            {/* El texto también está en 0,0 y se centra dentro de la caja de Konva */}
             <Text
-              x={x}
-              y={y}
               text={name}
               fontSize={calculatedFontSize}
               fill="black"
@@ -899,10 +904,9 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               height={circleDiameter}
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
-              // Esta propiedad hace que el clic 'atraviese' el texto y llegue al círculo
-              listening={false} 
+              listening={false} // Evita que capture eventos y que el clic llegue al Group
             />
-          </React.Fragment>
+          </Group>
         );
       default:
         return null;
