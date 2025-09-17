@@ -251,40 +251,75 @@ if (addingSPL) {
   const { lineIndex, proj } = found;
   const original = lines[lineIndex];
 
-  // dimensión total
-  const totalDim = parseFloat(original.dimension_mm) 
-                  || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-  const dim1 = Math.round(totalDim * proj.t);
-  const dim2 = Math.round(totalDim * (1 - proj.t));
-
-  // ✅ Guardamos como "acotaciones externas" sin tocar la línea original
-  const newAcotaciones = [
-    {
+  // 🔎 buscar si ya hay acotaciones previas de esta línea
+  let segmentos = acotaciones.filter(a => a.lineaIndex === lineIndex);
+  if (segmentos.length === 0) {
+    // si no existen acotaciones, usamos la línea completa como segmento base
+    segmentos = [{
       lineaIndex: lineIndex,
       p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
+      p2: { ...original.p2 },
       nombre_obj1: original.nombre_obj1,
+      nombre_obj2: original.nombre_obj2,
+      dim: parseFloat(original.dimension_mm) 
+            || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y),
+      spl: false
+    }];
+  }
+
+  // calcular sobre qué segmento cayó el click
+  let bestSeg = null;
+  let bestProj = null;
+  let bestDist = Infinity;
+
+  segmentos.forEach(seg => {
+    const projSeg = projectPointOnLine(seg.p1, seg.p2, pos);
+    const dist = Math.hypot(projSeg.x - pos.x, projSeg.y - pos.y);
+    if (dist < bestDist) {
+      bestSeg = seg;
+      bestProj = projSeg;
+      bestDist = dist;
+    }
+  });
+
+  if (!bestSeg) {
+    setStatusMessage("❌ No se encontró segmento válido.");
+    return;
+  }
+
+  // ✅ partir el segmento en 2 nuevos
+  const dim1 = Math.round(bestSeg.dim * bestProj.t);
+  const dim2 = Math.round(bestSeg.dim * (1 - bestProj.t));
+
+  const newSegs = [
+    {
+      lineaIndex: lineIndex,
+      p1: { ...bestSeg.p1 },
+      p2: { x: bestProj.x, y: bestProj.y },
+      nombre_obj1: bestSeg.nombre_obj1,
       nombre_obj2: 'SPL',
       dim: dim1,
       spl: true
     },
     {
       lineaIndex: lineIndex,
-      p1: { x: proj.x, y: proj.y },
-      p2: { ...original.p2 },
+      p1: { x: bestProj.x, y: bestProj.y },
+      p2: { ...bestSeg.p2 },
       nombre_obj1: 'SPL',
-      nombre_obj2: original.nombre_obj2,
+      nombre_obj2: bestSeg.nombre_obj2,
       dim: dim2,
       spl: true
     }
   ];
 
-  setAcotaciones([...acotaciones, ...newAcotaciones]);
+  // quitar el segmento viejo y agregar los nuevos
+  const nuevasAcotaciones = acotaciones.filter(a => a !== bestSeg);
+  setAcotaciones([...nuevasAcotaciones, ...newSegs]);
   setAddingSPL(false);
-  setStatusMessage('🔺 SPL acotado correctamente.');
+  setStatusMessage('🔺 SPL agregado y acotación subdividida.');
   return;
 }
+
 
 
   // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
