@@ -803,18 +803,20 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL':
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
-        const fontSize = 8;
-        const textWidth = name.length * fontSize * 0.6;
-        const radius = Math.max(7, textWidth / 2 + 2);
+        const fixedRadius = 7;
+        
+        // Calcular el tamaño de la fuente para que el texto quepa en el círculo
+        // El factor 1.2 es un ajuste para el ancho de los caracteres
+        const calculatedFontSize = Math.min(8, (fixedRadius * 2) / (name.length * 1.2));
 
         return (
           <React.Fragment key={key}>
-            <Circle {...commonProps} radius={radius} fill="white" stroke="red" strokeWidth={1.5} />
+            <Circle {...commonProps} radius={fixedRadius} fill="white" stroke="red" strokeWidth={1.5} />
             <Text
               x={x}
               y={y}
               text={name}
-              fontSize={fontSize}
+              fontSize={calculatedFontSize}
               fill="black"
               align="center"
               verticalAlign="middle"
