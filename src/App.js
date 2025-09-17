@@ -256,8 +256,8 @@ const handleStageClick = (e) => {
       const dim1 = Math.round(totalDim * proj.t);
       const dim2 = Math.round(totalDim * (1 - proj.t));
 
-      // Generar un nombre único para el nuevo SPL
-      const newSPLName = `SPL_${Math.floor(Math.random() * 10000)}`;
+      // Asignar el nombre "SPL" por defecto
+      const newSPLName = 'SPL';
 
       // crear las dos nuevas líneas que reemplazarán a la original
       const lineA = {
@@ -788,7 +788,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
         if (!eraserMode && !pencilMode) {
-          // Abrimos el selector para todos los objetos ahora, incluyendo SPL
           setSelectedEnd({ lineIndex: index, end });
           setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
           setSelectorPos({ x, y });
@@ -803,22 +802,24 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
       case 'BRK':
         return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL':
-        // En lugar de renderizar un RegularPolygon, renderizamos un círculo y un texto
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
+        const fontSize = 8;
+        const textWidth = name.length * fontSize * 0.6;
+        const radius = Math.max(7, textWidth / 2 + 2);
+
         return (
           <React.Fragment key={key}>
-            <Circle {...commonProps} radius={7} fill="white" stroke="red" strokeWidth={1.5} />
+            <Circle {...commonProps} radius={radius} fill="white" stroke="red" strokeWidth={1.5} />
             <Text
               x={x}
               y={y}
               text={name}
-              fontSize={8}
+              fontSize={fontSize}
               fill="black"
               align="center"
               verticalAlign="middle"
-              // Ajustamos la posición del texto para que esté centrado en el círculo
-              offsetX={Math.round(name.length * 2.2)}
-              offsetY={4}
+              offsetX={0}
+              offsetY={0}
             />
           </React.Fragment>
         );
@@ -1305,12 +1306,12 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
     align="center"
   />
 </Label>
-                {line.nombre_obj1 && (
-                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
-                )}
-                {line.nombre_obj2 && (
-                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
-                )}
+               // {line.nombre_obj1 && (
+                 // <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
+                //)}
+                //{line.nombre_obj2 && (
+                 // <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
+                //)}
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
               </React.Fragment>
