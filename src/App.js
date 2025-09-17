@@ -579,26 +579,27 @@ setRutaCalculada(result.path);
 const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
-    const targetLine = updatedLines[lineIndex];
+    
+    // Identificar el nombre del SPL que se está moviendo
+    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
 
-    // Encontrar la línea "padre" en la que el SPL fue insertado
-    // Buscamos la línea que tiene el mismo nombre de SPL en uno de sus extremos
+    // Encontrar ambas líneas que se unen en este SPL
     const connectedLines = updatedLines.filter(line => 
-      line.nombre_obj1 === targetLine.nombre_obj2 || line.nombre_obj2 === targetLine.nombre_obj2
+      line.nombre_obj1 === splName || line.nombre_obj2 === splName
     );
 
-    // Si hay más de una línea conectada (lo que siempre debería ser el caso para un SPL)
+    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
     if (connectedLines.length === 2) {
       const lineA = connectedLines[0];
       const lineB = connectedLines[1];
       
-      const p1 = lineA.p1;
-      const p2 = lineB.p2;
-      const splPoint = newPos;
+      // Encontrar los puntos fijos de la línea combinada
+      const p1Original = lineA.obj1 === 'SPL' ? lineA.p2 : lineA.p1;
+      const p2Original = lineB.obj2 === 'SPL' ? lineB.p1 : lineB.p2;
 
-      // Calcular la proyección del punto del SPL sobre la línea original (p1 a p2)
-      const lineVector = { x: p2.x - p1.x, y: p2.y - p1.y };
-      const pointVector = { x: splPoint.x - p1.x, y: splPoint.y - p1.y };
+      // Calcular la proyección del punto del SPL sobre la línea original
+      const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
 
       const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
       const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
@@ -608,22 +609,31 @@ const handleSPLDragMove = (e, lineIndex, end) => {
         t = dotProduct / lineLengthSq;
       }
       
-      // Asegurarse de que t esté entre 0 y 1 para que el punto se mantenga dentro de la línea
+      // Limitar t entre 0 y 1 para que el SPL se quede en la línea
       t = Math.max(0, Math.min(1, t));
 
       // Calcular la nueva posición proyectada
-      const projectedX = p1.x + t * lineVector.x;
-      const projectedY = p1.y + t * lineVector.y;
+      const projectedX = p1Original.x + t * lineVector.x;
+      const projectedY = p1Original.y + t * lineVector.y;
       const newSPLPos = { x: projectedX, y: projectedY };
       
-      // Actualizar las posiciones y recalcular las dimensiones
-      lineA.p2 = newSPLPos;
-      lineB.p1 = newSPLPos;
-
+      // Actualizar la posición del SPL en ambas líneas
+      if (lineA.obj1 === 'SPL') {
+          lineA.p1 = newSPLPos;
+      } else {
+          lineA.p2 = newSPLPos;
+      }
+      
+      if (lineB.obj2 === 'SPL') {
+          lineB.p2 = newSPLPos;
+      } else {
+          lineB.p1 = newSPLPos;
+      }
+      
       // Recalcular las dimensiones en milímetros
-      const totalLength = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      const newLengthA = Math.hypot(newSPLPos.x - p1.x, newSPLPos.y - p1.y);
-      const newLengthB = Math.hypot(p2.x - newSPLPos.x, p2.y - newSPLPos.y);
+      const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
+      const newLengthA = Math.hypot(newSPLPos.x - p1Original.x, newSPLPos.y - p1Original.y);
+      const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
 
       lineA.dimension_mm = Math.round((newLengthA / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
       lineB.dimension_mm = Math.round((newLengthB / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
