@@ -1370,7 +1370,7 @@ lines.forEach((line) => {
           a.splPos.y + Math.cos(angle) * stickLength
         ]}
         stroke="red"
-        strokeWidth={2}
+        strokeWidth={1}
       />
       {/* círculo en la punta */}
       <Circle
@@ -1378,7 +1378,7 @@ lines.forEach((line) => {
         y={a.splPos.y + Math.cos(angle) * stickLength}
         radius={radius}
         stroke="red"
-        strokeWidth={3}
+        strokeWidth={1}
         fill="white"
       />
     </React.Fragment>
