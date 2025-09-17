@@ -296,46 +296,6 @@ if (addingSPL) {
   setStatusMessage("🔺 SPL insertado correctamente.");
   return;
 }
-
-
-  // ✅ partir el segmento en 2 nuevos
-  const dim1 = Math.round(bestSeg.dim * bestProj.t);
-  const dim2 = Math.round(bestSeg.dim * (1 - bestProj.t));
-
-const newSegs = [
-  {
-    lineaIndex: lineIndex,
-    p1: { ...bestSeg.p1 },
-    p2: { x: bestProj.x, y: bestProj.y },
-    nombre_obj1: bestSeg.nombre_obj1,
-    nombre_obj2: 'SPL',
-    dim: dim1,
-    spl: true,
-    splPos: { x: bestProj.x, y: bestProj.y }  // 📍 guardamos el punto
-  },
-  {
-    lineaIndex: lineIndex,
-    p1: { x: bestProj.x, y: bestProj.y },
-    p2: { ...bestSeg.p2 },
-    nombre_obj1: 'SPL',
-    nombre_obj2: bestSeg.nombre_obj2,
-    dim: dim2,
-    spl: true,
-    splPos: { x: bestProj.x, y: bestProj.y }  // 📍 mismo punto para el otro lado
-  }
-];
-
-
-  // quitar el segmento viejo y agregar los nuevos
-  const nuevasAcotaciones = acotaciones.filter(a => a !== bestSeg);
-  setAcotaciones([...nuevasAcotaciones, ...newSegs]);
-  setAddingSPL(false);
-  setStatusMessage('🔺 SPL agregado y acotación subdividida.');
-  return;
-}
-
-
-
   // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
   if (pencilMode) {
     if (eraserMode) return;
@@ -462,8 +422,8 @@ const calcularRuta = (start, end) => {
   if (!nombre_obj1 || !nombre_obj2 || !dim) return;
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-    graph[nombre_obj1][nombre_obj2] = dimension_mm;
-    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+graph[nombre_obj1][nombre_obj2] = dim;
+graph[nombre_obj2][nombre_obj1] = dim;
   });
 
   const distances = {};
@@ -509,8 +469,8 @@ const calcularRutaReal = () => {
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
 
-    graph[nombre_obj1][nombre_obj2] = dimension_mm;
-    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+graph[nombre_obj1][nombre_obj2] = dim;
+graph[nombre_obj2][nombre_obj1] = dim;
   });
 
   const dijkstra = (start, end) => {
