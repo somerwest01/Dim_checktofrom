@@ -1267,61 +1267,60 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
   }
 }}
 >
-  <Stage
-  width={canvasSize.width}
-  height={canvasSize.height}
-  onClick={handleStageClick}
-  onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
-  onMouseDown={handleMouseDown}
-  onMouseUp={handleMouseUp}
-  onWheel={handleWheel}
-  >
-          <Layer>
-            {lines.map((line, i) => (
-              <React.Fragment key={i}>
-                <Line
-                  points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
-                  stroke="black"
-                  strokeWidth={2}
-                  onClick={() => handleLineClick(i)}
-                />
-                <Label
-                x={(line.p1.x + line.p2.x) / 2}
-                y={(line.p1.y + line.p2.y) / 2}
-                offsetX={(line.dimension_mm?.toString().length || 1) * 3} // centra horizontalmente
-                offsetY={6} // centra verticalmente
-                >
-                <Tag
-                fill="white"        // Fondo blanco para simular corte de la línea
+<Stage
+      width={canvasSize.width}
+      height={canvasSize.height}
+      onClick={handleStageClick}
+      onMouseMove={(e) => { handleMouseMove(e); handleMouseMovePan(e); }}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onWheel={handleWheel}
+    >
+      <Layer>
+        {lines.map((line, i) => (
+          <React.Fragment key={i}>
+            <Line
+              points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
+              stroke="black"
+              strokeWidth={2}
+              onClick={() => handleLineClick(i)}
+            />
+            <Label
+              x={(line.p1.x + line.p2.x) / 2}
+              y={(line.p1.y + line.p2.y) / 2}
+              offsetX={(line.dimension_mm?.toString().length || 1) * 3}
+              offsetY={6}
+            >
+              <Tag
+                fill="white"
                 pointerDirection="none"
-                cornerRadius={2}    // Bordes redondeados
-                stroke="white"      // Borde negro opcional
+                cornerRadius={2}
+                stroke="white"
                 strokeWidth={0.5}
-  />
-  <Text
-    text={`${line.dimension_mm ?? ''}`}
-    fontSize={11}
-    fill="black"
-    padding={1}         // Espacio entre texto y fondo
-    align="center"
-  />
-</Label>
-
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
-              </React.Fragment>
-            }
-
-            {points.length === 1 && mousePos && !eraserMode && (
-              <Line
-                points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
-                stroke="gray"
-                dash={[4, 4]}
-                strokeWidth={1}
               />
-            )}
-          </Layer>
-        </Stage>
+              <Text
+                text={`${line.dimension_mm ?? ''}`}
+                fontSize={11}
+                fill="black"
+                padding={1}
+                align="center"
+              />
+            </Label>
+            {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
+            {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+          </React.Fragment>
+        ))}
+        {/* El código de la línea temporal debe estar aquí, fuera del .map */}
+        {points.length === 1 && mousePos && !eraserMode && (
+          <Line
+            points={[points[0].x, points[0].y, mousePos.x, mousePos.y]}
+            stroke="gray"
+            dash={[4, 4]}
+            strokeWidth={1}
+          />
+        )}
+      </Layer>
+    </Stage>
                   </div>
 
         {showInput && (
