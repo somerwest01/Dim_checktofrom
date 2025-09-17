@@ -42,7 +42,6 @@ function App() {
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [editingSPLMode, setEditingSPLMode] = useState(false);
-  const [tempLine, setTempLine] = useState(null);
 
 
 
