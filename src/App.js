@@ -823,10 +823,10 @@ switch (tipo) {
     return (
       <Circle
         {...commonProps}
-        radius={6}  // 25% más pequeño
+        radius={6}
         stroke="red"
-        strokeWidth={2}
-        fill={isHovered ? "lightblue" : "white"} // hover
+        strokeWidth={1}
+        fill={isHovered ? "lightblue" : "white"}
       />
     );
   default:
@@ -1325,11 +1325,11 @@ switch (tipo) {
     x={line.p1.x}
     y={line.p1.y}
     text={line.nombre_obj1}
-    fontSize={8}
+    fontSize={Math.min(10, 2 * 6 / line.nombre_obj1.length)} // 👈 ajusta al radio (6)
     fill="black"
     align="center"
     verticalAlign="middle"
-    offsetX={line.nombre_obj1.length * 2}
+    offsetX={(line.nombre_obj1.length * Math.min(10, 2 * 6 / line.nombre_obj1.length)) / 4}
     offsetY={4}
   />
 )}
@@ -1338,11 +1338,11 @@ switch (tipo) {
     x={line.p2.x}
     y={line.p2.y}
     text={line.nombre_obj2}
-    fontSize={8}
+    fontSize={Math.min(10, 2 * 6 / line.nombre_obj2.length)} // 👈 ajusta al radio (6)
     fill="black"
     align="center"
     verticalAlign="middle"
-    offsetX={line.nombre_obj2.length * 2}
+    offsetX={(line.nombre_obj2.length * Math.min(10, 2 * 6 / line.nombre_obj2.length)) / 4}
     offsetY={4}
   />
 )}
