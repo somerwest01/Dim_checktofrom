@@ -1318,6 +1318,7 @@ case 'SPL':
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
 // Reemplaza con este código
 // Reemplaza tus dos bloques de código del Text para SPL con esto
+// Reemplaza tus dos bloques de código del Text para SPL con esto
 {line.obj1 === "SPL" && line.nombre_obj1 && (
   <Text
     x={line.p1.x - 6}
