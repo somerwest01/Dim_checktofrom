@@ -1231,18 +1231,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 >
   🔺 {addingSPL ? 'SPL: ON' : 'Agregar SPL'}
 </button>
-  <button
-          onClick={() => {
-            setAddingSPL(true);
-            setEditingSPLMode(false); // Desactiva el modo de edición de SPL
-            setObj1('Ninguno');
-            setObj2('SPL');
-            setStatusMessage('Clic en una línea para agregar un SPL.');
-          }}
-          style={{ backgroundColor: addingSPL ? '#a0a0a0' : '#f0f0f0' }}
-        >
-          Agregar SPL
-        </button>
         <button
           onClick={() => {
             setEditingSPLMode(true);
