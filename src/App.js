@@ -804,24 +804,32 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
       case 'SPL':
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
         const fixedRadius = 7;
+        const circleDiameter = fixedRadius * 2;
         
-        // Calcular el tamaño de la fuente para que el texto quepa en el círculo
-        // El factor 1.2 es un ajuste para el ancho de los caracteres
-        const calculatedFontSize = Math.min(8, (fixedRadius * 2) / (name.length * 1.2));
+        // Se calcula un tamaño de fuente que garantice que el texto se ajuste al círculo
+        const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
         return (
           <React.Fragment key={key}>
+            {/* El círculo ahora tiene un radio fijo */}
             <Circle {...commonProps} radius={fixedRadius} fill="white" stroke="red" strokeWidth={1.5} />
+            
+            {/* El texto se centra utilizando las propiedades de Konva */}
             <Text
               x={x}
               y={y}
               text={name}
               fontSize={calculatedFontSize}
               fill="black"
+              // Se asegura que el texto esté alineado en el centro del componente
               align="center"
               verticalAlign="middle"
-              offsetX={0}
-              offsetY={0}
+              // Se le da al texto una caja del mismo tamaño que el círculo para que el centrado funcione
+              width={circleDiameter}
+              height={circleDiameter}
+              // Se ajusta el desplazamiento para que el punto de anclaje de la caja de texto esté en el centro del círculo
+              offsetX={circleDiameter / 2}
+              offsetY={circleDiameter / 2}
             />
           </React.Fragment>
         );
