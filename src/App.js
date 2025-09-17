@@ -831,22 +831,23 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
         const fixedRadius = 7;
         const circleDiameter = fixedRadius * 2;
+        
         const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
         return (
           <React.Fragment key={key}>
+            {/* El círculo ahora tiene la propiedad draggable */}
             <Circle 
               {...commonProps} 
               radius={fixedRadius} 
               fill="white" 
               stroke="red" 
               strokeWidth={1.5} 
-              // Se hace el SPL arrastrable si estamos en modo de edición
               draggable={editingSPLMode}
-              // Manejador para el movimiento
               onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
             
+            {/* El texto también tiene la propiedad draggable */}
             <Text
               {...commonProps} 
               x={x}
@@ -860,6 +861,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               height={circleDiameter}
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
+              draggable={editingSPLMode}
+              onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
           </React.Fragment>
         );
