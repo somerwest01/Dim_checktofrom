@@ -258,11 +258,23 @@ const handleStageClick = (e) => {
 
       // Asignar el nombre "SPL" por defecto
       const newSPLName = 'SPL';
+      
+      // ✅ Nuevos puntos de inicio y fin para la línea de acotación del SPL
+      const lineVector = { x: original.p2.x - original.p1.x, y: original.p2.y - original.p1.y };
+      const lineLength = Math.hypot(lineVector.x, lineVector.y);
+      const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
+      const offset = 25; // Distancia de la línea de acotación
 
-      // crear las dos nuevas líneas que reemplazarán a la original
+      const newP1_A = { x: original.p1.x + normalVector.x * offset, y: original.p1.y + normalVector.y * offset };
+      const newP2_A = { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset };
+
+      const newP1_B = { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset };
+      const newP2_B = { x: original.p2.x + normalVector.x * offset, y: original.p2.y + normalVector.y * offset };
+
+      // ✅ Crear las dos nuevas líneas de acotación (sin modificar la original)
       const lineA = {
-        p1: { ...original.p1 },
-        p2: { x: proj.x, y: proj.y },
+        p1: newP1_A,
+        p2: newP2_A,
         obj1: original.obj1,
         obj2: 'SPL',
         nombre_obj1: original.nombre_obj1 || '',
@@ -270,12 +282,12 @@ const handleStageClick = (e) => {
         dimension_mm: dim1,
         deduce1: original.deduce1 || '',
         deduce2: '',
-        item: original.item || null
+        isSPLDimension: true // ✅ Nueva propiedad para renderizado
       };
 
       const lineB = {
-        p1: { x: proj.x, y: proj.y },
-        p2: { ...original.p2 },
+        p1: newP1_B,
+        p2: newP2_B,
         obj1: 'SPL',
         obj2: original.obj2,
         nombre_obj1: newSPLName,
@@ -283,14 +295,14 @@ const handleStageClick = (e) => {
         dimension_mm: dim2,
         deduce1: '',
         deduce2: original.deduce2 || '',
-        item: original.item || null
+        isSPLDimension: true // ✅ Nueva propiedad para renderizado
       };
 
-      const updated = [...lines];
-      updated.splice(lineIndex, 1, lineA, lineB);
+      // ✅ Solo añade las nuevas líneas al array, no reemplaza la original
+      const updated = [...lines, lineA, lineB];
       setLines(updated);
       setAddingSPL(false);
-      setStatusMessage('🔺 SPL insertado correctamente.');
+      setStatusMessage('🔺 SPL insertado correctamente. La dimensión original se mantiene.');
       return;
     }
 
@@ -1400,7 +1412,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
             <Line
               points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
               stroke="black"
-              strokeWidth={2}
+              strokeWidth={line.isSPLDimension ? 1 : 2} // ✅ Grosor más fino para las acotaciones
+              dash={line.isSPLDimension ? [4, 4] : []} // ✅ Línea punteada
               onClick={() => handleLineClick(i)}
             />
             <Label
