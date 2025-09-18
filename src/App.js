@@ -881,7 +881,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
       const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
 
       // Estimación del tamaño para centrar el rectángulo en el punto
-      const fontSize = 9; // Nuevo tamaño de la fuente
+      const fontSize = 6; // Nuevo tamaño de la fuente
       const padding = 2;  // Nuevo padding para reducir la altura del rectángulo
 
       // Estimación del ancho y alto total del Label
