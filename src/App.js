@@ -43,8 +43,8 @@ function App() {
   const [addingSPL, setAddingSPL] = useState(false);
   const [editingSPLMode, setEditingSPLMode] = useState(false);
 
-
-  const DIM_LINE_STROKE_WIDTH = 1;
+  // Grosor de línea para las acotaciones
+  const DIM_LINE_STROKE_WIDTH = .5;
 
   const botonBase = {
     display: 'inline-flex',
@@ -149,13 +149,11 @@ function App() {
     if (!lines || lines.length === 0) return null;
     let best = null;
     lines.forEach((line, idx) => {
-      // Solo considera líneas que no son de dimensión SPL
-      if (!line.isSPLDimension) {
-        const proj = projectPointOnLine(line.p1, line.p2, pos);
-        const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
-        if (!best || dist < best.distance) {
-          best = { lineIndex: idx, proj, distance: dist, line };
-        }
+      // línea p1-p2 (todavía modelada en tu app original)
+      const proj = projectPointOnLine(line.p1, line.p2, pos);
+      const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
+      if (!best || dist < best.distance) {
+        best = { lineIndex: idx, proj, distance: dist, line };
       }
     });
     return best;
@@ -191,8 +189,7 @@ function App() {
               dimension_mm: null,
               deduce1: '',
               deduce2: '',
-              item: null,
-              spls: []
+              item: null
             });
           }
         });
@@ -247,7 +244,7 @@ function App() {
     // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
     if (addingSPL) {
       const found = findClosestSegment(pos);
-      const proximityPx = 12;
+      const proximityPx = 12; // Ajuste: distancia máxima para "aceptar" el drop
       if (!found || found.distance > proximityPx) {
         setStatusMessage('Acércate a una línea y haz clic para colocar el SPL.');
         return;
@@ -255,32 +252,43 @@ function App() {
 
       const { lineIndex, proj, line: originalLine } = found;
 
-      const updatedLines = [...lines];
-      const lineToUpdate = updatedLines[lineIndex];
+      const totalDim = parseFloat(originalLine.dimension_mm) || Math.hypot(originalLine.p2.x - originalLine.p1.x, originalLine.p2.y - originalLine.p1.y);
+      const dim1 = Math.round(totalDim * proj.t);
+      const dim2 = Math.round(totalDim * (1 - proj.t));
 
-      if (!lineToUpdate.spls) {
-        lineToUpdate.spls = [];
-      }
+      // Asignar un nombre único para el nuevo SPL
+      const newSPLName = `SPL-${lines.length}`;
 
-      // Evita agregar múltiples SPL en el mismo punto
-      const alreadyExists = lineToUpdate.spls.some(spl => Math.hypot(spl.x - proj.x, spl.y - proj.y) < 5);
-      if (alreadyExists) {
-        setStatusMessage('Ya existe un SPL en esa posición.');
-        return;
-      }
-
-      const newSPL = {
-        x: proj.x,
-        y: proj.y,
-        name: `SPL-${lineToUpdate.spls.length + 1}`,
-        type: 'SPL',
-        t: proj.t,
+      // crear las dos nuevas líneas que reemplazarán a la original
+      const lineA = {
+        p1: { ...originalLine.p1 },
+        p2: { x: proj.x, y: proj.y },
+        obj1: originalLine.obj1,
+        obj2: 'SPL',
+        nombre_obj1: originalLine.nombre_obj1 || '',
+        nombre_obj2: newSPLName,
+        dimension_mm: dim1,
+        deduce1: originalLine.deduce1 || '',
+        deduce2: '',
+        item: originalLine.item || null
       };
 
-      // Agregar el nuevo SPL a la línea
-      lineToUpdate.spls.push(newSPL);
-      setLines(updatedLines);
+      const lineB = {
+        p1: { x: proj.x, y: proj.y },
+        p2: { ...originalLine.p2 },
+        obj1: 'SPL',
+        obj2: originalLine.obj2,
+        nombre_obj1: newSPLName,
+        nombre_obj2: originalLine.nombre_obj2 || '',
+        dimension_mm: dim2,
+        deduce1: '',
+        deduce2: originalLine.deduce2 || '',
+        item: originalLine.item || null
+      };
 
+      const updated = [...lines];
+      updated.splice(lineIndex, 1, lineA, lineB);
+      setLines(updated);
       setAddingSPL(false);
       setStatusMessage('🔺 SPL insertado correctamente.');
       return;
@@ -320,8 +328,7 @@ function App() {
           dimension_mm: null,
           deduce1: '',
           deduce2: '',
-          item: null,
-          spls: []
+          item: null
         };
 
         setTempLine(newLine);
@@ -569,22 +576,68 @@ function App() {
     };
     reader.readAsText(file);
   };
-
-
-  const handleSPLDragMove = (e, lineIndex, splIndex) => {
+  const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
-    const line = updatedLines[lineIndex];
 
-    const proj = projectPointOnLine(line.p1, line.p2, newPos);
+    // Identificar el nombre del SPL que se está moviendo
+    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
 
-    line.spls[splIndex].x = proj.x;
-    line.spls[splIndex].y = proj.y;
-    line.spls[splIndex].t = proj.t;
+    // Encontrar ambas líneas que se unen en este SPL
+    const connectedLines = updatedLines.filter(line =>
+      line.nombre_obj1 === splName || line.nombre_obj2 === splName
+    );
 
-    setLines(updatedLines);
+    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
+    if (connectedLines.length === 2) {
+      const lineA = connectedLines[0];
+      const lineB = connectedLines[1];
+
+      // Encontrar los puntos fijos de la línea combinada
+      const p1Original = (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) ? lineA.p2 : lineA.p1;
+      const p2Original = (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) ? lineB.p1 : lineB.p2;
+
+      // Calcular la proyección del punto del SPL sobre la línea original
+      const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
+
+      const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
+      const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+
+      let t = 0;
+      if (lineLengthSq !== 0) {
+        t = dotProduct / lineLengthSq;
+      }
+
+      // Limitar t entre 0 y 1 para que el SPL se quede en la línea
+      t = Math.max(0, Math.min(1, t));
+
+      // Calcular la nueva posición proyectada
+      const projectedX = p1Original.x + t * lineVector.x;
+      const projectedY = p1Original.y + t * lineVector.y;
+      const newSPLPos = { x: projectedX, y: projectedY };
+
+      // Actualizar la posición del SPL en ambas líneas
+      if ((lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName)) {
+        lineA.p1 = newSPLPos;
+      } else {
+        lineA.p2 = newSPLPos;
+      }
+
+      if ((lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName)) {
+        lineB.p2 = newSPLPos;
+      } else {
+        lineB.p1 = newSPLPos;
+      }
+
+      // Recalcular las dimensiones en milímetros
+      // Corrección: el cálculo de la longitud se hacía incorrectamente. Ahora se calcula la longitud real de la línea.
+      lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
+      lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
+
+      setLines(updatedLines);
+    }
   };
-
 
   const handleImportExcel = (e) => {
     setStatusMessage('Importando archivo...');
@@ -813,9 +866,11 @@ function App() {
       case 'SPL':
         const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
 
+        // Estimación del tamaño para centrar el rectángulo en el punto
         const fontSize = 6; // Nuevo tamaño de la fuente
         const padding = 2;  // Nuevo padding para reducir la altura del rectángulo
 
+        // Estimación del ancho y alto total del Label
         const textWidth = name.length * 5; // Estimación simple del ancho del texto
         const labelWidth = textWidth + 2 * padding;
         const labelHeight = fontSize + 2 * padding;
@@ -825,6 +880,7 @@ function App() {
             key={key}
             x={x}
             y={y}
+            // Aplica el offset para centrar el rectángulo sobre el punto (x, y)
             offsetX={labelWidth / 2}
             offsetY={labelHeight / 2}
             draggable={editingSPLMode}
@@ -832,6 +888,7 @@ function App() {
             onMouseEnter={() => setHoveredObj(key)}
             onMouseLeave={() => setHoveredObj(null)}
           >
+            {/* El Tag crea el borde rectangular rojo */}
             <Tag
               fill="white"
               stroke={isHovered ? 'green' : 'red'}
@@ -840,6 +897,7 @@ function App() {
               cornerRadius={2}
               lineJoin="round"
             />
+            {/* El texto va dentro del Label */}
             <Text
               text={name}
               fontSize={fontSize} // Aplica el nuevo tamaño de fuente
@@ -863,106 +921,85 @@ function App() {
     }
   };
 
-  const renderSPL = (line, lineIndex) => {
-    if (!line.spls || line.spls.length === 0) return null;
+  // ✅ NUEVA FUNCIÓN para renderizar las acotaciones de cualquier línea
+  const renderDimensions = (line, key) => {
+    if (line.dimension_mm === null || isNaN(line.dimension_mm)) {
+      return null;
+    }
 
-    const spls = line.spls.map((spl, splIndex) => {
-      // Calcular la posición de los puntos de referencia
-      const lineVector = { x: line.p2.x - line.p1.x, y: line.p2.y - line.p1.y };
-      const lineLength = Math.hypot(lineVector.x, lineVector.y);
-      const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
-      const offset = 25;
+    const p1 = line.p1;
+    const p2 = line.p2;
 
-      const dimLineStart = { x: line.p1.x + normalVector.x * offset, y: line.p1.y + normalVector.y * offset };
-      const dimLineEnd = { x: spl.x + normalVector.x * offset, y: spl.y + normalVector.y * offset };
+    const lineVector = { x: p2.x - p1.x, y: p2.y - p1.y };
+    const lineLength = Math.hypot(lineVector.x, lineVector.y);
 
-      const totalDimension = Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-      const dimensionPart = Math.round(totalDimension * spl.t);
+    if (lineLength === 0) {
+      return null;
+    }
 
-      return (
-        <React.Fragment key={`spl-${lineIndex}-${splIndex}`}>
-          {/* Rectángulo SPL */}
-          <Label
-            x={spl.x}
-            y={spl.y}
-            offsetX={15}
-            offsetY={8}
-            draggable={editingSPLMode}
-            onDragMove={(e) => handleSPLDragMove(e, lineIndex, splIndex)}
-          >
-            <Tag
-              fill="white"
-              stroke="red"
-              strokeWidth={1.5}
-              pointerDirection="none"
-              cornerRadius={2}
-              lineJoin="round"
-            />
-            <Text
-              text={spl.name}
-              fontSize={8}
-              fill="black"
-              padding={2}
-              align="center"
-              verticalAlign="middle"
-            />
-          </Label>
+    const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
+    const offset = 25;
 
-          {/* Línea de acotación */}
-          <Line
-            points={[dimLineStart.x, dimLineStart.y, dimLineEnd.x, dimLineEnd.y]}
-            stroke="black"
-            strokeWidth={DIM_LINE_STROKE_WIDTH}
-            dash={[4, 4]}
-          />
+    const dimLineStart = { x: p1.x + normalVector.x * offset, y: p1.y + normalVector.y * offset };
+    const dimLineEnd = { x: p2.x + normalVector.x * offset, y: p2.y + normalVector.y * offset };
 
-          {/* Línea de referencia del primer extremo */}
-          <Line
-            points={[dimLineStart.x, dimLineStart.y, line.p1.x, line.p1.y]}
-            stroke="black"
-            strokeWidth={DIM_LINE_STROKE_WIDTH}
-          />
-          {/* Línea de referencia del segundo extremo */}
-          <Line
-            points={[dimLineEnd.x, dimLineEnd.y, spl.x, spl.y]}
-            stroke="black"
-            strokeWidth={DIM_LINE_STROKE_WIDTH}
-          />
+    const textPos = {
+      x: (dimLineStart.x + dimLineEnd.x) / 2,
+      y: (dimLineStart.y + dimLineEnd.y) / 2
+    };
 
-          {/* Flechas */}
-          <RegularPolygon
-            x={dimLineStart.x}
-            y={dimLineStart.y}
-            sides={3}
-            radius={5}
-            fill="black"
-            rotation={Math.atan2(dimLineEnd.y - dimLineStart.y, dimLineEnd.x - dimLineStart.x) * 180 / Math.PI - 90}
-          />
-          <RegularPolygon
-            x={dimLineEnd.x}
-            y={dimLineEnd.y}
-            sides={3}
-            radius={5}
-            fill="black"
-            rotation={Math.atan2(dimLineStart.y - dimLineEnd.y, dimLineStart.x - dimLineEnd.x) * 180 / Math.PI - 90}
-          />
+    return (
+      <React.Fragment key={`dim-${key}`}>
+        {/* Línea de acotación principal */}
+        <Line
+          points={[dimLineStart.x, dimLineStart.y, dimLineEnd.x, dimLineEnd.y]}
+          stroke="black"
+          strokeWidth={DIM_LINE_STROKE_WIDTH}
+        />
 
-          {/* Etiqueta de dimensión */}
-          <Text
-            x={(dimLineStart.x + dimLineEnd.x) / 2}
-            y={(dimLineStart.y + dimLineEnd.y) / 2}
-            text={`${dimensionPart}`}
-            fontSize={9}
-            fill="black"
-            padding={2}
-            offsetX={((dimensionPart?.toString().length || 1) * 3) / 2}
-            offsetY={10}
-          />
-        </React.Fragment>
-      );
-    });
+        {/* Líneas de referencia */}
+        <Line
+          points={[p1.x, p1.y, dimLineStart.x, dimLineStart.y]}
+          stroke="black"
+          strokeWidth={DIM_LINE_STROKE_WIDTH}
+        />
+        <Line
+          points={[p2.x, p2.y, dimLineEnd.x, dimLineEnd.y]}
+          stroke="black"
+          strokeWidth={DIM_LINE_STROKE_WIDTH}
+        />
 
-    return spls;
+        {/* Flechas */}
+        <RegularPolygon
+          x={dimLineStart.x}
+          y={dimLineStart.y}
+          sides={3}
+          radius={5}
+          fill="black"
+          rotation={Math.atan2(dimLineEnd.y - dimLineStart.y, dimLineEnd.x - dimLineStart.x) * 180 / Math.PI - 90}
+        />
+        <RegularPolygon
+          x={dimLineEnd.x}
+          y={dimLineEnd.y}
+          sides={3}
+          radius={5}
+          fill="black"
+          rotation={Math.atan2(dimLineStart.y - dimLineEnd.y, dimLineStart.x - dimLineEnd.x) * 180 / Math.PI - 90}
+        />
+
+        {/* Etiqueta de la dimensión */}
+        <Text
+          x={textPos.x}
+          y={textPos.y}
+          text={`${line.dimension_mm}`}
+          fontSize={10}
+          fill="black"
+          offsetY={lineVector.y === 0 ? 10 : 0} // Ajuste para líneas horizontales
+          offsetX={lineVector.x === 0 ? 10 : 0} // Ajuste para líneas verticales
+          rotation={Math.atan2(lineVector.y, lineVector.x) * 180 / Math.PI}
+        />
+      </React.Fragment>
+    );
   };
 
   return (
@@ -1432,10 +1469,11 @@ function App() {
                     strokeWidth={2}
                     onClick={() => handleLineClick(i)}
                   />
+
+                  {renderDimensions(line, i)}
+
                   {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                   {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
-
-                  {line.spls && line.spls.length > 0 && renderSPL(line, i)}
                 </React.Fragment>
               ))}
               {/* El código de la línea temporal debe estar aquí, fuera del .map */}
