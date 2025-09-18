@@ -36,13 +36,12 @@ function App() {
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
-  const [selectorPos, setSelectorPos] = useState(null); // posición del panel flotante
-  const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
+  const [selectorPos, setSelectorPos] = useState(null);
+  const [selectorEnd, setSelectorEnd] = useState(null);
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [editingSPLMode, setEditingSPLMode] = useState(false);
-
 
 
   const botonBase = {
@@ -76,7 +75,7 @@ const botonExpandido = {
   width: '150px'
 };
   const handleMouseDown = (e) => {
-  if (e.evt.button === 1) { // botón central (scroll)
+  if (e.evt.button === 1) {
     setIsPanning(true);
     setLastPos({ x: e.evt.clientX, y: e.evt.clientY });
   }
@@ -91,10 +90,10 @@ const handleMouseUp = (e) => {
 useEffect(() => {
   const handleKeyDown = (e) => {
     if (e.key === "Escape") {
-      setPoints([]);       // borra puntos en espera
-      setTempLine(null);   // limpia la línea temporal
-      setMousePos(null);   // quita el preview
-      setShowInput(false); // oculta el input flotante de dimensión
+      setPoints([]);
+      setTempLine(null);
+      setMousePos(null);
+      setShowInput(false);
     }
   };
 
@@ -123,7 +122,6 @@ const handleMouseMovePan = (e) => {
   return transform.point(pos);
 };
 
-// proyecta un punto `pos` sobre el segmento p1-p2 y devuelve {x,y,t} donde t es 0..1
 function projectPointOnLine(p1, p2, pos) {
   const A = { x: p1.x, y: p1.y };
   const B = { x: p2.x, y: p2.y };
@@ -142,13 +140,10 @@ function projectPointOnLine(p1, p2, pos) {
   return { x: A.x + AB.x * t, y: A.y + AB.y * t, t };
 }
 
-// busca el segmento (línea) más cercano al punto `pos`.
-// devuelve { lineIndex, proj: {x,y,t}, distance } o null si no hay líneas
 function findClosestSegment(pos) {
   if (!lines || lines.length === 0) return null;
   let best = null;
   lines.forEach((line, idx) => {
-    // línea p1-p2 (todavía modelada en tu app original)
     const proj = projectPointOnLine(line.p1, line.p2, pos);
     const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
     if (!best || dist < best.distance) {
@@ -235,34 +230,31 @@ function findClosestSegment(pos) {
   };
 
 const handleStageClick = (e) => {
-    if (e.evt.button !== 0) return; // solo click izquierdo
+    if (e.evt.button !== 0) return;
 
     const stage = e.target.getStage();
     const pos = getRelativePointerPosition(stage);
 
-    // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
     if (addingSPL) {
       const found = findClosestSegment(pos);
-      const proximityPx = 12; // Ajuste: distancia máxima para "aceptar" el drop
+      const proximityPx = 12;
       if (!found || found.distance > proximityPx) {
         setStatusMessage('Acércate a una línea y haz clic para colocar el SPL.');
         return;
       }
 
-      const { lineIndex, proj } = found;
-      const original = lines[lineIndex];
+      const { lineIndex, proj, line: original } = found;
+      
+      const newSPLName = `SPL_${Date.now()}`;
+      const newSPLPos = { x: proj.x, y: proj.y };
 
-      const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+      const totalDim = Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
       const dim1 = Math.round(totalDim * proj.t);
       const dim2 = Math.round(totalDim * (1 - proj.t));
 
-      // Asignar el nombre "SPL" por defecto
-      const newSPLName = 'SPL';
-
-      // crear las dos nuevas líneas que reemplazarán a la original
       const lineA = {
         p1: { ...original.p1 },
-        p2: { x: proj.x, y: proj.y },
+        p2: newSPLPos,
         obj1: original.obj1,
         obj2: 'SPL',
         nombre_obj1: original.nombre_obj1 || '',
@@ -274,7 +266,7 @@ const handleStageClick = (e) => {
       };
 
       const lineB = {
-        p1: { x: proj.x, y: proj.y },
+        p1: newSPLPos,
         p2: { ...original.p2 },
         obj1: 'SPL',
         obj2: original.obj2,
@@ -294,7 +286,6 @@ const handleStageClick = (e) => {
       return;
     }
 
-    // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
     if (pencilMode) {
       if (eraserMode) return;
 
@@ -312,9 +303,9 @@ const handleStageClick = (e) => {
           const dx = Math.abs(pos.x - p1.x);
           const dy = Math.abs(pos.y - p1.y);
           if (dx > dy) {
-            adjustedPos.y = p1.y; // Horizontal
+            adjustedPos.y = p1.y;
           } else {
-            adjustedPos.x = p1.x; // Vertical
+            adjustedPos.x = p1.x;
           }
         }
 
@@ -351,9 +342,9 @@ const handleMouseMove = (e) => {
       const dx = Math.abs(pos.x - p1.x);
       const dy = Math.abs(pos.y - p1.y);
       if (dx > dy) {
-        adjustedPos.y = p1.y; // Horizontal
+        adjustedPos.y = p1.y;
       } else {
-        adjustedPos.x = p1.x; // Vertical
+        adjustedPos.x = p1.x;
       }
     }
 
@@ -364,8 +355,12 @@ const handleMouseMove = (e) => {
 
   const confirmDimension = () => {
     if (tempLine) {
-      tempLine.dimension_mm = parseFloat(dimension);
-      setLines([...lines, tempLine]);
+      const calculatedDim = Math.round(Math.hypot(tempLine.p2.x - tempLine.p1.x, tempLine.p2.y - tempLine.p1.y));
+      const newLine = {
+        ...tempLine,
+        dimension_mm: dimension ? parseFloat(dimension) : calculatedDim,
+      };
+      setLines([...lines, newLine]);
       setTempLine(null);
       setDimension('');
       setShowInput(false);
@@ -380,16 +375,13 @@ const updateNombre = () => {
       const newName = nameInput;
       const targetPos = targetLine[selectedEnd.end];
 
-      // Asignar nombre al extremo seleccionado
       if (selectedEnd.end === 'p1') {
         targetLine.nombre_obj1 = newName;
       } else {
         targetLine.nombre_obj2 = newName;
       }
 
-      // Propagar nombre a extremos cercanos
       updatedLines.forEach((line) => {
-        // Usa una tolerancia para evitar problemas de precisión flotante
         const tol = 1; 
         if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < tol) {
           line.nombre_obj1 = newName;
@@ -467,8 +459,8 @@ const calcularRutaReal = () => {
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
 
-    graph[nombre_obj1][nombre_obj2] = dimension_mm;
-    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+    graph[nombre_obj1][nombre_obj2] = parseFloat(dimension_mm);
+    graph[nombre_obj2][nombre_obj1] = parseFloat(dimension_mm);
   });
 
   const dijkstra = (start, end) => {
@@ -509,7 +501,6 @@ const calcularRutaReal = () => {
     return distances[end] !== Infinity ? { distance: distances[end], path } : null;
   };
 
-  // ✅ Corrección aquí
   const result = dijkstra(nameInput1, nameInput2);
 
 if (!graph[nameInput1] || !graph[nameInput2]) {
@@ -576,29 +567,27 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex, end) => {
-    // ⚠️ REFACTORIZADO
+   
+  const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
-    // Identificar el nombre del SPL que se está moviendo
+    // Find all lines connected to this SPL
     const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
-
-    // Encontrar ambas líneas que se unen en este SPL
     const connectedLines = updatedLines.filter(line => 
-      line.nombre_obj1 === splName || line.nombre_obj2 === splName
+        (line.nombre_obj1 === splName || line.nombre_obj2 === splName)
     );
 
-    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
     if (connectedLines.length === 2) {
       const lineA = connectedLines[0];
       const lineB = connectedLines[1];
       
-      // Encontrar los puntos fijos de la línea combinada
-      const p1Original = (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) ? lineA.p2 : lineA.p1;
-      const p2Original = (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) ? lineB.p1 : lineB.p2;
+      const isSPL1A = lineA.nombre_obj1 === splName;
+      const isSPL1B = lineB.nombre_obj1 === splName;
+      
+      const p1Original = isSPL1A ? lineA.p2 : lineA.p1;
+      const p2Original = isSPL1B ? lineB.p2 : lineB.p1;
 
-      // Calcular la proyección del punto del SPL sobre la línea original
       const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
       const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
 
@@ -610,44 +599,17 @@ const handleSPLDragMove = (e, lineIndex, end) => {
         t = dotProduct / lineLengthSq;
       }
       
-      // Limitar t entre 0 y 1 para que el SPL se quede en la línea
       t = Math.max(0, Math.min(1, t));
 
-      // Calcular la nueva posición proyectada
       const projectedX = p1Original.x + t * lineVector.x;
       const projectedY = p1Original.y + t * lineVector.y;
       const newSPLPos = { x: projectedX, y: projectedY };
       
-      // Actualizar la posición del SPL en ambas líneas
-      if ((lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName)) {
-          lineA.p1 = newSPLPos;
-      } else {
-          lineA.p2 = newSPLPos;
-      }
+      if (isSPL1A) lineA.p1 = newSPLPos; else lineA.p2 = newSPLPos;
+      if (isSPL1B) lineB.p1 = newSPLPos; else lineB.p2 = newSPLPos;
       
-      if ((lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName)) {
-          lineB.p2 = newSPLPos;
-      } else {
-          lineB.p1 = newSPLPos;
-      }
-      
-      // Recalcular las dimensiones en milímetros
-      const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
-      const newLengthA = Math.hypot(newSPLPos.x - lineA.p1.x, newSPLPos.y - lineA.p1.y);
-      const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
-
-      // Los cálculos de la dimensión deben ser relativos a la nueva posición y la posición del otro extremo.
-      if (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
-      } else {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p1.x - lineA.p2.x, lineA.p1.y - lineA.p2.y));
-      }
-      
-      if (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p1.x - lineB.p2.x, lineB.p1.y - lineB.p2.y));
-      } else {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
-      }
+      lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
+      lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
       
       setLines(updatedLines);
     }
@@ -655,7 +617,7 @@ const handleSPLDragMove = (e, lineIndex, end) => {
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
-  setProcesandoExcel(true); // ⏳ Mostrar spinner
+  setProcesandoExcel(true);
 
   const file = e.target.files[0];
   if (!file) return;
@@ -669,7 +631,7 @@ const handleImportExcel = (e) => {
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
-    setTotalCircuitos(updatedSheet.length - 2); // Asumiendo que las filas empiezan en la fila 2
+    setTotalCircuitos(updatedSheet.length - 2);
     setCircuitosProcesados(0);
 
 
@@ -687,8 +649,8 @@ updatedSheet[1][25] = 'Deduce Lado 2';
       if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
       if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
       if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-      graph[nombre_obj1][nombre_obj2] = dimension_mm;
-      graph[nombre_obj2][nombre_obj1] = dimension_mm;
+      graph[nombre_obj1][nombre_obj2] = parseFloat(dimension_mm);
+      graph[nombre_obj2][nombre_obj1] = parseFloat(dimension_mm);
     });
 
     const dijkstra = (start, end) => {
@@ -779,13 +741,11 @@ lines.forEach((line) => {
     }
   }
 
-  // ✅ Actualiza el contador una sola vez por bloque
   setCircuitosProcesados(i - 2);
 
   if (i < updatedSheet.length) {
     setTimeout(processChunk, 0);
   } else {
-        // ✅ Finaliza y descarga
         const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
         const newWorkbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
@@ -794,7 +754,7 @@ lines.forEach((line) => {
         saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
         setStatusMessage('✅ Archivo procesado y listo para descargar.');
         setArchivoProcesado(true);
-        setProcesandoExcel(false); // ✅ Ocultar spinner
+        setProcesandoExcel(false);
       }
     };
 
@@ -804,6 +764,30 @@ lines.forEach((line) => {
   reader.readAsArrayBuffer(file);
 };
   
+  const handleWheel = (e) => {
+  e.evt.preventDefault();
+  const stage = e.target.getStage();
+  const oldScale = stage.scaleX();
+
+  const scaleBy = 1.1;
+  const mousePointTo = {
+    x: stage.getPointerPosition().x / oldScale - stage.x() / oldScale,
+    y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale,
+  };
+
+  const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+  stage.scale({ x: newScale, y: newScale });
+
+  const newPos = {
+    x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
+    y: -(mousePointTo.y - stage.getPointerPosition().y / newScale) * newScale,
+  };
+  stage.position(newPos);
+  stage.batchDraw();
+};
+
+  
+
   const handleExportExcel = () => {
     setStatusMessage('📤 Procesando archivo para exportar...');
     const exportData = lines.map((line, index) => ({
@@ -824,9 +808,9 @@ lines.forEach((line) => {
 
     setStatusMessage('✅ Archivo listo para descargar.');
     setArchivoProcesado(true);
-    setMostrarExcel(false);      // Oculta el panel de Excel
-    setArchivoProcesado(false);  // Limpia el estado del archivo procesado
-    setStatusMessage('');        // Borra el mensaje de estado
+    setMostrarExcel(false);
+    setArchivoProcesado(false);
+    setStatusMessage('');
 
   };
   
@@ -856,12 +840,10 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
     case 'SPL':
       const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
 
-      // Estimación del tamaño para centrar el rectángulo en el punto
-      const fontSize = 6; // Nuevo tamaño de la fuente
-      const padding = 2;  // Nuevo padding para reducir la altura del rectángulo
+      const fontSize = 9;
+      const padding = 2;
 
-      // Estimación del ancho y alto total del Label
-      const textWidth = name.length * 5; // Estimación simple del ancho del texto
+      const textWidth = name.length * 5;
       const labelWidth = textWidth + 2 * padding;
       const labelHeight = fontSize + 2 * padding;
 
@@ -870,7 +852,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
           key={key}
           x={x}
           y={y}
-          // Aplica el offset para centrar el rectángulo sobre el punto (x, y)
           offsetX={labelWidth / 2}
           offsetY={labelHeight / 2}
           draggable={editingSPLMode}
@@ -878,7 +859,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
           onMouseEnter={() => setHoveredObj(key)}
           onMouseLeave={() => setHoveredObj(null)}
         >
-          {/* El Tag crea el borde rectangular rojo */}
           <Tag
             fill="white"
             stroke={isHovered ? 'green' : 'red'}
@@ -887,12 +867,11 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
             cornerRadius={2}
             lineJoin="round"
           />
-          {/* El texto va dentro del Label */}
           <Text
             text={name}
-            fontSize={fontSize} // Aplica el nuevo tamaño de fuente
+            fontSize={fontSize}
             fill="black"
-            padding={padding} // Aplica el nuevo padding
+            padding={padding}
             align="center"
             verticalAlign="middle"
             onClick={() => {
@@ -1309,8 +1288,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 </button>
         <button
           onClick={() => {
-            setEditingSPLMode(!editingSPLMode); // ⚠️ REFACTORIZADO: Toglea el modo
-            setAddingSPL(false); // Desactiva el modo de agregar SPL
+            setEditingSPLMode(!editingSPLMode);
+            setAddingSPL(false);
             setStatusMessage(!editingSPLMode ? 'Arrastra un SPL para moverlo.' : '');
           }}
           style={{ backgroundColor: editingSPLMode ? '#a0a0a0' : '#f0f0f0' }}
@@ -1344,7 +1323,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
     const newWidth = container.offsetWidth;
     const newHeight = container.offsetHeight;
 
-    // Detecta si el mouse se soltó en el borde inferior derecho (zona de resize)
     const mouseX = e.clientX;
     const mouseY = e.clientY;
     const rect = container.getBoundingClientRect();
@@ -1379,43 +1357,27 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               strokeWidth={2}
               onClick={() => handleLineClick(i)}
             />
-            {
-              (line.obj1 === 'SPL' || line.obj2 === 'SPL') ? (
-                // Lógica para SPLs: Usa el Label y Tag (acotaciones)
-                <Label
-                  x={(line.p1.x + line.p2.x) / 2}
-                  y={(line.p1.y + line.p2.y) / 2}
-                  offsetX={(line.dimension_mm?.toString().length || 1) * 3}
-                  offsetY={6}
-                >
-                  <Tag
-                    fill="white"
-                    pointerDirection="none"
-                    cornerRadius={2}
-                    stroke="red" // Color del borde para destacar
-                    strokeWidth={0.5}
-                  />
-                  <Text
-                    text={`${line.dimension_mm ?? ''}`}
-                    fontSize={9}
-                    fill="black"
-                    padding={1}
-                    align="center"
-                  />
-                </Label>
-              ) : (
-                // Lógica para líneas normales: Solo el texto
-                <Text
-                  text={`${line.dimension_mm ?? ''}`}
-                  x={(line.p1.x + line.p2.x) / 2}
-                  y={(line.p1.y + line.p2.y) / 2}
-                  fontSize={9}
-                  fill="black"
-                  offsetX={(line.dimension_mm?.toString().length || 1) * 3}
-                  offsetY={6}
-                />
-              )
-            }
+            <Label
+              x={(line.p1.x + line.p2.x) / 2}
+              y={(line.p1.y + line.p2.y) / 2}
+              offsetX={(line.dimension_mm?.toString().length || 1) * 3}
+              offsetY={6}
+            >
+              <Tag
+                fill="white"
+                pointerDirection="none"
+                cornerRadius={2}
+                stroke="white"
+                strokeWidth={0.5}
+              />
+              <Text
+                text={`${line.dimension_mm ?? ''}`}
+                fontSize={11}
+                fill="black"
+                padding={1}
+                align="center"
+              />
+            </Label>
             {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
             {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
           </React.Fragment>
