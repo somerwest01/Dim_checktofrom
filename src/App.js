@@ -44,7 +44,7 @@ function App() {
   const [editingSPLMode, setEditingSPLMode] = useState(false);
 
   // Grosor de línea para las acotaciones
-  const DIM_LINE_STROKE_WIDTH = .5;
+  const DIM_LINE_STROKE_WIDTH = .3;
 
   const botonBase = {
     display: 'inline-flex',
@@ -921,7 +921,7 @@ function App() {
     }
   };
 
-  // ✅ NUEVA FUNCIÓN para renderizar las acotaciones de cualquier línea
+  // ✅ FUNCIÓN para renderizar las acotaciones de cualquier línea
   const renderDimensions = (line, key) => {
     if (line.dimension_mm === null || isNaN(line.dimension_mm)) {
       return null;
@@ -1470,7 +1470,8 @@ function App() {
                     onClick={() => handleLineClick(i)}
                   />
 
-                  {renderDimensions(line, i)}
+                  {/* ✅ Lógica corregida para renderizar las dimensiones solo si uno de los extremos es un SPL */}
+                  {(line.obj1 === 'SPL' || line.obj2 === 'SPL') && renderDimensions(line, i)}
 
                   {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
                   {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
