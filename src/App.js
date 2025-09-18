@@ -873,36 +873,33 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
         
         const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
 
-        return (
-          <React.Fragment key={key}>
-            {/* El círculo es el único elemento arrastrable */}
-            <Circle 
-              {...commonProps} 
-              radius={fixedRadius} 
-              fill="white" 
-              stroke="red" 
-              strokeWidth={1.5} 
-              draggable={editingSPLMode}
-              onDragMove={(e) => handleSPLDragMove(e, index, end)}
-            />
-            
-            {/* El texto ya no tiene la propiedad draggable */}
-            <Text
-              {...commonProps} 
-              x={x}
-              y={y}
-              text={name}
-              fontSize={calculatedFontSize}
-              fill="black"
-              align="center"
-              verticalAlign="middle"
-              width={circleDiameter}
-              height={circleDiameter}
-              offsetX={circleDiameter / 2}
-              offsetY={circleDiameter / 2}
-            />
-          </React.Fragment>
-        );
+return (
+  <Group
+    key={key}
+    x={x}
+    y={y}
+    draggable={editingSPLMode}
+    onDragMove={(e) => handleSPLDragMove(e, index, end)}
+  >
+    <Circle
+      radius={fixedRadius}
+      fill="white"
+      stroke="red"
+      strokeWidth={1.5}
+    />
+    <Text
+      text={name}
+      fontSize={calculatedFontSize}
+      fill="black"
+      align="center"
+      verticalAlign="middle"
+      width={circleDiameter}
+      height={circleDiameter}
+      offsetX={circleDiameter / 2}
+      offsetY={circleDiameter / 2}
+    />
+  </Group>
+);
       default:
         return null;
     }
