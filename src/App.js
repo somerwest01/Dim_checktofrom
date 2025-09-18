@@ -576,7 +576,7 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex, end) => {
+const handleSPLDragMove = (e, lineIndex) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
@@ -879,7 +879,7 @@ return (
     x={x}
     y={y}
     draggable={editingSPLMode}
-    onDragMove={(e) => handleSPLDragMove(e, index, end)}
+   onDragMove={(e) => handleSPLDragMove(e, index)}
   >
     <Circle
       radius={fixedRadius}
