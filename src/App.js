@@ -41,7 +41,7 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
-  const [editingSPLMode, setEditingSPLMode] = useState(false);
+
 
 
 
@@ -576,71 +576,6 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex, end) => {
-    const newPos = { x: e.target.x(), y: e.target.y() };
-    const updatedLines = [...lines];
-    
-    // Identificar el nombre del SPL que se está moviendo
-    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
-
-    // Encontrar ambas líneas que se unen en este SPL
-    const connectedLines = updatedLines.filter(line => 
-      line.nombre_obj1 === splName || line.nombre_obj2 === splName
-    );
-
-    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
-    if (connectedLines.length === 2) {
-      const lineA = connectedLines[0];
-      const lineB = connectedLines[1];
-      
-      // Encontrar los puntos fijos de la línea combinada
-      const p1Original = lineA.obj1 === 'SPL' ? lineA.p2 : lineA.p1;
-      const p2Original = lineB.obj2 === 'SPL' ? lineB.p1 : lineB.p2;
-
-      // Calcular la proyección del punto del SPL sobre la línea original
-      const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
-
-      const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
-      const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
-
-      let t = 0;
-      if (lineLengthSq !== 0) {
-        t = dotProduct / lineLengthSq;
-      }
-      
-      // Limitar t entre 0 y 1 para que el SPL se quede en la línea
-      t = Math.max(0, Math.min(1, t));
-
-      // Calcular la nueva posición proyectada
-      const projectedX = p1Original.x + t * lineVector.x;
-      const projectedY = p1Original.y + t * lineVector.y;
-      const newSPLPos = { x: projectedX, y: projectedY };
-      
-      // Actualizar la posición del SPL en ambas líneas
-      if (lineA.obj1 === 'SPL') {
-          lineA.p1 = newSPLPos;
-      } else {
-          lineA.p2 = newSPLPos;
-      }
-      
-      if (lineB.obj2 === 'SPL') {
-          lineB.p2 = newSPLPos;
-      } else {
-          lineB.p1 = newSPLPos;
-      }
-      
-      // Recalcular las dimensiones en milímetros
-      const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
-      const newLengthA = Math.hypot(newSPLPos.x - p1Original.x, newSPLPos.y - p1Original.y);
-      const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
-
-      lineA.dimension_mm = Math.round((newLengthA / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
-      lineB.dimension_mm = Math.round((newLengthB / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
-
-      setLines(updatedLines);
-    }
-  };
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -875,18 +810,10 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 
         return (
           <React.Fragment key={key}>
-            {/* El círculo es el único elemento arrastrable */}
-            <Circle 
-              {...commonProps} 
-              radius={fixedRadius} 
-              fill="white" 
-              stroke="red" 
-              strokeWidth={1.5} 
-              draggable={editingSPLMode}
-              onDragMove={(e) => handleSPLDragMove(e, index, end)}
-            />
+            {/* El círculo ahora tiene un radio fijo */}
+            <Circle {...commonProps} radius={fixedRadius} fill="white" stroke="red" strokeWidth={1.5} />
             
-            {/* El texto ya no tiene la propiedad draggable */}
+            {/* Se añade commonProps para que el texto sea también clickeable */}
             <Text
               {...commonProps} 
               x={x}
@@ -1304,18 +1231,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 >
   🔺 {addingSPL ? 'SPL: ON' : 'Agregar SPL'}
 </button>
-        <button
-          onClick={() => {
-            setEditingSPLMode(true);
-            setAddingSPL(false); // Desactiva el modo de agregar SPL
-            setStatusMessage('Arrastra un SPL sobre la línea para moverlo.');
-          }}
-          style={{ backgroundColor: editingSPLMode ? '#a0a0a0' : '#f0f0f0' }}
-        >
-          Editar SPL
-        </button>
 </div>
-  
 
 
   
