@@ -32,7 +32,7 @@ function App() {
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
   const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
-  const [procesandoExcel, setProcesandoExcel] = useState(false);
+  const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
@@ -44,7 +44,7 @@ function App() {
   const [editingSPLMode, setEditingSPLMode] = useState(false);
 
   // Grosor de línea para las acotaciones
-  const DIM_LINE_STROKE_WIDTH = .3;
+  const DIM_LINE_STROKE_WIDTH = 1;
 
   const botonBase = {
     display: 'inline-flex',
@@ -948,6 +948,10 @@ function App() {
       y: (dimLineStart.y + dimLineEnd.y) / 2
     };
 
+    // ✅ Nuevas variables para la acotación
+    const newRadius = 2.5; // 50% más pequeña
+    const dimVector = { x: (dimLineEnd.x - dimLineStart.x) / lineLength, y: (dimLineEnd.y - dimLineStart.y) / lineLength };
+
     return (
       <React.Fragment key={`dim-${key}`}>
         {/* Línea de acotación principal */}
@@ -970,19 +974,21 @@ function App() {
         />
 
         {/* Flechas */}
+        {/* Flecha en el inicio de la línea de acotación */}
         <RegularPolygon
-          x={dimLineStart.x}
-          y={dimLineStart.y}
+          x={dimLineStart.x + dimVector.x * newRadius}
+          y={dimLineStart.y + dimVector.y * newRadius}
           sides={3}
-          radius={5}
+          radius={newRadius}
           fill="black"
           rotation={Math.atan2(dimLineEnd.y - dimLineStart.y, dimLineEnd.x - dimLineStart.x) * 180 / Math.PI - 90}
         />
+        {/* Flecha en el final de la línea de acotación */}
         <RegularPolygon
-          x={dimLineEnd.x}
-          y={dimLineEnd.y}
+          x={dimLineEnd.x - dimVector.x * newRadius}
+          y={dimLineEnd.y - dimVector.y * newRadius}
           sides={3}
-          radius={5}
+          radius={newRadius}
           fill="black"
           rotation={Math.atan2(dimLineStart.y - dimLineEnd.y, dimLineStart.x - dimLineEnd.x) * 180 / Math.PI - 90}
         />
