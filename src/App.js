@@ -879,24 +879,32 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
       return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
     case 'SPL':
       const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
+
+      // Estimación del tamaño para centrar el rectángulo en el punto
+      const fontSize = 9; // Nuevo tamaño de la fuente
+      const padding = 2;  // Nuevo padding para reducir la altura del rectángulo
+
+      // Estimación del ancho y alto total del Label
+      const textWidth = name.length * 5; // Estimación simple del ancho del texto
+      const labelWidth = textWidth + 2 * padding;
+      const labelHeight = fontSize + 2 * padding;
+
       return (
-        // ⚠️ REFACTORIZADO: Ahora usamos una Label que contiene el Tag y el Text
         <Label
           key={key}
           x={x}
           y={y}
+          // Aplica el offset para centrar el rectángulo sobre el punto (x, y)
+          offsetX={labelWidth / 2}
+          offsetY={labelHeight / 2}
           draggable={editingSPLMode}
           onDragMove={(e) => handleSPLDragMove(e, index, end)}
-          // Centra la etiqueta en la posición (x, y)
-          offsetX={0} 
-          offsetY={0}
         >
           {/* El Tag crea el borde rectangular rojo */}
           <Tag
             fill="white"
             stroke="red"
             strokeWidth={1.5}
-            // Propiedades para hacer el Tag rectangular
             pointerDirection="none"
             cornerRadius={2}
             lineJoin="round"
@@ -904,9 +912,9 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
           {/* El texto va dentro del Label */}
           <Text
             text={name}
-            fontSize={11}
+            fontSize={fontSize} // Aplica el nuevo tamaño de fuente
             fill="black"
-            padding={5} // Espaciado interno para que el borde no esté pegado al texto
+            padding={padding} // Aplica el nuevo padding
             align="center"
             verticalAlign="middle"
           />
