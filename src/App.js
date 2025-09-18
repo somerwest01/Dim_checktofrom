@@ -899,11 +899,13 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
           offsetY={labelHeight / 2}
           draggable={editingSPLMode}
           onDragMove={(e) => handleSPLDragMove(e, index, end)}
+          onMouseEnter={() => setHoveredObj(key)}
+          onMouseLeave={() => setHoveredObj(null)}
         >
           {/* El Tag crea el borde rectangular rojo */}
           <Tag
             fill="white"
-            stroke="red"
+            stroke={isHovered ? 'green' : 'red'}
             strokeWidth={1.5}
             pointerDirection="none"
             cornerRadius={2}
@@ -917,6 +919,14 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
             padding={padding} // Aplica el nuevo padding
             align="center"
             verticalAlign="middle"
+            onClick={() => {
+              if (!eraserMode && !pencilMode) {
+                setSelectedEnd({ lineIndex: index, end });
+                setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+                setSelectorPos({ x, y });
+                setSelectorEnd({ lineIndex: index, end });
+              }
+            }}
           />
         </Label>
       );
