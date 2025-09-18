@@ -577,7 +577,6 @@ setRutaCalculada(result.path);
        reader.readAsText(file);
    };
 const handleSPLDragMove = (e, lineIndex, end) => {
-    // ⚠️ REFACTORIZADO
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
@@ -595,12 +594,12 @@ const handleSPLDragMove = (e, lineIndex, end) => {
       const lineB = connectedLines[1];
       
       // Encontrar los puntos fijos de la línea combinada
-      const p1Original = (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) ? lineA.p2 : lineA.p1;
-      const p2Original = (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) ? lineB.p1 : lineB.p2;
+      const p1Original = lineA.obj1 === 'SPL' ? lineA.p2 : lineA.p1;
+      const p2Original = lineB.obj2 === 'SPL' ? lineB.p1 : lineB.p2;
 
       // Calcular la proyección del punto del SPL sobre la línea original
       const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
 
       const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
       const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
@@ -619,13 +618,13 @@ const handleSPLDragMove = (e, lineIndex, end) => {
       const newSPLPos = { x: projectedX, y: projectedY };
       
       // Actualizar la posición del SPL en ambas líneas
-      if ((lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName)) {
+      if (lineA.obj1 === 'SPL') {
           lineA.p1 = newSPLPos;
       } else {
           lineA.p2 = newSPLPos;
       }
       
-      if ((lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName)) {
+      if (lineB.obj2 === 'SPL') {
           lineB.p2 = newSPLPos;
       } else {
           lineB.p1 = newSPLPos;
@@ -633,22 +632,12 @@ const handleSPLDragMove = (e, lineIndex, end) => {
       
       // Recalcular las dimensiones en milímetros
       const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
-      const newLengthA = Math.hypot(newSPLPos.x - lineA.p1.x, newSPLPos.y - lineA.p1.y);
+      const newLengthA = Math.hypot(newSPLPos.x - p1Original.x, newSPLPos.y - p1Original.y);
       const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
 
-      // Los cálculos de la dimensión deben ser relativos a la nueva posición y la posición del otro extremo.
-      if (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
-      } else {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p1.x - lineA.p2.x, lineA.p1.y - lineA.p2.y));
-      }
-      
-      if (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p1.x - lineB.p2.x, lineB.p1.y - lineB.p2.y));
-      } else {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
-      }
-      
+      lineA.dimension_mm = Math.round((newLengthA / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
+      lineB.dimension_mm = Math.round((newLengthB / totalLength) * (parseFloat(lineA.dimension_mm) + parseFloat(lineB.dimension_mm)));
+
       setLines(updatedLines);
     }
   };
@@ -853,87 +842,71 @@ lines.forEach((line) => {
     setStatusMessage('');        // Borra el mensaje de estado
 
   };
-  
+
 const renderObjeto = (tipo, x, y, key, index, end) => {
-  const isHovered = hoveredObj === key;
-  const commonProps = {
-    key,
-    x,
-    y,
-    onMouseEnter: () => setHoveredObj(key),
-    onMouseLeave: () => setHoveredObj(null),
-    onClick: () => {
-      if (!eraserMode && !pencilMode) {
-        setSelectedEnd({ lineIndex: index, end });
-        setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-        setSelectorPos({ x, y });
-        setSelectorEnd({ lineIndex: index, end });
-      }
-    },
+    const isHovered = hoveredObj === key;
+    const commonProps = {
+      key,
+      x,
+      y,
+      onMouseEnter: () => setHoveredObj(key),
+      onMouseLeave: () => setHoveredObj(null),
+      onClick: () => {
+        if (!eraserMode && !pencilMode) {
+          setSelectedEnd({ lineIndex: index, end });
+          setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+          setSelectorPos({ x, y });
+          setSelectorEnd({ lineIndex: index, end });
+        }
+      },
+    };
+
+    switch (tipo) {
+      case 'Conector':
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
+      case 'BRK':
+        return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
+      case 'SPL':
+        const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
+        const fixedRadius = 7;
+        const circleDiameter = fixedRadius * 2;
+        
+        const calculatedFontSize = Math.min(8, (circleDiameter / name.length) * 1.3);
+
+        return (
+          <React.Fragment key={key}>
+            {/* El círculo es el único elemento arrastrable */}
+            <Circle 
+              {...commonProps} 
+              radius={fixedRadius} 
+              fill="white" 
+              stroke="red" 
+              strokeWidth={1.5} 
+              draggable={editingSPLMode}
+              onDragMove={(e) => handleSPLDragMove(e, index, end)}
+            />
+            
+            {/* El texto ya no tiene la propiedad draggable */}
+            <Text
+              {...commonProps} 
+              x={x}
+              y={y}
+              text={name}
+              fontSize={calculatedFontSize}
+              fill="black"
+              align="center"
+              verticalAlign="middle"
+              width={circleDiameter}
+              height={circleDiameter}
+              offsetX={circleDiameter / 2}
+              offsetY={circleDiameter / 2}
+            />
+          </React.Fragment>
+        );
+      default:
+        return null;
+    }
   };
-
-  switch (tipo) {
-    case 'Conector':
-      return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
-    case 'BRK':
-      return <Circle {...commonProps} radius={4} fill={isHovered ? 'green' : 'black'} />;
-    case 'SPL':
-      const name = end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2;
-
-      // Estimación del tamaño para centrar el rectángulo en el punto
-      const fontSize = 9; // Nuevo tamaño de la fuente
-      const padding = 2;  // Nuevo padding para reducir la altura del rectángulo
-
-      // Estimación del ancho y alto total del Label
-      const textWidth = name.length * 5; // Estimación simple del ancho del texto
-      const labelWidth = textWidth + 2 * padding;
-      const labelHeight = fontSize + 2 * padding;
-
-      return (
-        <Label
-          key={key}
-          x={x}
-          y={y}
-          // Aplica el offset para centrar el rectángulo sobre el punto (x, y)
-          offsetX={labelWidth / 2}
-          offsetY={labelHeight / 2}
-          draggable={editingSPLMode}
-          onDragMove={(e) => handleSPLDragMove(e, index, end)}
-          onMouseEnter={() => setHoveredObj(key)}
-          onMouseLeave={() => setHoveredObj(null)}
-        >
-          {/* El Tag crea el borde rectangular rojo */}
-          <Tag
-            fill="white"
-            stroke={isHovered ? 'green' : 'red'}
-            strokeWidth={1.5}
-            pointerDirection="none"
-            cornerRadius={2}
-            lineJoin="round"
-          />
-          {/* El texto va dentro del Label */}
-          <Text
-            text={name}
-            fontSize={fontSize} // Aplica el nuevo tamaño de fuente
-            fill="black"
-            padding={padding} // Aplica el nuevo padding
-            align="center"
-            verticalAlign="middle"
-            onClick={() => {
-              if (!eraserMode && !pencilMode) {
-                setSelectedEnd({ lineIndex: index, end });
-                setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
-                setSelectorPos({ x, y });
-                setSelectorEnd({ lineIndex: index, end });
-              }
-            }}
-          />
-        </Label>
-      );
-    default:
-      return null;
-  }
-};
 
   return (
     <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
@@ -1333,9 +1306,9 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 </button>
         <button
           onClick={() => {
-            setEditingSPLMode(!editingSPLMode); // ⚠️ REFACTORIZADO: Toglea el modo
+            setEditingSPLMode(true);
             setAddingSPL(false); // Desactiva el modo de agregar SPL
-            setStatusMessage(!editingSPLMode ? 'Arrastra un SPL para moverlo.' : '');
+            setStatusMessage('Arrastra un SPL sobre la línea para moverlo.');
           }}
           style={{ backgroundColor: editingSPLMode ? '#a0a0a0' : '#f0f0f0' }}
         >
