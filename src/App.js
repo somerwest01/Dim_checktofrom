@@ -1418,7 +1418,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               />
               <Text
                 text={`${line.dimension_mm ?? ''}`}
-                fontSize={11}
+                fontSize={9}
                 fill="black"
                 padding={1}
                 align="center"
