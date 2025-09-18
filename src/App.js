@@ -148,11 +148,13 @@ function findClosestSegment(pos) {
   if (!lines || lines.length === 0) return null;
   let best = null;
   lines.forEach((line, idx) => {
-    // línea p1-p2 (todavía modelada en tu app original)
-    const proj = projectPointOnLine(line.p1, line.p2, pos);
-    const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
-    if (!best || dist < best.distance) {
-      best = { lineIndex: idx, proj, distance: dist, line };
+    // Solo considera líneas que no son de dimensión SPL
+    if (!line.isSPLDimension) {
+      const proj = projectPointOnLine(line.p1, line.p2, pos);
+      const dist = Math.hypot(proj.x - pos.x, proj.y - pos.y);
+      if (!best || dist < best.distance) {
+        best = { lineIndex: idx, proj, distance: dist, line };
+      }
     }
   });
   return best;
@@ -243,76 +245,72 @@ const handleStageClick = (e) => {
     // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
     if (addingSPL) {
       const found = findClosestSegment(pos);
-      const proximityPx = 12; // Ajuste: distancia máxima para "aceptar" el drop
+      const proximityPx = 12;
       if (!found || found.distance > proximityPx) {
         setStatusMessage('Acércate a una línea y haz clic para colocar el SPL.');
         return;
       }
 
-      const { lineIndex, proj, line } = found; // ✅ Se pasa la línea original
+      const { lineIndex, proj, line: originalLine } = found;
       const original = lines[lineIndex];
 
-      const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+      const newSPLName = 'SPL';
+      const totalDim = Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
       const dim1 = Math.round(totalDim * proj.t);
       const dim2 = Math.round(totalDim * (1 - proj.t));
 
-      // Asignar el nombre "SPL" por defecto
-      const newSPLName = 'SPL';
-      
-      // ✅ Nuevos puntos de inicio y fin para la línea de acotación del SPL
-      const lineVector = { x: original.p2.x - original.p1.x, y: original.p2.y - original.p1.y };
-      const lineLength = Math.hypot(lineVector.x, lineVector.y);
-      const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
-      const offset = 25; // Distancia de la línea de acotación
-
-      const newP1_A = { x: original.p1.x + normalVector.x * offset, y: original.p1.y + normalVector.y * offset };
-      const newP2_A = { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset };
-
-      const newP1_B = { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset };
-      const newP2_B = { x: original.p2.x + normalVector.x * offset, y: original.p2.y + normalVector.y * offset };
-
-      // ✅ Crear las dos nuevas líneas de acotación (sin modificar la original)
-      const lineA = {
-        p1: newP1_A,
-        p2: newP2_A,
-        // ✅ Se eliminan los tipos de objeto para evitar que se dibujen círculos/cuadrados
-        obj1: 'Ninguno',
-        obj2: 'Ninguno',
-        nombre_obj1: original.nombre_obj1 || '',
+      // ✅ 1. Crear las dos nuevas líneas que reemplazan la original
+      const newLine1 = {
+        p1: original.p1,
+        p2: proj,
+        obj1: original.obj1,
+        obj2: newSPLName,
+        nombre_obj1: original.nombre_obj1,
         nombre_obj2: newSPLName,
         dimension_mm: dim1,
-        deduce1: original.deduce1 || '',
+        deduce1: original.deduce1,
         deduce2: '',
-        isSPLDimension: true, // ✅ Nueva propiedad para renderizado
-        originalEndpoints: { // ✅ Puntos de referencia para las flechas
-          p1: original.p1,
-          p2: proj
-        }
       };
 
-      const lineB = {
-        p1: newP1_B,
-        p2: newP2_B,
-        // ✅ Se eliminan los tipos de objeto para evitar que se dibujen círculos/cuadrados
-        obj1: 'Ninguno',
-        obj2: 'Ninguno',
+      const newLine2 = {
+        p1: proj,
+        p2: original.p2,
+        obj1: newSPLName,
+        obj2: original.obj2,
         nombre_obj1: newSPLName,
-        nombre_obj2: original.nombre_obj2 || '',
+        nombre_obj2: original.nombre_obj2,
         dimension_mm: dim2,
         deduce1: '',
-        deduce2: original.deduce2 || '',
-        isSPLDimension: true, // ✅ Nueva propiedad para renderizado
-        originalEndpoints: { // ✅ Puntos de referencia para las flechas
-          p1: proj,
-          p2: original.p2
-        }
+        deduce2: original.deduce2,
       };
 
-      // ✅ Solo añade las nuevas líneas al array, no reemplaza la original
-      const updated = [...lines, lineA, lineB];
-      setLines(updated);
+      // ✅ 2. Calcular la posición de las líneas de acotación
+      const lineVector = { x: originalLine.p2.x - originalLine.p1.x, y: originalLine.p2.y - originalLine.p1.y };
+      const lineLength = Math.hypot(lineVector.x, lineVector.y);
+      const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
+      const offset = 25;
+
+      const dimLineA = {
+        p1: { x: originalLine.p1.x + normalVector.x * offset, y: originalLine.p1.y + normalVector.y * offset },
+        p2: { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset },
+        isSPLDimension: true, // Propiedad para el renderizado especial
+        dimension_mm: dim1,
+        refEndpoints: { p1: originalLine.p1, p2: proj } // Puntos de referencia para las líneas de acotación
+      };
+
+      const dimLineB = {
+        p1: { x: proj.x + normalVector.x * offset, y: proj.y + normalVector.y * offset },
+        p2: { x: originalLine.p2.x + normalVector.x * offset, y: originalLine.p2.y + normalVector.y * offset },
+        isSPLDimension: true,
+        dimension_mm: dim2,
+        refEndpoints: { p1: proj, p2: originalLine.p2 }
+      };
+
+      // ✅ 3. Reemplazar la línea original con las nuevas líneas
+      const updatedLines = lines.filter((_, i) => i !== lineIndex);
+      setLines([...updatedLines, newLine1, newLine2, dimLineA, dimLineB]);
       setAddingSPL(false);
-      setStatusMessage('🔺 SPL insertado correctamente. La dimensión original se mantiene.');
+      setStatusMessage('🔺 SPL insertado correctamente.');
       return;
     }
 
@@ -599,81 +597,73 @@ setRutaCalculada(result.path);
        reader.readAsText(file);
    };
 const handleSPLDragMove = (e, lineIndex, end) => {
-    // ⚠️ REFACTORIZADO
-    const newPos = { x: e.target.x(), y: e.target.y() };
-    const updatedLines = [...lines];
+  const newPos = { x: e.target.x(), y: e.target.y() };
+  const updatedLines = [...lines];
+
+  const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
+
+  // Encontrar las dos líneas originales que se conectan con este SPL, excluyendo las de acotación
+  const connectedLines = updatedLines.filter(line => 
+    !line.isSPLDimension && (line.nombre_obj1 === splName || line.nombre_obj2 === splName)
+  );
+
+  // Encontrar las dos líneas de acotación asociadas
+  const dimLines = updatedLines.filter(line =>
+    line.isSPLDimension && (line.refEndpoints.p1.x === newPos.x || line.refEndpoints.p2.x === newPos.x)
+  );
+
+  if (connectedLines.length === 2) {
+    const lineA = connectedLines.find(l => (l.nombre_obj1 === splName && l.p1) || (l.nombre_obj2 === splName && l.p2));
+    const lineB = connectedLines.find(l => l !== lineA);
+
+    const p1Original = (lineA.nombre_obj1 === splName) ? lineA.p2 : lineA.p1;
+    const p2Original = (lineB.nombre_obj2 === splName) ? lineB.p1 : lineB.p2;
+
+    const proj = projectPointOnLine(p1Original, p2Original, newPos);
+    const newSPLPos = { x: proj.x, y: proj.y };
+
+    // Actualizar las posiciones de las líneas originales
+    if (lineA.nombre_obj1 === splName) lineA.p1 = newSPLPos;
+    else lineA.p2 = newSPLPos;
+
+    if (lineB.nombre_obj2 === splName) lineB.p2 = newSPLPos;
+    else lineB.p1 = newSPLPos;
+
+    // Recalcular dimensiones de las líneas originales
+    lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
+    lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
     
-    // Identificar el nombre del SPL que se está moviendo
-    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
+    // Y ahora, recalcular las líneas de acotación para que coincidan con la nueva posición del SPL
+    dimLines.forEach(dLine => {
+        // Encontrar los puntos de la línea original asociada a esta línea de acotación
+        const originalLine = connectedLines.find(oLine => 
+            (dLine.refEndpoints.p1.x === oLine.p1.x && dLine.refEndpoints.p1.y === oLine.p1.y) ||
+            (dLine.refEndpoints.p2.x === oLine.p2.x && dLine.refEndpoints.p2.y === oLine.p2.y)
+        );
 
-    // Encontrar ambas líneas que se unen en este SPL
-    const connectedLines = updatedLines.filter(line => 
-      line.nombre_obj1 === splName || line.nombre_obj2 === splName
-    );
+        if (!originalLine) return;
 
-    // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
-    if (connectedLines.length === 2) {
-      const lineA = connectedLines[0];
-      const lineB = connectedLines[1];
-      
-      // Encontrar los puntos fijos de la línea combinada
-      const p1Original = (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) ? lineA.p2 : lineA.p1;
-      const p2Original = (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) ? lineB.p1 : lineB.p2;
+        const lineVector = { x: originalLine.p2.x - originalLine.p1.x, y: originalLine.p2.y - originalLine.p1.y };
+        const lineLength = Math.hypot(lineVector.x, lineVector.y);
+        const normalVector = { x: -lineVector.y / lineLength, y: lineVector.x / lineLength };
+        const offset = 25;
 
-      // Calcular la proyección del punto del SPL sobre la línea original
-      const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
+        // Si la línea de acotación apunta al SPL en p2
+        if (dLine.refEndpoints.p2.x === newSPLPos.x && dLine.refEndpoints.p2.y === newSPLPos.y) {
+            dLine.p2 = { x: newSPLPos.x + normalVector.x * offset, y: newSPLPos.y + normalVector.y * offset };
+            dLine.refEndpoints.p2 = newSPLPos;
+            dLine.dimension_mm = lineA.dimension_mm;
+        } else if (dLine.refEndpoints.p1.x === newSPLPos.x && dLine.refEndpoints.p1.y === newSPLPos.y) {
+            dLine.p1 = { x: newSPLPos.x + normalVector.x * offset, y: newSPLPos.y + normalVector.y * offset };
+            dLine.refEndpoints.p1 = newSPLPos;
+            dLine.dimension_mm = lineB.dimension_mm;
+        }
+    });
 
-      const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
-      const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+    setLines(updatedLines);
+  }
+};
 
-      let t = 0;
-      if (lineLengthSq !== 0) {
-        t = dotProduct / lineLengthSq;
-      }
-      
-      // Limitar t entre 0 y 1 para que el SPL se quede en la línea
-      t = Math.max(0, Math.min(1, t));
-
-      // Calcular la nueva posición proyectada
-      const projectedX = p1Original.x + t * lineVector.x;
-      const projectedY = p1Original.y + t * lineVector.y;
-      const newSPLPos = { x: projectedX, y: projectedY };
-      
-      // Actualizar la posición del SPL en ambas líneas
-      if ((lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName)) {
-          lineA.p1 = newSPLPos;
-      } else {
-          lineA.p2 = newSPLPos;
-      }
-      
-      if ((lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName)) {
-          lineB.p2 = newSPLPos;
-      } else {
-          lineB.p1 = newSPLPos;
-      }
-      
-      // Recalcular las dimensiones en milímetros
-      const totalLength = Math.hypot(p2Original.x - p1Original.x, p2Original.y - p1Original.y);
-      const newLengthA = Math.hypot(newSPLPos.x - lineA.p1.x, newSPLPos.y - lineA.p1.y);
-      const newLengthB = Math.hypot(p2Original.x - newSPLPos.x, p2Original.y - newSPLPos.y);
-
-      // Los cálculos de la dimensión deben ser relativos a la nueva posición y la posición del otro extremo.
-      if (lineA.obj1 === 'SPL' && lineA.nombre_obj1 === splName) {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p2.x - lineA.p1.x, lineA.p2.y - lineA.p1.y));
-      } else {
-        lineA.dimension_mm = Math.round(Math.hypot(lineA.p1.x - lineA.p2.x, lineA.p1.y - lineA.p2.y));
-      }
-      
-      if (lineB.obj2 === 'SPL' && lineB.nombre_obj2 === splName) {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p1.x - lineB.p2.x, lineB.p1.y - lineB.p2.y));
-      } else {
-        lineB.dimension_mm = Math.round(Math.hypot(lineB.p2.x - lineB.p1.x, lineB.p2.y - lineB.p1.y));
-      }
-      
-      setLines(updatedLines);
-    }
-  };
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
@@ -876,12 +866,7 @@ lines.forEach((line) => {
 
   };
   
-const renderObjeto = (tipo, x, y, key, index, end, isSPLDimension) => {
-  // ✅ Si es una línea de acotación de SPL, no se dibujan los objetos
-  if (isSPLDimension) {
-    return null;
-  }
-  
+const renderObjeto = (tipo, x, y, key, index, end) => {
   const isHovered = hoveredObj === key;
   const commonProps = {
     key,
@@ -1427,53 +1412,45 @@ const renderObjeto = (tipo, x, y, key, index, end, isSPLDimension) => {
             <Line
               points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
               stroke="black"
-              strokeWidth={line.isSPLDimension ? 1 : 2} // ✅ Grosor más fino para las acotaciones
-              dash={line.isSPLDimension ? [4, 4] : []} // ✅ Línea punteada
+              strokeWidth={line.isSPLDimension ? 1 : 2}
+              dash={line.isSPLDimension ? [4, 4] : []}
               onClick={() => handleLineClick(i)}
             />
             {line.isSPLDimension && (
                 <>
-                  {/* ✅ Línea de referencia del primer extremo */}
+                  {/* Línea de referencia del primer extremo */}
                   <Line
-                    points={[line.p1.x, line.p1.y, line.originalEndpoints.p1.x, line.originalEndpoints.p1.y]}
+                    points={[line.p1.x, line.p1.y, line.refEndpoints.p1.x, line.refEndpoints.p1.y]}
                     stroke="black"
                     strokeWidth={1}
-                    dash={[4, 4]}
                   />
-                  {/* ✅ Línea de referencia del segundo extremo */}
+                  {/* Línea de referencia del segundo extremo */}
                   <Line
-                    points={[line.p2.x, line.p2.y, line.originalEndpoints.p2.x, line.originalEndpoints.p2.y]}
+                    points={[line.p2.x, line.p2.y, line.refEndpoints.p2.x, line.refEndpoints.p2.y]}
                     stroke="black"
                     strokeWidth={1}
-                    dash={[4, 4]}
                   />
-                  {/* ✅ Flecha de inicio de la dimensión */}
+                  {/* Flecha de inicio de la dimensión */}
                   <Line
                     points={[
                       line.p1.x, line.p1.y,
                       line.p1.x + (line.p2.y - line.p1.y) * 0.1, line.p1.y - (line.p2.x - line.p1.x) * 0.1,
-                      line.p1.x + (line.p2.y - line.p1.y) * 0.1 * -1, line.p1.y - (line.p2.x - line.p1.x) * 0.1 * -1
+                      line.p1.x - (line.p2.y - line.p1.y) * 0.1, line.p1.y + (line.p2.x - line.p1.x) * 0.1
                     ]}
                     stroke="black"
                     closed={true}
                     fill="black"
-                    tension={0.5}
-                    offsetX={(line.p1.x - line.p2.x) * 0.1}
-                    offsetY={(line.p1.y - line.p2.y) * 0.1}
                   />
-                  {/* ✅ Flecha de fin de la dimensión */}
+                  {/* Flecha de fin de la dimensión */}
                   <Line
                     points={[
                       line.p2.x, line.p2.y,
                       line.p2.x + (line.p1.y - line.p2.y) * 0.1, line.p2.y - (line.p1.x - line.p2.x) * 0.1,
-                      line.p2.x + (line.p1.y - line.p2.y) * 0.1 * -1, line.p2.y - (line.p1.x - line.p2.x) * 0.1 * -1
+                      line.p2.x - (line.p1.y - line.p2.y) * 0.1, line.p2.y + (line.p1.x - line.p2.x) * 0.1
                     ]}
                     stroke="black"
                     closed={true}
                     fill="black"
-                    tension={0.5}
-                    offsetX={(line.p2.x - line.p1.x) * 0.1}
-                    offsetY={(line.p2.y - line.p1.y) * 0.1}
                   />
                 </>
               )}
@@ -1498,8 +1475,8 @@ const renderObjeto = (tipo, x, y, key, index, end, isSPLDimension) => {
                 align="center"
               />
             </Label>
-            {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', line.isSPLDimension)}
-            {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line.isSPLDimension)}
+            {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
+            {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
           </React.Fragment>
         ))}
         {/* El código de la línea temporal debe estar aquí, fuera del .map */}
