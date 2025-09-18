@@ -576,14 +576,12 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex) => {
-    // La nueva posición es la del objeto que se está arrastrando (el círculo)
+const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
     // Identificar el nombre del SPL que se está moviendo
-    const targetLine = updatedLines[lineIndex];
-    const splName = targetLine.obj1 === 'SPL' ? targetLine.nombre_obj1 : targetLine.nombre_obj2;
+    const splName = end === 'p1' ? updatedLines[lineIndex].nombre_obj1 : updatedLines[lineIndex].nombre_obj2;
 
     // Encontrar ambas líneas que se unen en este SPL
     const connectedLines = updatedLines.filter(line => 
@@ -592,16 +590,16 @@ const handleSPLDragMove = (e, lineIndex) => {
 
     // Asegurarse de que hemos encontrado exactamente dos líneas conectadas
     if (connectedLines.length === 2) {
-      const lineA = connectedLines.find(line => line.p2.x === targetLine.p2.x && line.p2.y === targetLine.p2.y) || connectedLines[0];
-      const lineB = connectedLines.find(line => line.p1.x === targetLine.p1.x && line.p1.y === targetLine.p1.y) || connectedLines[1];
+      const lineA = connectedLines[0];
+      const lineB = connectedLines[1];
       
-      // Encontrar los puntos fijos de la línea combinada (los que no son SPL)
-      const p1Original = lineA.obj1 !== 'SPL' ? lineA.p1 : lineA.p2;
-      const p2Original = lineB.obj2 !== 'SPL' ? lineB.p2 : lineB.p1;
+      // Encontrar los puntos fijos de la línea combinada
+      const p1Original = lineA.obj1 === 'SPL' ? lineA.p2 : lineA.p1;
+      const p2Original = lineB.obj2 === 'SPL' ? lineB.p1 : lineB.p2;
 
-      // Calcular la proyección del punto del SPL sobre la línea original (proyección vectorial)
+      // Calcular la proyección del punto del SPL sobre la línea original
       const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
 
       const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
       const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
@@ -619,18 +617,17 @@ const handleSPLDragMove = (e, lineIndex) => {
       const projectedY = p1Original.y + t * lineVector.y;
       const newSPLPos = { x: projectedX, y: projectedY };
       
-      // Actualizar la posición de los puntos de las dos líneas
-      // Se busca el extremo que tiene el nombre del SPL y se actualiza su posición
+      // Actualizar la posición del SPL en ambas líneas
       if (lineA.obj1 === 'SPL') {
           lineA.p1 = newSPLPos;
       } else {
           lineA.p2 = newSPLPos;
       }
       
-      if (lineB.obj1 === 'SPL') {
-          lineB.p1 = newSPLPos;
-      } else {
+      if (lineB.obj2 === 'SPL') {
           lineB.p2 = newSPLPos;
+      } else {
+          lineB.p1 = newSPLPos;
       }
       
       // Recalcular las dimensiones en milímetros
@@ -878,7 +875,7 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
 
         return (
           <React.Fragment key={key}>
-            {/* El círculo es el único elemento que escuchará el clic y el arrastre */}
+            {/* El círculo es el único elemento arrastrable */}
             <Circle 
               {...commonProps} 
               radius={fixedRadius} 
@@ -889,8 +886,9 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               onDragMove={(e) => handleSPLDragMove(e, index, end)}
             />
             
-            {/* El texto ya no tiene la propiedad 'draggable' y le decimos que NO escuche eventos */}
+            {/* El texto ya no tiene la propiedad draggable */}
             <Text
+              {...commonProps} 
               x={x}
               y={y}
               text={name}
@@ -902,8 +900,6 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               height={circleDiameter}
               offsetX={circleDiameter / 2}
               offsetY={circleDiameter / 2}
-              // Esta propiedad hace que el clic 'atraviese' el texto y llegue al círculo
-              listening={false} 
             />
           </React.Fragment>
         );
