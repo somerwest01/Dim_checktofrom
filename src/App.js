@@ -44,7 +44,7 @@ function App() {
   const [editingSPLMode, setEditingSPLMode] = useState(false);
 
   // Grosor de línea para las acotaciones
-  const DIM_LINE_STROKE_WIDTH = 1;
+  const DIM_LINE_STROKE_WIDTH = .2;
 
   const botonBase = {
     display: 'inline-flex',
