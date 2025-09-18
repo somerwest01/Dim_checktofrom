@@ -249,7 +249,7 @@ const handleStageClick = (e) => {
         return;
       }
 
-      const { lineIndex, proj } = found;
+      const { lineIndex, proj, line } = found; // ✅ Se pasa la línea original
       const original = lines[lineIndex];
 
       const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
@@ -275,27 +275,37 @@ const handleStageClick = (e) => {
       const lineA = {
         p1: newP1_A,
         p2: newP2_A,
-        obj1: original.obj1,
-        obj2: 'SPL',
+        // ✅ Se eliminan los tipos de objeto para evitar que se dibujen círculos/cuadrados
+        obj1: 'Ninguno',
+        obj2: 'Ninguno',
         nombre_obj1: original.nombre_obj1 || '',
         nombre_obj2: newSPLName,
         dimension_mm: dim1,
         deduce1: original.deduce1 || '',
         deduce2: '',
-        isSPLDimension: true // ✅ Nueva propiedad para renderizado
+        isSPLDimension: true, // ✅ Nueva propiedad para renderizado
+        originalEndpoints: { // ✅ Puntos de referencia para las flechas
+          p1: original.p1,
+          p2: proj
+        }
       };
 
       const lineB = {
         p1: newP1_B,
         p2: newP2_B,
-        obj1: 'SPL',
-        obj2: original.obj2,
+        // ✅ Se eliminan los tipos de objeto para evitar que se dibujen círculos/cuadrados
+        obj1: 'Ninguno',
+        obj2: 'Ninguno',
         nombre_obj1: newSPLName,
         nombre_obj2: original.nombre_obj2 || '',
         dimension_mm: dim2,
         deduce1: '',
         deduce2: original.deduce2 || '',
-        isSPLDimension: true // ✅ Nueva propiedad para renderizado
+        isSPLDimension: true, // ✅ Nueva propiedad para renderizado
+        originalEndpoints: { // ✅ Puntos de referencia para las flechas
+          p1: proj,
+          p2: original.p2
+        }
       };
 
       // ✅ Solo añade las nuevas líneas al array, no reemplaza la original
@@ -866,7 +876,12 @@ lines.forEach((line) => {
 
   };
   
-const renderObjeto = (tipo, x, y, key, index, end) => {
+const renderObjeto = (tipo, x, y, key, index, end, isSPLDimension) => {
+  // ✅ Si es una línea de acotación de SPL, no se dibujan los objetos
+  if (isSPLDimension) {
+    return null;
+  }
+  
   const isHovered = hoveredObj === key;
   const commonProps = {
     key,
@@ -1416,6 +1431,52 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
               dash={line.isSPLDimension ? [4, 4] : []} // ✅ Línea punteada
               onClick={() => handleLineClick(i)}
             />
+            {line.isSPLDimension && (
+                <>
+                  {/* ✅ Línea de referencia del primer extremo */}
+                  <Line
+                    points={[line.p1.x, line.p1.y, line.originalEndpoints.p1.x, line.originalEndpoints.p1.y]}
+                    stroke="black"
+                    strokeWidth={1}
+                    dash={[4, 4]}
+                  />
+                  {/* ✅ Línea de referencia del segundo extremo */}
+                  <Line
+                    points={[line.p2.x, line.p2.y, line.originalEndpoints.p2.x, line.originalEndpoints.p2.y]}
+                    stroke="black"
+                    strokeWidth={1}
+                    dash={[4, 4]}
+                  />
+                  {/* ✅ Flecha de inicio de la dimensión */}
+                  <Line
+                    points={[
+                      line.p1.x, line.p1.y,
+                      line.p1.x + (line.p2.y - line.p1.y) * 0.1, line.p1.y - (line.p2.x - line.p1.x) * 0.1,
+                      line.p1.x + (line.p2.y - line.p1.y) * 0.1 * -1, line.p1.y - (line.p2.x - line.p1.x) * 0.1 * -1
+                    ]}
+                    stroke="black"
+                    closed={true}
+                    fill="black"
+                    tension={0.5}
+                    offsetX={(line.p1.x - line.p2.x) * 0.1}
+                    offsetY={(line.p1.y - line.p2.y) * 0.1}
+                  />
+                  {/* ✅ Flecha de fin de la dimensión */}
+                  <Line
+                    points={[
+                      line.p2.x, line.p2.y,
+                      line.p2.x + (line.p1.y - line.p2.y) * 0.1, line.p2.y - (line.p1.x - line.p2.x) * 0.1,
+                      line.p2.x + (line.p1.y - line.p2.y) * 0.1 * -1, line.p2.y - (line.p1.x - line.p2.x) * 0.1 * -1
+                    ]}
+                    stroke="black"
+                    closed={true}
+                    fill="black"
+                    tension={0.5}
+                    offsetX={(line.p2.x - line.p1.x) * 0.1}
+                    offsetY={(line.p2.y - line.p1.y) * 0.1}
+                  />
+                </>
+              )}
             <Label
               x={(line.p1.x + line.p2.x) / 2}
               y={(line.p1.y + line.p2.y) / 2}
@@ -1437,8 +1498,8 @@ const renderObjeto = (tipo, x, y, key, index, end) => {
                 align="center"
               />
             </Label>
-            {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
-            {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+            {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', line.isSPLDimension)}
+            {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line.isSPLDimension)}
           </React.Fragment>
         ))}
         {/* El código de la línea temporal debe estar aquí, fuera del .map */}
