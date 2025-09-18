@@ -576,7 +576,7 @@ setRutaCalculada(result.path);
        };
        reader.readAsText(file);
    };
-const handleSPLDragMove = (e, lineIndex) => {
+const handleSPLDragMove = (e, lineIndex, end) => {
     const newPos = { x: e.target.x(), y: e.target.y() };
     const updatedLines = [...lines];
     
@@ -599,7 +599,7 @@ const handleSPLDragMove = (e, lineIndex) => {
 
       // Calcular la proyección del punto del SPL sobre la línea original
       const lineVector = { x: p2Original.x - p1Original.x, y: p2Original.y - p1Original.y };
-      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1.y };
+      const pointVector = { x: newPos.x - p1Original.x, y: newPos.y - p1Original.y };
 
       const dotProduct = pointVector.x * lineVector.x + pointVector.y * lineVector.y;
       const lineLengthSq = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
@@ -879,7 +879,7 @@ return (
     x={x}
     y={y}
     draggable={editingSPLMode}
-   onDragMove={(e) => handleSPLDragMove(e, index)}
+   onDragMove={(e) => handleSPLDragMove(e, index, end)}
   >
     <Circle
       radius={fixedRadius}
