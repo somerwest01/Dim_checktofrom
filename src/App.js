@@ -798,24 +798,31 @@ lines.forEach((line) => {
         return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-        // El offset debe ser aproximadamente la mitad del tamaño final (fontSize + padding) para centrarlo.
-        const offset = 9; 
+        const radius = 9; // ✅ Círculo de tamaño fijo
         return (
-          <Label {...commonProps} x={x} y={y} offsetX={offset} offsetY={offset}>
-            <Tag
+          // ✅ El Group se centra en la coordenada (x,y) de la línea
+          <Group {...commonProps} x={x} y={y}>
+            <Circle
+              radius={radius}
               fill="white"
               stroke="red"
-              strokeWidth={0.3} // ✅ Borde más delgado
-              cornerRadius={10} // Valor alto para asegurar que sea un círculo
+              strokeWidth={0.3}
             />
             <Text
               text={nombre}
-              fontSize={5} // ✅ 50% más pequeño
+              fontSize={7}
               fill="black"
-              padding={4} // ✅ 50% más pequeño
               fontStyle="bold"
+              width={radius * 2}
+              height={radius * 2}
+              align="center"
+              verticalAlign="middle"
+              offsetX={radius}
+              offsetY={radius}
+              wrap="none"
+              ellipsis={true} // ✅ El texto se acorta si es muy largo
             />
-          </Label>
+          </Group>
         );
       }
       default:
