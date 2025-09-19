@@ -384,15 +384,18 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
-    // Propagar nombre a extremos cercanos
-    updatedLines.forEach((line) => {
-      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj1 = newName;
-      }
-      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj2 = newName;
-      }
-    });
+ if (selectedObjType !== 'SPL') {
+      updatedLines.forEach((line) => {
+        // Propaga al extremo 1 si está cerca
+        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj1 = newName;
+        }
+        // Propaga al extremo 2 si está cerca
+        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj2 = newName;
+        }
+      });
+    }
 
     setLines(updatedLines);
     setSelectedEnd(null);
