@@ -803,7 +803,7 @@ lines.forEach((line) => {
         // **✅ Lógica de ajuste de fuente mejorada**
         let calculatedFontSize = 6;
         if (nombre.length > 3) {
-            calculatedFontSize = Math.max(5, 7 - (nombre.length - 5) * 0.5);
+            calculatedFontSize = Math.max(5, 6 - (nombre.length - 3) * 0.5);
         }
 
         return (
