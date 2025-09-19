@@ -792,18 +792,22 @@ lines.forEach((line) => {
     };
 
     switch (tipo) {
-      // ... otros casos
+      case 'Conector':
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
+      case 'BRK':
+        return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-        const radius = 9;
+        const radius = 9; // ✅ Círculo de tamaño fijo
         
-        // ✨ Lógica para ajustar el tamaño de la fuente ✨
-        let fontSize = 7; // Tamaño de fuente por defecto
-        if (nombre && nombre.length > 7) { // Puedes ajustar este valor
-            fontSize = 7 * (7 / nombre.length); // Reduce la fuente proporcionalmente
+        // **✅ Lógica de ajuste de fuente mejorada**
+        let calculatedFontSize = 7;
+        if (nombre.length > 5) {
+            calculatedFontSize = Math.max(5, 7 - (nombre.length - 5) * 0.5);
         }
-        
+
         return (
+          // ✅ El Group se centra en la coordenada (x,y) de la línea
           <Group {...commonProps} x={x} y={y}>
             <Circle
               radius={radius}
@@ -813,7 +817,7 @@ lines.forEach((line) => {
             />
             <Text
               text={nombre}
-              fontSize={fontSize} // Usa el tamaño de fuente calculado
+              fontSize={calculatedFontSize} // ✅ Ahora usa el tamaño calculado
               fill="black"
               fontStyle="bold"
               width={radius * 2}
@@ -823,7 +827,7 @@ lines.forEach((line) => {
               offsetX={radius}
               offsetY={radius}
               wrap="none"
-              ellipsis={true} // Puedes quitar esta línea si no quieres que se trunque. Si la mantienes, el texto se reducirá y se truncará si todavía no cabe.
+              ellipsis={false} // ✅ Desactiva la elipsis para que no trunque el texto
             />
           </Group>
         );
@@ -1287,7 +1291,7 @@ lines.forEach((line) => {
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
-                  strokeWidth={1}
+                  strokeWidth={2}
                   onClick={() => handleLineClick(i)}
                 />
                 <Label
@@ -1305,7 +1309,7 @@ lines.forEach((line) => {
   />
   <Text
     text={`${line.dimension_mm ?? ''}`}
-    fontSize={9}
+    fontSize={11}
     fill="black"
     padding={1}         // Espacio entre texto y fondo
     align="center"
