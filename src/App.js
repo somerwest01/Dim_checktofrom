@@ -792,15 +792,18 @@ lines.forEach((line) => {
     };
 
     switch (tipo) {
-      case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
-      case 'BRK':
-        return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
+      // ... otros casos
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-        const radius = 9; // ✅ Círculo de tamaño fijo
+        const radius = 9;
+        
+        // ✨ Lógica para ajustar el tamaño de la fuente ✨
+        let fontSize = 7; // Tamaño de fuente por defecto
+        if (nombre && nombre.length > 7) { // Puedes ajustar este valor
+            fontSize = 7 * (7 / nombre.length); // Reduce la fuente proporcionalmente
+        }
+        
         return (
-          // ✅ El Group se centra en la coordenada (x,y) de la línea
           <Group {...commonProps} x={x} y={y}>
             <Circle
               radius={radius}
@@ -810,7 +813,7 @@ lines.forEach((line) => {
             />
             <Text
               text={nombre}
-              fontSize={7}
+              fontSize={fontSize} // Usa el tamaño de fuente calculado
               fill="black"
               fontStyle="bold"
               width={radius * 2}
@@ -820,7 +823,7 @@ lines.forEach((line) => {
               offsetX={radius}
               offsetY={radius}
               wrap="none"
-              ellipsis={true} // ✅ El texto se acorta si es muy largo
+              ellipsis={true} // Puedes quitar esta línea si no quieres que se trunque. Si la mantienes, el texto se reducirá y se truncará si todavía no cabe.
             />
           </Group>
         );
