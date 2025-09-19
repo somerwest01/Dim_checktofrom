@@ -1284,7 +1284,7 @@ lines.forEach((line) => {
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
-                  strokeWidth={2}
+                  strokeWidth={1}
                   onClick={() => handleLineClick(i)}
                 />
                 <Label
@@ -1302,7 +1302,7 @@ lines.forEach((line) => {
   />
   <Text
     text={`${line.dimension_mm ?? ''}`}
-    fontSize={11}
+    fontSize={9}
     fill="black"
     padding={1}         // Espacio entre texto y fondo
     align="center"
