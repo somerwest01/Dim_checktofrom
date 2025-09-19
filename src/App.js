@@ -801,8 +801,8 @@ lines.forEach((line) => {
         const radius = 9; // ✅ Círculo de tamaño fijo
         
         // **✅ Lógica de ajuste de fuente mejorada**
-        let calculatedFontSize = 7;
-        if (nombre.length > 5) {
+        let calculatedFontSize = 6;
+        if (nombre.length > 3) {
             calculatedFontSize = Math.max(5, 7 - (nombre.length - 5) * 0.5);
         }
 
