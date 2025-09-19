@@ -798,22 +798,21 @@ lines.forEach((line) => {
         return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-        // El tamaño del label se ajusta por el padding, así que el offset debe ser una aproximación
-        // para centrarlo. Ajusta este valor si el padding cambia.
-        const offset = 18; 
+        // El offset debe ser aproximadamente la mitad del tamaño final (fontSize + padding) para centrarlo.
+        const offset = 9; 
         return (
           <Label {...commonProps} x={x} y={y} offsetX={offset} offsetY={offset}>
             <Tag
               fill="white"
               stroke="red"
-              strokeWidth={2}
-              cornerRadius={20} // Valor alto para asegurar que sea un círculo
+              strokeWidth={0.3} // ✅ Borde más delgado
+              cornerRadius={10} // Valor alto para asegurar que sea un círculo
             />
             <Text
               text={nombre}
-              fontSize={10}
+              fontSize={5} // ✅ 50% más pequeño
               fill="black"
-              padding={8} // Espacio entre el texto y el borde del círculo
+              padding={4} // ✅ 50% más pequeño
               fontStyle="bold"
             />
           </Label>
