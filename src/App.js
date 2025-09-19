@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
-import { useEffect } from 'react';
 
-import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon, Label, Tag } from 'react-konva';
+import { Stage, Layer, Line, Text, Rect, Circle, RegularPolygon, Label, Tag, Group } from 'react-konva';
 
 function App() {
   const [mode, setMode] = useState('design');
@@ -264,7 +263,7 @@ const handleStageClick = (e) => {
       obj1: original.obj1,
       obj2: 'SPL',
       nombre_obj1: original.nombre_obj1 || '',
-      nombre_obj2: '', // el SPL por ahora no tiene nombre
+      nombre_obj2: 'SPL', // ✅ Nombre por defecto para el nuevo SPL
       dimension_mm: dim1,
       deduce1: original.deduce1 || '',
       deduce2: '',
@@ -276,7 +275,7 @@ const handleStageClick = (e) => {
       p2: { ...original.p2 },
       obj1: 'SPL',
       obj2: original.obj2,
-      nombre_obj1: '',
+      nombre_obj1: 'SPL', // ✅ Nombre por defecto para el nuevo SPL
       nombre_obj2: original.nombre_obj2 || '',
       dimension_mm: dim2,
       deduce1: '',
@@ -774,13 +773,10 @@ lines.forEach((line) => {
 
   };
 
-  const renderObjeto = (tipo, x, y, key, index, end) => {
+  const renderObjeto = (tipo, x, y, key, index, end, line) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
       key,
-      x,
-      y,
-      fill: isHovered ? 'green' : tipo === 'Conector' ? 'purple' : tipo === 'BRK' ? 'black' : 'green',
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
       onClick: () => {
@@ -797,11 +793,32 @@ lines.forEach((line) => {
 
     switch (tipo) {
       case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} />;
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
       case 'BRK':
-        return <Circle {...commonProps} radius={4} />;
-      case 'SPL':
-        return <RegularPolygon {...commonProps} sides={3} radius={7} />;
+        return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
+      case 'SPL': {
+        const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
+        // El tamaño del label se ajusta por el padding, así que el offset debe ser una aproximación
+        // para centrarlo. Ajusta este valor si el padding cambia.
+        const offset = 18; 
+        return (
+          <Label {...commonProps} x={x} y={y} offsetX={offset} offsetY={offset}>
+            <Tag
+              fill="white"
+              stroke="red"
+              strokeWidth={2}
+              cornerRadius={20} // Valor alto para asegurar que sea un círculo
+            />
+            <Text
+              text={nombre}
+              fontSize={10}
+              fill="black"
+              padding={8} // Espacio entre el texto y el borde del círculo
+              fontStyle="bold"
+            />
+          </Label>
+        );
+      }
       default:
         return null;
     }
@@ -1285,14 +1302,14 @@ lines.forEach((line) => {
     align="center"
   />
 </Label>
-                {line.nombre_obj1 && (
+                {line.obj1 !== 'SPL' && line.nombre_obj1 && (
                   <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
                 )}
-                {line.nombre_obj2 && (
+                {line.obj2 !== 'SPL' && line.nombre_obj2 && (
                   <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
                 )}
-                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1')}
-                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2')}
+                {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', line)}
+                {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line)}
               </React.Fragment>
             ))}
 
