@@ -377,6 +377,9 @@ const updateNombre = () => {
     const newName = nameInput;
     const targetPos = targetLine[selectedEnd.end];
 
+      // ✅ Obtener el tipo de objeto seleccionado para el caso 'SPL'
+    const selectedObjType = selectedEnd.end === 'p1' ? targetLine.obj1 : targetLine.obj2;
+
     // Asignar nombre al extremo seleccionado
     if (selectedEnd.end === 'p1') {
       targetLine.nombre_obj1 = newName;
@@ -384,19 +387,28 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
- if (selectedObjType !== 'SPL') {
+    if (selectedObjType === 'SPL') {
+      // Si el objeto es un SPL, busca la otra línea unida en ese punto y actualiza solo ese extremo
       updatedLines.forEach((line) => {
-        // Propaga al extremo 1 si está cerca
+        // Busca el punto que tiene la misma posición que el SPL seleccionado
+        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold && line.p1 !== targetPos) {
+          line.nombre_obj1 = newName;
+        }
+        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold && line.p2 !== targetPos) {
+          line.nombre_obj2 = newName;
+        }
+      });
+    } else {
+      // Si no es un SPL, se mantiene la propagación a todos los extremos cercanos
+      updatedLines.forEach((line) => {
         if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
           line.nombre_obj1 = newName;
         }
-        // Propaga al extremo 2 si está cerca
         if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
           line.nombre_obj2 = newName;
         }
       });
     }
-
     setLines(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
