@@ -808,9 +808,9 @@ lines.forEach((line) => {
 
     switch (tipo) {
       case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'green' : 'purple'} />;
+        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'Lime' : 'DeepSkyBlue'} />;
       case 'BRK':
-        return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'green' : 'black'} />;
+        return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'Lime' : 'black'} />;
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
         const radius = 9; // ✅ Círculo de tamaño fijo
@@ -1059,12 +1059,12 @@ lines.forEach((line) => {
   }}>
     <thead>
       <tr>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>#</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 1</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>D1</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 2</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>D2</th>
-        <th style={{ backgroundColor: '#3f51b5', color: 'white', border: '1px solid black', padding: '6px' }}>Dim (mm)</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>#</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 1</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>D1</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>Lado 2</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>D2</th>
+        <th style={{ backgroundColor: '#0022FF', color: 'white', border: '1px solid black', padding: '6px' }}>Dim (mm)</th>
       </tr>
     </thead>
     <tbody>
@@ -1185,20 +1185,20 @@ lines.forEach((line) => {
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
     style={{
-      backgroundColor: modoAnguloRecto ? 'lightblue' : 'white',
+      backgroundColor: modoAnguloRecto ? 'Lime' : 'white',
       border: '1px solid gray',
       padding: '5px 10px',
       borderRadius: '5px',
       cursor: 'pointer'
     }}
   >
-    {modoAnguloRecto ? '🔒 Ángulo recto activado' : '🔓 Ángulo libre'}
+    {modoAnguloRecto ? '🔒 Ángulo recto' : '🔓 Ángulo libre'}
   </button>
 
   <button
     onClick={() => setPencilMode(!pencilMode)}
     style={{
-      backgroundColor: pencilMode ? 'lightgreen' : 'white',
+      backgroundColor: pencilMode ? 'Lime' : 'white',
       border: '1px solid gray',
       padding: '5px 10px',
       borderRadius: '5px',
@@ -1211,7 +1211,7 @@ lines.forEach((line) => {
   <button
     onClick={() => setEraserMode(!eraserMode)}
     style={{
-      backgroundColor: eraserMode ? 'lightcoral' : 'white',
+      backgroundColor: eraserMode ? 'Lime' : 'white',
       border: '1px solid gray',
       padding: '5px 10px',
       borderRadius: '5px',
@@ -1224,7 +1224,7 @@ lines.forEach((line) => {
     <button
   onClick={() => setModoModificarExtremos(!modoModificarExtremos)}
   style={{
-    backgroundColor: modoModificarExtremos ? 'khaki' : 'white',
+    backgroundColor: modoModificarExtremos ? 'Lime' : 'white',
     border: '1px solid gray',
     padding: '5px 10px',
     borderRadius: '5px',
@@ -1239,7 +1239,7 @@ lines.forEach((line) => {
     setStatusMessage(!addingSPL ? 'Modo: colocar SPL activo' : '');
   }}
   style={{
-    backgroundColor: addingSPL ? 'lightgreen' : 'white',
+    backgroundColor: addingSPL ? 'Lime' : 'white',
     border: '1px solid gray',
     padding: '5px 10px',
     borderRadius: '5px',
@@ -1306,7 +1306,7 @@ lines.forEach((line) => {
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
-                  strokeWidth={2}
+                  strokeWidth={.5}
                   onClick={() => handleLineClick(i)}
                 />
                 <Label
@@ -1324,7 +1324,7 @@ lines.forEach((line) => {
   />
   <Text
     text={`${line.dimension_mm ?? ''}`}
-    fontSize={11}
+    fontSize={8}
     fill="black"
     padding={1}         // Espacio entre texto y fondo
     align="center"
@@ -1383,7 +1383,7 @@ lines.forEach((line) => {
     borderRadius: '5px',
     zIndex: 20
   }}>
-    <p style={{ marginBottom: '5px' }}>Cambiar tipo de extremo:</p>
+    <p style={{ marginBottom: '5px' }}>Cambiar tipo:</p>
     {['Conector', 'BRK', 'SPL'].map(tipo => (
       <button
         key={tipo}
@@ -1401,7 +1401,7 @@ lines.forEach((line) => {
         }}
         style={{
           marginRight: '5px',
-          padding: '5px 10px',
+          padding: '5px',
           border: '1px solid gray',
           borderRadius: '5px',
           backgroundColor: '#f0f0f0',
