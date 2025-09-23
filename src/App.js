@@ -426,6 +426,8 @@ const updateNombre = () => {
     const newName = nameInput;
     const targetPos = targetLine[selectedEnd.end];
 
+    const selectedObjType = selectedEnd.end === 'p1' ? targetLine.obj1 : targetLine.obj2;
+
     // Asignar nombre al extremo seleccionado
     if (selectedEnd.end === 'p1') {
       targetLine.nombre_obj1 = newName;
@@ -433,18 +435,28 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
-    // Propaga el nombre a todos los extremos unidos en el mismo punto,
-    // sin importar su tipo (BRK, SPL, Conector, etc.).
-    updatedLines.forEach((line) => {
-      // Verifica si p1 de la línea actual está en la misma posición que el punto modificado
-      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj1 = newName;
-      }
-      // Verifica si p2 de la línea actual está en la misma posición que el punto modificado
-      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj2 = newName;
-      }
-    });
+    // Lógica de propagación para SPL
+    if (selectedObjType === 'SPL') {
+      updatedLines.forEach((line) => {
+        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj1 = newName;
+        }
+        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj2 = newName;
+        }
+      });
+    } 
+    // Lógica de propagación para BRK
+    else if (selectedObjType === 'BRK') {
+      updatedLines.forEach((line) => {
+        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj1 = newName;
+        }
+        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
+          line.nombre_obj2 = newName;
+        }
+      });
+    }
 
     setLines(updatedLines);
     setSelectedEnd(null);
