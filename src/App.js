@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
@@ -31,7 +31,7 @@ function App() {
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
   const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
-  const [procesandoExcel, setProcesandoExcel] = useState(false);
+  const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
@@ -45,6 +45,9 @@ function App() {
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
+
+  // ✅ Nueva referencia para el contenedor principal
+  const containerRef = useRef(null);
 
 
   const botonBase = {
@@ -508,9 +511,9 @@ const calcularRutaReal = () => {
           distances[neighbor] = newDist;
           prev[neighbor] = node;
           queue.push({ node: neighbor, dist: newDist });
+          }
         }
       }
-    }
 
     const path = [];
     let current = end;
@@ -908,11 +911,18 @@ lines.forEach((line) => {
       onClick: (e) => {
         if (!eraserMode && !pencilMode) {
           e.cancelBubble = true; // Evita que el clic se propague al Stage
-          const menuX = e.evt.clientX;
-          const menuY = e.evt.clientY;
+          
+          // ✅ Nuevo: Obtener la posición del contenedor
+          const containerRect = containerRef.current.getBoundingClientRect();
+          
+          // ✅ Nuevo: Calcular la posición del menú
+          const menuX = e.evt.clientX - containerRect.left;
+          const menuY = e.evt.clientY - containerRect.top;
+          
           const name = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
           const deduce = end === 'p1' ? line.deduce1 : line.deduce2;
           
+          // ✅ Se usan las nuevas coordenadas calculadas
           setFloatingMenu({ x: menuX, y: menuY, lineIndex: index, end, type: tipo });
           setMenuValues({ name, deduce });
         }
@@ -1292,7 +1302,7 @@ lines.forEach((line) => {
   
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }} ref={containerRef}>
           
 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '10px' }}>
   <button
