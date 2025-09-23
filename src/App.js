@@ -41,15 +41,9 @@ function App() {
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
-
-  // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
-  
-  // ✅ Nuevo estado para la previsualización del SPL
   const [previewSPL, setPreviewSPL] = useState(null);
-
-  // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
 
 
@@ -352,20 +346,20 @@ const handleMouseMove = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
 
-  // ✅ New Logic for SPL preview
   if (addingSPL) {
     const found = findClosestSegment(pos);
-    const proximityPx = 12; // Same threshold as in handleStageClick
+    const proximityPx = 12;
 
     if (found && found.distance <= proximityPx) {
       const { line } = found;
-      // Determine which endpoint is closer
+      // ✅ CORRECCIÓN: Usar la posición del cursor (pos) para calcular las distancias
       const dist1 = Math.hypot(pos.x - line.p1.x, pos.y - line.p1.y);
-      const startPoint = dist1 < Math.hypot(pos.x - line.p2.x, pos.y - line.p1.y) ? line.p1 : line.p2;
+      const dist2 = Math.hypot(pos.x - line.p2.x, pos.y - line.p2.y);
+      
+      const startPoint = dist1 < dist2 ? line.p1 : line.p2;
 
-      // Calculate the dimension from the starting endpoint
       const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-      const dimensionValue = (found.proj.t * totalDim).toFixed(0);
+      const dimensionValue = Math.hypot(found.proj.x - startPoint.x, found.proj.y - startPoint.y).toFixed(0);
 
       setPreviewSPL({
         p1: startPoint,
@@ -373,10 +367,9 @@ const handleMouseMove = (e) => {
         dimension: dimensionValue
       });
     } else {
-      setPreviewSPL(null); // Hide the preview if the cursor isn't near a line
+      setPreviewSPL(null);
     }
   } else {
-    // Original logic for pencil mode
     if (pencilMode && points.length === 1 && !eraserMode) {
       const p1 = points[0];
       let adjustedPos = { ...pos };
@@ -384,9 +377,9 @@ const handleMouseMove = (e) => {
         const dx = Math.abs(pos.x - p1.x);
         const dy = Math.abs(pos.y - p1.y);
         if (dx > dy) {
-          adjustedPos.y = p1.y; // Horizontal
+          adjustedPos.y = p1.y;
         } else {
-          adjustedPos.x = p1.x; // Vertical
+          adjustedPos.x = p1.x;
         }
       }
       setMousePos(adjustedPos);
