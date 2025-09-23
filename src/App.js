@@ -1195,13 +1195,6 @@ case 'SPL':
       <option>SPL</option>
     </select>
     <br /><br />
-    <button
-      onClick={() => setEraserMode(!eraserMode)}
-      style={{ backgroundColor: eraserMode ? 'lightcoral' : 'white' }}
-    >
-      🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
-    </button>
-    <br /><br />
     <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
