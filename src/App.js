@@ -1088,7 +1088,7 @@ case 'SPL':
     ...(hoverBoton === 'diseño' ? botonExpandido : {})
   }}
 >
-  ✏️ {hoverBoton === 'diseño' && 'Diseño'}
+  🖉 {hoverBoton === 'diseño' && 'Diseño'}
 </button>
   
   <button
@@ -1144,7 +1144,7 @@ case 'SPL':
     ...(hoverBoton === 'Guardar' ? botonExpandido : {})
   }}
 >
-  💾 {hoverBoton === 'guardar' && 'Guardar'}
+  🖫 {hoverBoton === 'guardar' && 'Guardar'}
 </button>
 
         
@@ -1383,7 +1383,7 @@ case 'SPL':
       cursor: 'pointer'
     }}
   >
-    {modoAnguloRecto ? '🔒 Ángulo recto' : '🔓 Ángulo libre'}
+    {modoAnguloRecto ? '🔒︎ Ángulo recto' : '🔓︎ Ángulo libre'}
   </button>
 
   <button
@@ -1396,7 +1396,7 @@ case 'SPL':
       cursor: 'pointer'
     }}
   >
-    ✏️ {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}
+    🖉 {pencilMode ? 'Desactivar lápiz' : 'Activar lápiz'}
   </button>
 
   <button
