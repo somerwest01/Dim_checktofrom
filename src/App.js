@@ -1462,17 +1462,17 @@ const handleUpdateFloatingMenu = () => {
   />
   <Text
     text={`${line.dimension_mm ?? ''}`}
-    fontSize={8}
+    fontSize={7}
     fill="black"
     padding={1}         // Espacio entre texto y fondo
     align="center"
   />
 </Label>
                 {line.obj1 !== 'SPL' && line.nombre_obj1 && (
-                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={10} fill="black" />
+                  <Text x={line.p1.x + 5} y={line.p1.y - 15} text={line.nombre_obj1} fontSize={7} fill="black" />
                 )}
                 {line.obj2 !== 'SPL' && line.nombre_obj2 && (
-                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={10} fill="black" />
+                  <Text x={line.p2.x + 5} y={line.p2.y - 15} text={line.nombre_obj2} fontSize={7} fill="black" />
                 )}
                 {renderObjeto(line.obj1, line.p1.x, line.p1.y, `obj1-${i}`, i, 'p1', line)}
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line)}
