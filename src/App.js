@@ -351,15 +351,14 @@ const handleMouseMove = (e) => {
     const proximityPx = 12;
 
     if (found && found.distance <= proximityPx) {
-      const { line } = found;
-      // ✅ CORRECCIÓN: Usar la posición del cursor (pos) para calcular las distancias
-      const dist1 = Math.hypot(pos.x - line.p1.x, pos.y - line.p1.y);
-      const dist2 = Math.hypot(pos.x - line.p2.x, pos.y - line.p2.y);
+      const { line, proj } = found;
       
-      const startPoint = dist1 < dist2 ? line.p1 : line.p2;
-
       const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-      const dimensionValue = Math.hypot(found.proj.x - startPoint.x, found.proj.y - startPoint.y).toFixed(0);
+      const dist1 = totalDim * proj.t;
+      const dist2 = totalDim * (1 - proj.t);
+      const dimensionValue = Math.round(dist1 < dist2 ? dist1 : dist2);
+
+      const startPoint = dist1 < dist2 ? line.p1 : line.p2;
 
       setPreviewSPL({
         p1: startPoint,
