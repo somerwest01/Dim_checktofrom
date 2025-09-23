@@ -193,7 +193,7 @@ function findClosestSegment(pos) {
   return best;
 }
 
-  const handleDeleteSPL = () => {
+const handleDeleteSPL = () => {
   if (!floatingMenu) return;
 
   const { lineIndex, end } = floatingMenu;
@@ -202,10 +202,10 @@ function findClosestSegment(pos) {
 
   // Busca la otra línea que comparte el mismo punto SPL
   const otherLineIndex = lines.findIndex((line, idx) => {
-    // Evita la línea actual y busca la que comparta el punto
-    return idx !== lineIndex &&
-           (Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < proximityThreshold ||
-            Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < proximityThreshold);
+    if (idx === lineIndex) return false;
+    const p1Matches = Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < proximityThreshold;
+    const p2Matches = Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < proximityThreshold;
+    return p1Matches || p2Matches;
   });
 
   if (otherLineIndex === -1) {
@@ -215,21 +215,36 @@ function findClosestSegment(pos) {
   }
 
   const otherLine = lines[otherLineIndex];
-  const originalLine = {
-    p1: otherLine.p1,
-    p2: targetLine.p2,
-    obj1: otherLine.obj1,
-    obj2: targetLine.obj2,
-    nombre_obj1: otherLine.nombre_obj1,
-    nombre_obj2: targetLine.nombre_obj2,
+  
+  // Identifica los puntos que NO son el SPL para cada una de las dos líneas
+  const nonSPLPoint1 = end === 'p1' ? targetLine.p2 : targetLine.p1;
+  const nonSPLName1 = end === 'p1' ? targetLine.nombre_obj2 : targetLine.nombre_obj1;
+  const nonSPLDeduce1 = end === 'p1' ? targetLine.deduce2 : targetLine.deduce1;
+  const nonSPLObj1 = end === 'p1' ? targetLine.obj2 : targetLine.obj1;
+  
+  const isOtherLineP1SPL = Math.hypot(otherLine.p1.x - splPoint.x, otherLine.p1.y - splPoint.y) < proximityThreshold;
+  const nonSPLPoint2 = isOtherLineP1SPL ? otherLine.p2 : otherLine.p1;
+  const nonSPLName2 = isOtherLineP1SPL ? otherLine.nombre_obj2 : otherLine.nombre_obj1;
+  const nonSPLDeduce2 = isOtherLineP1SPL ? otherLine.deduce2 : otherLine.deduce1;
+  const nonSPLObj2 = isOtherLineP1SPL ? otherLine.obj2 : otherLine.obj1;
+
+  // Crea la nueva línea fusionada
+  const mergedLine = {
+    p1: nonSPLPoint1,
+    p2: nonSPLPoint2,
+    obj1: nonSPLObj1,
+    obj2: nonSPLObj2,
+    nombre_obj1: nonSPLName1,
+    nombre_obj2: nonSPLName2,
     dimension_mm: (parseFloat(targetLine.dimension_mm) || 0) + (parseFloat(otherLine.dimension_mm) || 0),
-    deduce1: otherLine.deduce1,
-    deduce2: targetLine.deduce2,
+    deduce1: nonSPLDeduce1,
+    deduce2: nonSPLDeduce2,
     item: targetLine.item || otherLine.item
   };
 
+  // Filtra las dos líneas antiguas y agrega la nueva
   const updatedLines = lines.filter((_, idx) => idx !== lineIndex && idx !== otherLineIndex);
-  handleStateChange([...updatedLines, originalLine]);
+  handleStateChange([...updatedLines, mergedLine]);
   setFloatingMenu(null);
 };
 
