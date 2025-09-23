@@ -607,28 +607,45 @@ setRutaCalculada(result.path);
 };
 
   
-  const handleResetApp = () => {
-  handleStateChange([]);
-  setPoints([]);
-  setObj1('Ninguno');
-  setObj2('Ninguno');
-  setDimension('');
-  setInputPos({ x: 0, y: 0 });
-  setShowInput(false);
-  setTempLine(null);
-  setMousePos(null);
-  setHoveredObj(null);
-  setSelectedEnd(null);
-  setNameInput('');
-  setEraserMode(false);
-  setNameInput1('');
-  setNameInput2('');
-  setDistanciaRuta(null);
-  setRutaCalculada([]);
-  setPencilMode(true);
-  setStatusMessage('');
-  setArchivoProcesado(false);
-  setFloatingMenu(null);
+ const handleResetApp = () => {
+  const confirmation = window.confirm("¿Quieres limpiar el dibujo por completo? No se guardará ningún cambio.");
+
+  if (confirmation) {
+    handleStateChange([]);
+    setPoints([]);
+    setObj1('Ninguno');
+    setObj2('Ninguno');
+    setDimension('');
+    setInputPos({ x: 0, y: 0 });
+    setShowInput(false);
+    setTempLine(null);
+    setMousePos(null);
+    setHoveredObj(null);
+    setSelectedEnd(null);
+    setNameInput('');
+    setEraserMode(false);
+    setNameInput1('');
+    setNameInput2('');
+    setDistanciaRuta(null);
+    setRutaCalculada([]);
+    setPencilMode(true);
+    setStatusMessage('');
+    setArchivoProcesado(false);
+    setFloatingMenu(null);
+    // Nuevos estados añadidos
+    setModoModificarExtremos(false);
+    setAddingSPL(false);
+    setTempSPL(null);
+    setHistory([[]]);
+    setHistoryStep(0);
+    setImportedFileName(null);
+    setMostrarCalculadora(false);
+    setMostrarExtremos(false);
+    setMostrarExcel(false);
+    setTotalCircuitos(0);
+    setCircuitosProcesados(0);
+    setProcesandoExcel(false);
+  }
 };
 
    const handleGuardar = () => {
@@ -655,31 +672,30 @@ setRutaCalculada(result.path);
 
 const handleImportExcel = (e) => {
   setStatusMessage('Importando archivo...');
-  setProcesandoExcel(true); // ⏳ Mostrar spinner
+  setProcesandoExcel(true);
 
   const file = e.target.files[0];
   if (!file) return;
 
-  setImportedFileName(file.name);  
+  setImportedFileName(file.name);
+
   const reader = new FileReader();
   reader.onload = (evt) => {
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName]; // ✅ LÍNEA CORREGIDA
+    const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
-    setTotalCircuitos(updatedSheet.length - 2); // Asumiendo que las filas empiezan en la fila 2
+    setTotalCircuitos(updatedSheet.length - 2);
     setCircuitosProcesados(0);
-
 
     if (updatedSheet[1]) {
       updatedSheet[1][22] = 'Dimension calculada';
-      
-updatedSheet[1][23] = 'Ruta encontrada';
-updatedSheet[1][24] = 'Deduce Lado 1';
-updatedSheet[1][25] = 'Deduce Lado 2';
+      updatedSheet[1][23] = 'Ruta encontrada';
+      updatedSheet[1][24] = 'Deduce Lado 1';
+      updatedSheet[1][25] = 'Deduce Lado 2';
     }
 
     const graph = {};
@@ -723,84 +739,70 @@ updatedSheet[1][25] = 'Deduce Lado 2';
     const chunkSize = 100;
 
     const processChunk = () => {
-  const end = Math.min(i + chunkSize, updatedSheet.length);
-  for (; i < end; i++) {
-    try {
-      const row = updatedSheet[i];
-      const to_item = row[8];
-      const from_item = row[15];
+      const end = Math.min(i + chunkSize, updatedSheet.length);
+      for (; i < end; i++) {
+        try {
+          const row = updatedSheet[i];
+          const to_item = row[8];
+          const from_item = row[15];
 
-      if (!from_item || !to_item) {
-        updatedSheet[i][22] = 'Extremos faltantes';
-        updatedSheet[i][23] = 'No';
-        continue;
-      }
-
-      const distancia = dijkstra(from_item, to_item);
-      updatedSheet[i][24] = '';
-updatedSheet[i][25] = '';
-lines.forEach((line) => {
-  const extremos = [
-    { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-    { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-  ];
-  extremos.forEach(({ nombre, valor }) => {
-    if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
-    if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
-  });
-});
-
-      if (distancia === null) {
-        updatedSheet[i][22] = 'Ruta no encontrada';
-        updatedSheet[i][23] = 'No';
-        continue;
-      }
-
-      let deduceTotal = 0;
-      const extremosProcesados = new Set();
-      lines.forEach((line) => {
-        const extremos = [
-          { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-          { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-        ];
-        extremos.forEach(({ nombre, valor }) => {
-          if ((nombre === from_item || nombre === to_item) && !extremosProcesados.has(nombre)) {
-            extremosProcesados.add(nombre);
-            if (!isNaN(valor)) deduceTotal += valor;
+          if (!from_item || !to_item) {
+            updatedSheet[i][22] = 'Extremos faltantes';
+            updatedSheet[i][23] = 'No';
+            continue;
           }
-        });
-      });
 
-      updatedSheet[i][22] = distancia;
-      updatedSheet[i][23] = 'Sí';
-    } catch (error) {
-      updatedSheet[i][22] = 'Error en fila';
-      updatedSheet[i][23] = 'No';
-      console.error(`Error en fila ${i}:`, error);
-    }
-  }
+          const distancia = dijkstra(from_item, to_item);
+          updatedSheet[i][24] = '';
+          updatedSheet[i][25] = '';
+          lines.forEach((line) => {
+            const extremos = [
+              { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+              { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+            ];
+            extremos.forEach(({ nombre, valor }) => {
+              if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
+              if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
+            });
+          });
 
-  // ✅ Actualiza el contador una sola vez por bloque
-  setCircuitosProcesados(i - 2);
+          if (distancia === null) {
+            updatedSheet[i][22] = 'Ruta no encontrada';
+            updatedSheet[i][23] = 'No';
+            continue;
+          }
 
-  if (i < updatedSheet.length) {
-    setTimeout(processChunk, 0);
-  } else {
-        // ✅ Finaliza y descarga
+          updatedSheet[i][22] = distancia;
+          updatedSheet[i][23] = 'Sí';
+        } catch (error) {
+          updatedSheet[i][22] = 'Error en fila';
+          updatedSheet[i][23] = 'No';
+          console.error(`Error en fila ${i}:`, error);
+        }
+      }
+
+      setCircuitosProcesados(i - 2);
+
+      if (i < updatedSheet.length) {
+        setTimeout(processChunk, 0);
+      } else {
         const newWorksheet = XLSX.utils.aoa_to_sheet(updatedSheet);
         const newWorkbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
         const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
+        saveAs(blob, importedFileName || 'resultado_procesado.xlsx');
         setStatusMessage('✅ Archivo procesado y listo para descargar.');
-        setProcesandoExcel(false); // ✅ Ocultar spinner
+        setProcesandoExcel(false);
+        // ✅ Nuevos estados añadidos
+        setImportedFileName(null);
+        setTotalCircuitos(0);
+        setCircuitosProcesados(0);
       }
     };
 
     processChunk();
   };
-
   reader.readAsArrayBuffer(file);
 };
   
@@ -828,31 +830,35 @@ lines.forEach((line) => {
 
   
 
-  const handleExportExcel = () => {
-    setStatusMessage('📤 Procesando archivo para exportar...');
-    const exportData = lines.map((line, index) => ({
-      item: index + 1,
-      nombre_obj1: line.nombre_obj1,
-      nombre_obj2: line.nombre_obj2,
-      dimension_mm: parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0),
-      deduce: line.deduce,
-    }));
+const handleExportExcel = () => {
+  setStatusMessage('📤 Procesando archivo para exportar...');
+  const exportData = lines.map((line, index) => ({
+    item: index + 1,
+    nombre_obj1: line.nombre_obj1,
+    nombre_obj2: line.nombre_obj2,
+    dimension_mm: parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0),
+    deduce: line.deduce,
+  }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Líneas');
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Líneas');
 
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, importedFileName || 'resultado_procesado.xlsx');
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+  saveAs(blob, 'resultado_procesado.xlsx');
 
-    setStatusMessage('✅ Archivo listo para descargar.');
-    setArchivoProcesado(true);
-    setMostrarExcel(false);      // Oculta el panel de Excel
-    setArchivoProcesado(false);  // Limpia el estado del archivo procesado
-    setStatusMessage('');        // Borra el mensaje de estado
+  setStatusMessage('✅ Archivo listo para descargar.');
+  setArchivoProcesado(false);
+  setMostrarExcel(false);
+  setStatusMessage('');
 
-  };
+  // ✅ Nuevos estados añadidos
+  setImportedFileName(null);
+  setTotalCircuitos(0);
+  setCircuitosProcesados(0);
+  setProcesandoExcel(false);
+};
 
 // ✅ Función para actualizar el menú flotante
 const handleUpdateFloatingMenu = () => {
