@@ -649,7 +649,7 @@ const handleImportExcel = (e) => {
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
-    const worksheet = XLSX.Sheets[sheetName];
+    const worksheet = workbook.Sheets[sheetName]; // ✅ LÍNEA CORREGIDA
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
@@ -777,7 +777,6 @@ lines.forEach((line) => {
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
         setStatusMessage('✅ Archivo procesado y listo para descargar.');
-        setArchivoProcesado(true);
         setProcesandoExcel(false); // ✅ Ocultar spinner
       }
     };
@@ -1486,7 +1485,7 @@ lines.forEach((line) => {
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
-                  strokeWidth={5}
+                  strokeWidth={.5}
                   onClick={() => handleLineClick(i)}
                 />
                 <Label
