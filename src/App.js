@@ -434,7 +434,7 @@ const updateNombre = () => {
     }
 
     // Propaga el nombre a todos los extremos unidos en el mismo punto,
-    // sin importar su tipo (BRK, SPL, Conector, etc.)
+    // sin importar su tipo (BRK, SPL, Conector, etc.).
     updatedLines.forEach((line) => {
       // Verifica si p1 de la línea actual está en la misma posición que el punto modificado
       if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
@@ -446,12 +446,11 @@ const updateNombre = () => {
       }
     });
 
-    handleStateChange(updatedLines);
+    setLines(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
   }
 };
-
 
   const handleLineClick = (index) => {
     if (eraserMode) {
