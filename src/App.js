@@ -853,7 +853,7 @@ lines.forEach((line) => {
     };
 
     const inputStyle = {
-      width: '100%',
+      width: '200x',
       marginBottom: '5px'
     };
     
