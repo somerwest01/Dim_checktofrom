@@ -45,9 +45,6 @@ function App() {
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
-  
-  // ✅ NUEVO: Estado para la previsualización de SPL
-  const [splPreview, setSplPreview] = useState(null);
 
   // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
@@ -104,7 +101,6 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
-      setSplPreview(null); // ✅ NUEVO: Oculta la previsualización del SPL
     }
   };
 
@@ -264,8 +260,8 @@ const handleStageClick = (e) => {
     // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
     const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-   const dim1 = Math.round(totalDim * found.proj.t);
-   const dim2 = Math.round(totalDim * (1 - found.proj.t));
+   const dim1 = Math.round(totalDim * proj.t);
+   const dim2 = Math.round(totalDim * (1 - proj.t));
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
@@ -297,7 +293,6 @@ const handleStageClick = (e) => {
     updated.splice(lineIndex, 1, lineA, lineB);
     setLines(updated);
     setAddingSPL(false);
-    setSplPreview(null); // ✅ NUEVO: Ocultar la previsualización al insertar
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -366,38 +361,6 @@ const handleMouseMove = (e) => {
     }
 
     setMousePos(adjustedPos);
-  }
-  
-  // ✅ NUEVO: Lógica de previsualización para el modo SPL
-  if (addingSPL) {
-    const stage = e.target.getStage();
-    const pos = getRelativePointerPosition(stage);
-    const found = findClosestSegment(pos);
-    const proximityPx = 30; // Umbral de proximidad para mostrar la previsualización
-
-    if (found && found.distance < proximityPx) {
-      const { line, proj } = found;
-      const p1 = line.p1;
-      const p2 = line.p2;
-
-      // Decide qué extremo es el más cercano al punto proyectado
-      const distToP1 = Math.hypot(proj.x - p1.x, proj.y - p1.y);
-      const distToP2 = Math.hypot(proj.x - p2.x, proj.y - p2.y);
-      
-      const startPoint = distToP1 < distToP2 ? p1 : p2;
-      
-      // ✅ MEJORA: La dimensión es la distancia entre el punto inicial y la proyección, redondeada.
-      const dimension = Math.round(Math.hypot(proj.x - startPoint.x, proj.y - startPoint.y));
-      
-      // ✅ MEJORA: Se quita la lógica de offset, se usan los puntos reales sobre la línea.
-      setSplPreview({
-        start: startPoint,
-        end: proj,
-        dim: dimension
-      });
-    } else {
-      setSplPreview(null); // Ocultar la previsualización si no hay una línea cercana
-    }
   }
 };
 
@@ -607,7 +570,6 @@ setRutaCalculada(result.path);
   setStatusMessage('');
   setArchivoProcesado(false);
   setFloatingMenu(null);
-  setSplPreview(null); // ✅ NUEVO: Limpiar el estado de previsualización
 };
 
    const handleGuardar = () => {
@@ -783,6 +745,30 @@ lines.forEach((line) => {
   reader.readAsArrayBuffer(file);
 };
   
+  const handleWheel = (e) => {
+  e.evt.preventDefault();
+  const stage = e.target.getStage();
+  const oldScale = stage.scaleX();
+
+  const scaleBy = 1.1; // factor de zoom
+  const mousePointTo = {
+    x: stage.getPointerPosition().x / oldScale - stage.x() / oldScale,
+    y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale,
+  };
+
+  const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+  stage.scale({ x: newScale, y: newScale });
+
+  const newPos = {
+    x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
+    y: -(mousePointTo.y - stage.getPointerPosition().y / newScale) * newScale,
+  };
+  stage.position(newPos);
+  stage.batchDraw();
+};
+
+  
+
   const handleExportExcel = () => {
     setStatusMessage('📤 Procesando archivo para exportar...');
     const exportData = lines.map((line, index) => ({
@@ -1477,30 +1463,6 @@ lines.forEach((line) => {
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line)}
               </React.Fragment>
             ))}
-            
-            {/* ✅ NUEVO: Renderizado de la previsualización del SPL */}
-            {splPreview && (
-              <Group>
-                {/* Línea de previsualización */}
-                <Line
-                  points={[splPreview.start.x, splPreview.start.y, splPreview.end.x, splPreview.end.y]}
-                  stroke="green"
-                  strokeWidth={1.5}
-                  dash={[5, 5]}
-                />
-                
-                {/* Texto de la dimensión */}
-                <Text
-                  text={`${splPreview.dim} mm`}
-                  x={(splPreview.start.x + splPreview.end.x) / 2}
-                  y={(splPreview.start.y + splPreview.end.y) / 2 - 10}
-                  fontSize={10}
-                  fill="green"
-                  fontStyle="bold"
-                  offsetX={-5} // Ajuste para que el texto no se superponga
-                />
-              </Group>
-            )}
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
