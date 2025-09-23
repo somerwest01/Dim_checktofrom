@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import './App.css';
@@ -40,14 +40,7 @@ function App() {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
-  const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
-
-  // ✅ Nuevo estado para el menú flotante contextual
-  const [floatingMenu, setFloatingMenu] = useState(null);
-  const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
-
-  // ✅ Nueva referencia para el contenedor principal
-  const containerRef = useRef(null);
+  const [previewDimension, setPreviewDimension] = useState(null);
 
 
   const botonBase = {
@@ -100,7 +93,6 @@ useEffect(() => {
       setTempLine(null);   // limpia la línea temporal
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
-      setFloatingMenu(null); // Oculta el menú flotante
     }
   };
 
@@ -217,6 +209,7 @@ function findClosestSegment(pos) {
 
 
   const [hoverBoton, setHoverBoton] = useState(null);
+  const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
 
 
   const proximityThreshold = 35;
@@ -344,24 +337,75 @@ const handleStageClick = (e) => {
 };
 
 const handleMouseMove = (e) => {
-  if (pencilMode && points.length === 1 && !eraserMode) {
     const stage = e.target.getStage();
     const pos = getRelativePointerPosition(stage);
-    const p1 = points[0];
-    let adjustedPos = { ...pos };
 
-    if (modoAnguloRecto) {
-      const dx = Math.abs(pos.x - p1.x);
-      const dy = Math.abs(pos.y - p1.y);
-      if (dx > dy) {
-        adjustedPos.y = p1.y; // Horizontal
-      } else {
-        adjustedPos.x = p1.x; // Vertical
+    if (pencilMode && points.length === 1 && !eraserMode) {
+      const p1 = points[0];
+      let adjustedPos = { ...pos };
+
+      if (modoAnguloRecto) {
+        const dx = Math.abs(pos.x - p1.x);
+        const dy = Math.abs(pos.y - p1.y);
+        if (dx > dy) {
+          adjustedPos.y = p1.y; // Horizontal
+        } else {
+          adjustedPos.x = p1.x; // Vertical
+        }
       }
+      setMousePos(adjustedPos);
     }
 
-    setMousePos(adjustedPos);
-  }
+    // ✅ NUEVA LÓGICA DE PREVISUALIZACIÓN PARA SPL
+    if (addingSPL) {
+      const found = findClosestSegment(pos);
+      const proximityPx = 15; // Distancia en píxeles para "engancharse" a la línea
+      if (found && found.distance < proximityPx) {
+        const { line, proj } = found;
+        const p1Dist = Math.hypot(proj.x - line.p1.x, proj.y - line.p1.y);
+        const p2Dist = Math.hypot(proj.x - line.p2.x, proj.y - line.p2.y);
+        
+        // Determinar el extremo más cercano
+        const nearestPoint = p1Dist < p2Dist ? line.p1 : line.p2;
+        
+        // Ajustar el punto de proyección para que coincida con el extremo más cercano
+        const startPoint = nearestPoint;
+        const endPoint = proj;
+
+        // ✅ Calcular la dimensión real, usando la propiedad `dimension_mm` si existe
+        const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+        let calculatedDim;
+        if (line.dimension_mm) {
+           // Si el usuario ya asignó una dimensión, usamos la proporción para calcular el valor
+           const totalLengthPx = Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+           const segmentLengthPx = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+           calculatedDim = (segmentLengthPx / totalLengthPx) * totalDim;
+        } else {
+           // Si no hay dimensión, usamos la distancia geométrica en píxeles
+           calculatedDim = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+        }
+
+        // Determinar la dirección de la acotación para que quede "por fuera"
+        const angle = Math.atan2(line.p2.y - line.p1.y, line.p2.x - line.p1.x);
+        const offset = 20; // Separación en píxeles de la línea original
+        const normalX = -Math.sin(angle) * offset;
+        const normalY = Math.cos(angle) * offset;
+        
+        setPreviewDimension({
+          p1: { x: startPoint.x + normalX, y: startPoint.y + normalY },
+          p2: { x: endPoint.x + normalX, y: endPoint.y + normalY },
+          text: calculatedDim.toFixed(0),
+          textPos: { x: (startPoint.x + endPoint.x) / 2 + normalX, y: (startPoint.y + endPoint.y) / 2 + normalY },
+        });
+
+      } else {
+        setPreviewDimension(null); // Ocultar si el cursor no está cerca de una línea
+      }
+    } else {
+      setPreviewDimension(null); // Ocultar si se desactiva el modo SPL
+    }
+    // Lógica de pan
+    handleMouseMovePan(e);
 };
 
 
@@ -511,9 +555,9 @@ const calcularRutaReal = () => {
           distances[neighbor] = newDist;
           prev[neighbor] = node;
           queue.push({ node: neighbor, dist: newDist });
-          }
         }
       }
+    }
 
     const path = [];
     let current = end;
@@ -569,7 +613,6 @@ setRutaCalculada(result.path);
   setPencilMode(true);
   setStatusMessage('');
   setArchivoProcesado(false);
-  setFloatingMenu(null);
 };
 
    const handleGuardar = () => {
@@ -795,136 +838,20 @@ lines.forEach((line) => {
 
   };
 
-  // ✅ Nueva función para actualizar el menú flotante
-  const handleUpdateFloatingMenu = () => {
-    if (!floatingMenu) return;
-    const { lineIndex, end, type } = floatingMenu;
-    const updatedLines = [...lines];
-    const targetLine = updatedLines[lineIndex];
-
-    const newName = menuValues.name;
-    const newDeduce = menuValues.deduce;
-
-    const targetPos = targetLine[end];
-
-    // Lógica de actualización
-    if (end === 'p1') {
-      targetLine.nombre_obj1 = newName;
-      if (type === 'Conector' || type === 'SPL') {
-        targetLine.deduce1 = newDeduce;
-      }
-    } else {
-      targetLine.nombre_obj2 = newName;
-      if (type === 'Conector' || type === 'SPL') {
-        targetLine.deduce2 = newDeduce;
-      }
-    }
-
-    // Propagación de cambios para SPL
-    if (type === 'SPL') {
-      updatedLines.forEach((line) => {
-        // Busca otros extremos de SPL en el mismo punto
-        const isSPL_p1 = line.obj1 === 'SPL' && Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold;
-        const isSPL_p2 = line.obj2 === 'SPL' && Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold;
-        if (isSPL_p1) line.nombre_obj1 = newName;
-        if (isSPL_p2) line.nombre_obj2 = newName;
-      });
-    }
-
-    setLines(updatedLines);
-    setFloatingMenu(null);
-  };
-  
-  // ✅ Nueva función para renderizar el menú flotante
-  const renderFloatingMenu = () => {
-    if (!floatingMenu) return null;
-
-    const { x, y, type } = floatingMenu;
-    const commonProps = {
-      position: 'absolute',
-      left: x + 10,
-      top: y + 10,
-      backgroundColor: 'white',
-      border: '1px solid gray',
-      padding: '10px',
-      borderRadius: '5px',
-      boxShadow: '2px 2px 5px rgba(0,0,0,0.2)',
-      zIndex: 100
-    };
-
-    const inputStyle = {
-      width: '200x',
-      marginBottom: '5px'
-    };
-    
-    const labelStyle = {
-      display: 'block',
-      fontSize: '12px'
-    };
-
-    switch (type) {
-      case 'SPL':
-        return (
-          <div style={commonProps}>
-            <p>Modificar SPL</p>
-            <label style={labelStyle}>Nombre:</label>
-            <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
-            <label style={labelStyle}>Deduce:</label>
-            <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
-            <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-            <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
-          </div>
-        );
-      case 'Conector':
-        return (
-          <div style={commonProps}>
-            <p>Modificar Conector</p>
-            <label style={labelStyle}>Nombre:</label>
-            <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
-            <label style={labelStyle}>Deduce:</label>
-            <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
-            <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-            <button>Agregar ángulo</button>
-          </div>
-        );
-      case 'BRK':
-        return (
-          <div style={commonProps}>
-            <p>Modificar BRK</p>
-            <label style={labelStyle}>Nombre:</label>
-            <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
-            <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-
   const renderObjeto = (tipo, x, y, key, index, end, line) => {
     const isHovered = hoveredObj === key;
     const commonProps = {
       key,
       onMouseEnter: () => setHoveredObj(key),
       onMouseLeave: () => setHoveredObj(null),
-      onClick: (e) => {
-        if (!eraserMode && !pencilMode) {
-          e.cancelBubble = true; // Evita que el clic se propague al Stage
-          
-          // ✅ Nuevo: Obtener la posición del contenedor
-          const containerRect = containerRef.current.getBoundingClientRect();
-          
-          // ✅ Nuevo: Calcular la posición del menú
-          const menuX = e.evt.clientX - containerRect.left;
-          const menuY = e.evt.clientY - containerRect.top;
-          
-          const name = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-          const deduce = end === 'p1' ? line.deduce1 : line.deduce2;
-          
-          // ✅ Se usan las nuevas coordenadas calculadas
-          setFloatingMenu({ x: menuX, y: menuY, lineIndex: index, end, type: tipo });
-          setMenuValues({ name, deduce });
+      onClick: () => {
+      
+  if (!eraserMode && !pencilMode) {
+    setSelectedEnd({ lineIndex: index, end });
+    setNameInput(end === 'p1' ? lines[index].nombre_obj1 : lines[index].nombre_obj2);
+    setSelectorPos({ x, y });
+    setSelectorEnd({ lineIndex: index, end });
+
         }
       },
     };
@@ -1302,7 +1229,7 @@ lines.forEach((line) => {
   
       </div>
 
-      <div style={{ position: 'relative' }} ref={containerRef}>
+      <div style={{ position: 'relative' }}>
           
 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '10px' }}>
   <button
@@ -1359,6 +1286,7 @@ lines.forEach((line) => {
   <button
   onClick={() => {
     setAddingSPL(!addingSPL);
+    setPreviewDimension(null); // ✅ Limpiar previsualización
     setStatusMessage(!addingSPL ? 'Modo: colocar SPL activo' : '');
   }}
   style={{
@@ -1472,12 +1400,34 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
+            {/* ✅ Nueva previsualización de dimensión para SPL */}
+            {previewDimension && (
+              <Group>
+                <Line
+                  points={[
+                    previewDimension.p1.x, previewDimension.p1.y,
+                    previewDimension.p2.x, previewDimension.p2.y,
+                  ]}
+                  stroke="red"
+                  strokeWidth={1.5}
+                  dash={[8, 4]}
+                />
+                <Text
+                  x={previewDimension.textPos.x}
+                  y={previewDimension.textPos.y}
+                  text={`${previewDimension.text} mm`}
+                  fontSize={10}
+                  fill="red"
+                  offsetX={-10}
+                  offsetY={-10}
+                  fontStyle="bold"
+                />
+              </Group>
+            )}
+
           </Layer>
         </Stage>
                   </div>
-        
-        {/* ✅ Renderiza el menú flotante aquí */}
-        {renderFloatingMenu()}
 
         {showInput && (
           <div style={{
