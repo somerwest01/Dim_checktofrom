@@ -45,6 +45,9 @@ function App() {
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
+  
+  // ✅ Nuevo estado para la previsualización del SPL
+  const [previewSPL, setPreviewSPL] = useState(null);
 
   // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
@@ -101,6 +104,7 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
+      setPreviewSPL(null); // ✅ Limpia la previsualización del SPL
     }
   };
 
@@ -293,6 +297,7 @@ const handleStageClick = (e) => {
     updated.splice(lineIndex, 1, lineA, lineB);
     setLines(updated);
     setAddingSPL(false);
+    setPreviewSPL(null); // ✅ Limpia la previsualización al colocar el SPL
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -344,24 +349,50 @@ const handleStageClick = (e) => {
 };
 
 const handleMouseMove = (e) => {
-  if (pencilMode && points.length === 1 && !eraserMode) {
-    const stage = e.target.getStage();
-    const pos = getRelativePointerPosition(stage);
-    const p1 = points[0];
-    let adjustedPos = { ...pos };
+  const stage = e.target.getStage();
+  const pos = getRelativePointerPosition(stage);
 
-    if (modoAnguloRecto) {
-      const dx = Math.abs(pos.x - p1.x);
-      const dy = Math.abs(pos.y - p1.y);
-      if (dx > dy) {
-        adjustedPos.y = p1.y; // Horizontal
-      } else {
-        adjustedPos.x = p1.x; // Vertical
-      }
+  // ✅ New Logic for SPL preview
+  if (addingSPL) {
+    const found = findClosestSegment(pos);
+    const proximityPx = 12; // Same threshold as in handleStageClick
+
+    if (found && found.distance <= proximityPx) {
+      const { line } = found;
+      // Determine which endpoint is closer
+      const dist1 = Math.hypot(pos.x - line.p1.x, pos.y - line.p1.y);
+      const startPoint = dist1 < Math.hypot(pos.x - line.p2.x, pos.y - line.p1.y) ? line.p1 : line.p2;
+
+      // Calculate the dimension from the starting endpoint
+      const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+      const dimensionValue = (found.proj.t * totalDim).toFixed(0);
+
+      setPreviewSPL({
+        p1: startPoint,
+        p2: { x: found.proj.x, y: found.proj.y },
+        dimension: dimensionValue
+      });
+    } else {
+      setPreviewSPL(null); // Hide the preview if the cursor isn't near a line
     }
-
-    setMousePos(adjustedPos);
+  } else {
+    // Original logic for pencil mode
+    if (pencilMode && points.length === 1 && !eraserMode) {
+      const p1 = points[0];
+      let adjustedPos = { ...pos };
+      if (modoAnguloRecto) {
+        const dx = Math.abs(pos.x - p1.x);
+        const dy = Math.abs(pos.y - p1.y);
+        if (dx > dy) {
+          adjustedPos.y = p1.y; // Horizontal
+        } else {
+          adjustedPos.x = p1.x; // Vertical
+        }
+      }
+      setMousePos(adjustedPos);
+    }
   }
+  handleMouseMovePan(e);
 };
 
 
@@ -1472,6 +1503,40 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
+            
+            {/* ✅ New Visual Preview for SPL Placement */}
+            {previewSPL && (
+                <React.Fragment>
+                    <Line
+                        points={[previewSPL.p1.x, previewSPL.p1.y, previewSPL.p2.x, previewSPL.p2.y]}
+                        stroke="red"
+                        strokeWidth={2}
+                        dash={[4, 2]}
+                    />
+                    <Label
+                        x={(previewSPL.p1.x + previewSPL.p2.x) / 2}
+                        y={(previewSPL.p1.y + previewSPL.p2.y) / 2}
+                        offsetX={(previewSPL.dimension?.toString().length || 1) * 3}
+                        offsetY={-10}
+                    >
+                        <Tag
+                            fill="white"
+                            pointerDirection="none"
+                            cornerRadius={2}
+                            stroke="black"
+                            strokeWidth={0.5}
+                        />
+                        <Text
+                            text={`${previewSPL.dimension} mm`}
+                            fontSize={10}
+                            fill="black"
+                            padding={3}
+                            align="center"
+                        />
+                    </Label>
+                </React.Fragment>
+            )}
+            
           </Layer>
         </Stage>
                   </div>
