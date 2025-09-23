@@ -45,6 +45,9 @@ function App() {
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
+  
+  // ✅ NUEVO: Estado para la previsualización de SPL
+  const [splPreview, setSplPreview] = useState(null);
 
   // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
@@ -101,6 +104,7 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
+      setSplPreview(null); // ✅ NUEVO: Oculta la previsualización del SPL
     }
   };
 
@@ -293,6 +297,7 @@ const handleStageClick = (e) => {
     updated.splice(lineIndex, 1, lineA, lineB);
     setLines(updated);
     setAddingSPL(false);
+    setSplPreview(null); // ✅ NUEVO: Ocultar la previsualización al insertar
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -361,6 +366,44 @@ const handleMouseMove = (e) => {
     }
 
     setMousePos(adjustedPos);
+  }
+  
+  // ✅ NUEVO: Lógica de previsualización para el modo SPL
+  if (addingSPL) {
+    const stage = e.target.getStage();
+    const pos = getRelativePointerPosition(stage);
+    const found = findClosestSegment(pos);
+    const proximityPx = 30; // Umbral de proximidad para mostrar la previsualización
+
+    if (found && found.distance < proximityPx) {
+      const { line, proj } = found;
+      const p1 = line.p1;
+      const p2 = line.p2;
+
+      // Decide qué extremo es el más cercano al punto proyectado
+      const distToP1 = Math.hypot(proj.x - p1.x, proj.y - p1.y);
+      const distToP2 = Math.hypot(proj.x - p2.x, proj.y - p2.y);
+      
+      const startPoint = distToP1 < distToP2 ? p1 : p2;
+      const dimension = (distToP1 < distToP2 ? distToP1 : distToP2).toFixed(2);
+      
+      // Calcular el offset para la línea de dimensión, moviéndola fuera de la línea original
+      const lineAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+      const offset = 20; // Distancia de la línea de previsualización con respecto a la original
+      
+      const offsetX = -Math.sin(lineAngle) * offset;
+      const offsetY = Math.cos(lineAngle) * offset;
+
+      setSplPreview({
+        start: { x: startPoint.x + offsetX, y: startPoint.y + offsetY },
+        end: { x: proj.x + offsetX, y: proj.y + offsetY },
+        dim: dimension,
+        p1: line.p1,
+        p2: line.p2,
+      });
+    } else {
+      setSplPreview(null); // Ocultar la previsualización si no hay una línea cercana
+    }
   }
 };
 
@@ -570,6 +613,7 @@ setRutaCalculada(result.path);
   setStatusMessage('');
   setArchivoProcesado(false);
   setFloatingMenu(null);
+  setSplPreview(null); // ✅ NUEVO: Limpiar el estado de previsualización
 };
 
    const handleGuardar = () => {
@@ -1463,6 +1507,39 @@ lines.forEach((line) => {
                 {renderObjeto(line.obj2, line.p2.x, line.p2.y, `obj2-${i}`, i, 'p2', line)}
               </React.Fragment>
             ))}
+            
+            {/* ✅ NUEVO: Renderizado de la previsualización del SPL */}
+            {splPreview && (
+              <Group>
+                {/* Línea de acotación */}
+                <Line
+                  points={[splPreview.start.x, splPreview.start.y, splPreview.end.x, splPreview.end.y]}
+                  stroke="green"
+                  strokeWidth={1}
+                  dash={[5, 5]}
+                />
+                {/* Líneas de extensión de los extremos */}
+                <Line
+                  points={[splPreview.p1.x, splPreview.p1.y, splPreview.start.x, splPreview.start.y]}
+                  stroke="green"
+                  strokeWidth={0.5}
+                />
+                <Line
+                  points={[splPreview.p2.x, splPreview.p2.y, splPreview.end.x, splPreview.end.y]}
+                  stroke="green"
+                  strokeWidth={0.5}
+                />
+                {/* Texto de la dimensión */}
+                <Text
+                  text={`${splPreview.dim} mm`}
+                  x={(splPreview.start.x + splPreview.end.x) / 2}
+                  y={(splPreview.start.y + splPreview.end.y) / 2 - 15} // Ligeramente por encima de la línea
+                  fontSize={10}
+                  fill="green"
+                  fontStyle="bold"
+                />
+              </Group>
+            )}
 
             {points.length === 1 && mousePos && !eraserMode && (
               <Line
