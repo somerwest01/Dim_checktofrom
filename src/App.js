@@ -426,9 +426,6 @@ const updateNombre = () => {
     const newName = nameInput;
     const targetPos = targetLine[selectedEnd.end];
 
-      // ✅ Obtener el tipo de objeto seleccionado para el caso 'SPL'
-    const selectedObjType = selectedEnd.end === 'p1' ? targetLine.obj1 : targetLine.obj2;
-
     // Asignar nombre al extremo seleccionado
     if (selectedEnd.end === 'p1') {
       targetLine.nombre_obj1 = newName;
@@ -436,28 +433,18 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
-    if (selectedObjType === 'SPL') {
-      // Si el objeto es un SPL, busca la otra línea unida en ese punto y actualiza solo ese extremo
-      updatedLines.forEach((line) => {
-        // Busca el punto que tiene la misma posición que el SPL seleccionado
-        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold && line.p1 !== targetPos) {
-          line.nombre_obj1 = newName;
-        }
-        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold && line.p2 !== targetPos) {
-          line.nombre_obj2 = newName;
-        }
-      });
-    } else {
-      // Si no es un SPL, se mantiene la propagación a todos los extremos cercanos
-      updatedLines.forEach((line) => {
-        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj1 = newName;
-        }
-        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj2 = newName;
-        }
-      });
-    }
+    // Propaga el nombre a todos los extremos unidos en el mismo punto
+    updatedLines.forEach((line) => {
+      // Verifica si p1 de la línea actual está en la misma posición que el punto modificado
+      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
+        line.nombre_obj1 = newName;
+      }
+      // Verifica si p2 de la línea actual está en la misma posición que el punto modificado
+      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
+        line.nombre_obj2 = newName;
+      }
+    });
+
     handleStateChange(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
