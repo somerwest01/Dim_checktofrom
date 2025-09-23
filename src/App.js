@@ -55,6 +55,9 @@ function App() {
 
   // ✅ Nuevo estado para la línea temporal del SPL
   const [tempSPL, setTempSPL] = useState(null);
+  
+  // ✅ NUEVO ESTADO: Distancia de propagación configurable
+  const [propagationDistance, setPropagationDistance] = useState(5);
 
 
   // ✅ Nueva función para manejar el historial y los cambios de estado
@@ -245,7 +248,8 @@ function findClosestSegment(pos) {
   const [hoverBoton, setHoverBoton] = useState(null);
 
 
-  const proximityThreshold = 35;
+  // ✅ Usando la nueva variable de estado
+  // const proximityThreshold = 35;
 
   const getClosestEndpoint = (pos) => {
     let closest = null;
@@ -255,7 +259,8 @@ function findClosestSegment(pos) {
       ['p1', 'p2'].forEach((end) => {
         const point = line[end];
         const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
-        if (dist < proximityThreshold && dist < minDist) {
+        // ✅ Usando la nueva variable de estado
+        if (dist < propagationDistance && dist < minDist) {
           closest = { point, obj: line[end === 'p1' ? 'obj1' : 'obj2'] };
           minDist = dist;
         }
@@ -823,10 +828,10 @@ const handleUpdateFloatingMenu = () => {
       const p1Proximity = Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y);
       const p2Proximity = Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y);
       
-      if (p1Proximity < proximityThreshold) {
+      if (p1Proximity < propagationDistance) {
           line.nombre_obj1 = newName;
       }
-      if (p2Proximity < proximityThreshold) {
+      if (p2Proximity < propagationDistance) {
           line.nombre_obj2 = newName;
       }
   });
@@ -1130,6 +1135,13 @@ const handleUpdateFloatingMenu = () => {
       🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
     </button>
     <br /><br />
+    <label>Distancia de propagación (px): </label>
+    <input
+      type="number"
+      value={propagationDistance}
+      onChange={(e) => setPropagationDistance(parseFloat(e.target.value) || 0)}
+      style={{ width: '60px' }}
+    />
     <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
