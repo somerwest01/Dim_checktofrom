@@ -334,7 +334,8 @@ const handleStageClick = (e) => {
       };
 
       setTempLine(newLine);
-      setInputPos(pos);
+      // ✅ Solución: ajustamos la posición del menú para que no quede encima del cursor
+      setInputPos({ x: pos.x + 15, y: pos.y + 15 });
       setShowInput(true);
       setPoints([]);
       setMousePos(null);
