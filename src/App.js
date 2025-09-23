@@ -249,7 +249,7 @@ const handleDeleteSPL = () => {
   handleStateChange([...updatedLines, mergedLine]);
   setFloatingMenu(null);
 };
- /* 
+ 
  const handleImportDXF = (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -298,7 +298,7 @@ const handleDeleteSPL = () => {
 
   reader.readAsArrayBuffer(file);
 };
-*/
+
 
 
   const [hoverBoton, setHoverBoton] = useState(null);
@@ -1116,7 +1116,7 @@ case 'SPL':
 </button>
 </div>
 
-/*  <input
+  <input
   type="file"
   accept=".dxf"
   id="importarDXF"
@@ -1132,7 +1132,7 @@ case 'SPL':
 >
   📐 Importar DXF
 </button>
-*/
+
   
 <div style={{ marginTop: '10px' }}>
   <button
