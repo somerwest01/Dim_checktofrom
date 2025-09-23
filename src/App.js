@@ -44,14 +44,18 @@ function App() {
 
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
-  const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
-
+  const [menuValues, setMenuValues] = useState({ name: '', deduce: '' });
+  
   // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
-    
+  
   // ✅ Estados para la funcionalidad de deshacer
   const [history, setHistory] = useState([[]]);
   const [historyStep, setHistoryStep] = useState(0);
+
+  // ✅ Nuevo estado para la línea temporal del SPL
+  const [tempSPL, setTempSPL] = useState(null);
+
 
   // ✅ Nueva función para manejar el historial y los cambios de estado
   const handleStateChange = (newLines) => {
@@ -61,7 +65,7 @@ function App() {
       setHistoryStep(newHistory.length - 1);
       setLines(newLines);
   };
-    
+  
   // ✅ Nueva función para deshacer
   const handleUndo = () => {
     if (historyStep > 0) {
@@ -122,6 +126,7 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
+      setTempSPL(null); // Limpia la vista previa del SPL
     }
   };
 
@@ -268,21 +273,12 @@ const handleStageClick = (e) => {
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
   if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
-    if (!found || found.distance > proximityPx) {
+    if (!tempSPL) {
       setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
       return;
     }
+    const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
 
-    const { lineIndex, proj } = found;
-    const original = lines[lineIndex];
-
-    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
-    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
-
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
@@ -314,6 +310,7 @@ const handleStageClick = (e) => {
     updated.splice(lineIndex, 1, lineA, lineB);
     handleStateChange(updated);
     setAddingSPL(false);
+    setTempSPL(null); // Limpiar la vista previa
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -365,9 +362,33 @@ const handleStageClick = (e) => {
 };
 
 const handleMouseMove = (e) => {
-  if (pencilMode && points.length === 1 && !eraserMode) {
-    const stage = e.target.getStage();
-    const pos = getRelativePointerPosition(stage);
+  const stage = e.target.getStage();
+  const pos = getRelativePointerPosition(stage);
+
+  if (addingSPL) {
+    const found = findClosestSegment(pos);
+    const proximityPx = 15; // Aumentar un poco el umbral para facilitar la selección
+
+    if (!found || found.distance > proximityPx) {
+      setTempSPL(null);
+      return;
+    }
+
+    const { proj, line } = found;
+    const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
+    const dim1 = Math.round(totalDim * proj.t);
+    const dim2 = Math.round(totalDim * (1 - proj.t));
+
+    // Si el mouse está lo suficientemente cerca, actualiza la línea temporal
+    setTempSPL({
+      lineIndex: found.lineIndex,
+      proj,
+      original: line,
+      dim1,
+      dim2
+    });
+
+  } else if (pencilMode && points.length === 1 && !eraserMode) {
     const p1 = points[0];
     let adjustedPos = { ...pos };
 
@@ -380,8 +401,9 @@ const handleMouseMove = (e) => {
         adjustedPos.x = p1.x; // Vertical
       }
     }
-
     setMousePos(adjustedPos);
+  } else {
+    setTempSPL(null);
   }
 };
 
@@ -627,7 +649,7 @@ const handleImportExcel = (e) => {
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
+    const worksheet = XLSX.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
@@ -1464,7 +1486,7 @@ lines.forEach((line) => {
                 <Line
                   points={[line.p1.x, line.p1.y, line.p2.x, line.p2.y]}
                   stroke="black"
-                  strokeWidth={.5}
+                  strokeWidth={5}
                   onClick={() => handleLineClick(i)}
                 />
                 <Label
@@ -1507,6 +1529,57 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
+            
+            {/* ✅ Renderiza la vista previa del SPL */}
+            {tempSPL && (
+              <Group>
+                <Line
+                  points={[tempSPL.original.p1.x, tempSPL.original.p1.y, tempSPL.proj.x, tempSPL.proj.y]}
+                  stroke="red"
+                  strokeWidth={1}
+                  dash={[2, 2]}
+                />
+                <Label
+                  x={(tempSPL.original.p1.x + tempSPL.proj.x) / 2}
+                  y={(tempSPL.original.p1.y + tempSPL.proj.y) / 2}
+                >
+                  <Tag
+                    fill="white"
+                    pointerDirection="none"
+                    cornerRadius={2}
+                  />
+                  <Text
+                    text={`${tempSPL.dim1}mm`}
+                    fontSize={10}
+                    fill="red"
+                    padding={1}
+                  />
+                </Label>
+                <Line
+                  points={[tempSPL.proj.x, tempSPL.proj.y, tempSPL.original.p2.x, tempSPL.original.p2.y]}
+                  stroke="red"
+                  strokeWidth={1}
+                  dash={[2, 2]}
+                />
+                <Label
+                  x={(tempSPL.proj.x + tempSPL.original.p2.x) / 2}
+                  y={(tempSPL.proj.y + tempSPL.original.p2.y) / 2}
+                >
+                  <Tag
+                    fill="white"
+                    pointerDirection="none"
+                    cornerRadius={2}
+                  />
+                  <Text
+                    text={`${tempSPL.dim2}mm`}
+                    fontSize={10}
+                    fill="red"
+                    padding={1}
+                  />
+                </Label>
+              </Group>
+            )}
+
           </Layer>
         </Stage>
                   </div>
