@@ -203,8 +203,9 @@ const handleDeleteSPL = () => {
   // Busca la otra línea que comparte el mismo punto SPL
   const otherLineIndex = lines.findIndex((line, idx) => {
     if (idx === lineIndex) return false;
-    const p1Matches = Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < proximityThreshold;
-    const p2Matches = Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < proximityThreshold;
+    // ✅ CORREGIDO: Usando 'propagationDistance' en lugar de 'proximityThreshold'
+    const p1Matches = Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < propagationDistance;
+    const p2Matches = Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < propagationDistance;
     return p1Matches || p2Matches;
   });
 
@@ -222,7 +223,7 @@ const handleDeleteSPL = () => {
   const nonSPLDeduce1 = end === 'p1' ? targetLine.deduce2 : targetLine.deduce1;
   const nonSPLObj1 = end === 'p1' ? targetLine.obj2 : targetLine.obj1;
   
-  const isOtherLineP1SPL = Math.hypot(otherLine.p1.x - splPoint.x, otherLine.p1.y - splPoint.y) < proximityThreshold;
+  const isOtherLineP1SPL = Math.hypot(otherLine.p1.x - splPoint.x, otherLine.p1.y - splPoint.y) < propagationDistance;
   const nonSPLPoint2 = isOtherLineP1SPL ? otherLine.p2 : otherLine.p1;
   const nonSPLName2 = isOtherLineP1SPL ? otherLine.nombre_obj2 : otherLine.nombre_obj1;
   const nonSPLDeduce2 = isOtherLineP1SPL ? otherLine.deduce2 : otherLine.deduce1;
@@ -247,7 +248,6 @@ const handleDeleteSPL = () => {
   handleStateChange([...updatedLines, mergedLine]);
   setFloatingMenu(null);
 };
-
   
  const handleImportDXF = (event) => {
   const file = event.target.files[0];
