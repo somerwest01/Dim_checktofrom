@@ -419,39 +419,7 @@ const handleMouseMove = (e) => {
   };
 
 
-const updateNombre = () => {
-  if (selectedEnd) {
-    const updatedLines = [...lines];
-    const targetLine = updatedLines[selectedEnd.lineIndex];
-    const newName = nameInput;
-    const targetPos = targetLine[selectedEnd.end];
-
-    // Asignar nombre al extremo seleccionado
-    if (selectedEnd.end === 'p1') {
-      targetLine.nombre_obj1 = newName;
-    } else {
-      targetLine.nombre_obj2 = newName;
-    }
-
-    // Propaga el nombre a todos los extremos unidos en el mismo punto,
-    // sin importar su tipo (BRK, SPL, Conector, etc.)
-    updatedLines.forEach((line) => {
-      // Verifica si p1 de la línea actual está en la misma posición que el punto modificado
-      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj1 = newName;
-      }
-      // Verifica si p2 de la línea actual está en la misma posición que el punto modificado
-      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-        line.nombre_obj2 = newName;
-      }
-    });
-
-    handleStateChange(updatedLines);
-    setSelectedEnd(null);
-    setNameInput('');
-  }
-};
-
+// ✅ ELIMINADA LA FUNCION updateNombre, su logica se mueve a handleUpdateFloatingMenu
 
   const handleLineClick = (index) => {
     if (eraserMode) {
@@ -824,45 +792,48 @@ lines.forEach((line) => {
 
   };
 
-  // ✅ Nueva función para actualizar el menú flotante
-  const handleUpdateFloatingMenu = () => {
-    if (!floatingMenu) return;
-    const { lineIndex, end, type } = floatingMenu;
-    const updatedLines = [...lines];
-    const targetLine = updatedLines[lineIndex];
+// ✅ Función para actualizar el menú flotante
+const handleUpdateFloatingMenu = () => {
+  if (!floatingMenu) return;
+  const { lineIndex, end, type } = floatingMenu;
+  const updatedLines = [...lines];
+  const targetLine = updatedLines[lineIndex];
 
-    const newName = menuValues.name;
-    const newDeduce = menuValues.deduce;
+  const newName = menuValues.name;
+  const newDeduce = menuValues.deduce;
 
-    const targetPos = targetLine[end];
+  const targetPos = targetLine[end];
 
-    // Lógica de actualización
-    if (end === 'p1') {
-      targetLine.nombre_obj1 = newName;
-      if (type === 'Conector' || type === 'SPL') {
-        targetLine.deduce1 = newDeduce;
-      }
-    } else {
-      targetLine.nombre_obj2 = newName;
-      if (type === 'Conector' || type === 'SPL') {
-        targetLine.deduce2 = newDeduce;
-      }
+  // Lógica de actualización del extremo seleccionado
+  if (end === 'p1') {
+    targetLine.nombre_obj1 = newName;
+    if (type === 'Conector' || type === 'SPL') {
+      targetLine.deduce1 = newDeduce;
     }
-
-    // Propagación de cambios para SPL
-    if (type === 'SPL') {
-      updatedLines.forEach((line) => {
-        // Busca otros extremos de SPL en el mismo punto
-        const isSPL_p1 = line.obj1 === 'SPL' && Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold;
-        const isSPL_p2 = line.obj2 === 'SPL' && Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold;
-        if (isSPL_p1) line.nombre_obj1 = newName;
-        if (isSPL_p2) line.nombre_obj2 = newName;
-      });
+  } else {
+    targetLine.nombre_obj2 = newName;
+    if (type === 'Conector' || type === 'SPL') {
+      targetLine.deduce2 = newDeduce;
     }
+  }
+  
+  // ✅ Lógica de PROPAGACIÓN unificada para todos los tipos
+  // Busca otros extremos unidos en la misma posición
+  updatedLines.forEach((line) => {
+      const p1Proximity = Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y);
+      const p2Proximity = Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y);
+      
+      if (p1Proximity < proximityThreshold) {
+          line.nombre_obj1 = newName;
+      }
+      if (p2Proximity < proximityThreshold) {
+          line.nombre_obj2 = newName;
+      }
+  });
 
-    handleStateChange(updatedLines);
-    setFloatingMenu(null);
-  };
+  handleStateChange(updatedLines);
+  setFloatingMenu(null);
+};
   
   // ✅ Nueva función para renderizar el menú flotante
   const renderFloatingMenu = () => {
@@ -913,7 +884,7 @@ lines.forEach((line) => {
             <label style={labelStyle}>Deduce:</label>
             <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
             <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-            <button>Agregar ángulo</button>
+            <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
           </div>
         );
       case 'BRK':
@@ -923,6 +894,7 @@ lines.forEach((line) => {
             <label style={labelStyle}>Nombre:</label>
             <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
             <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
+            <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
           </div>
         );
       default:
@@ -1179,18 +1151,6 @@ lines.forEach((line) => {
   <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
-
-
-              {selectedEnd && (
-          <>
-            <h4>Editar nombre del objeto</h4>
-            <label>Nombre:</label>
-            <input type="text" value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
-            <button onClick={updateNombre}>Asignar</button>
-
-            <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
-          </>
-        )}
 
 
          
