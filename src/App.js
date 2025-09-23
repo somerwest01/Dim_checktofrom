@@ -193,6 +193,46 @@ function findClosestSegment(pos) {
   return best;
 }
 
+  const handleDeleteSPL = () => {
+  if (!floatingMenu) return;
+
+  const { lineIndex, end } = floatingMenu;
+  const targetLine = lines[lineIndex];
+  const splPoint = targetLine[end];
+
+  // Busca la otra línea que comparte el mismo punto SPL
+  const otherLineIndex = lines.findIndex((line, idx) => {
+    // Evita la línea actual y busca la que comparta el punto
+    return idx !== lineIndex &&
+           (Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < proximityThreshold ||
+            Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < proximityThreshold);
+  });
+
+  if (otherLineIndex === -1) {
+    console.warn("No se encontró la otra parte del SPL.");
+    setFloatingMenu(null);
+    return;
+  }
+
+  const otherLine = lines[otherLineIndex];
+  const originalLine = {
+    p1: otherLine.p1,
+    p2: targetLine.p2,
+    obj1: otherLine.obj1,
+    obj2: targetLine.obj2,
+    nombre_obj1: otherLine.nombre_obj1,
+    nombre_obj2: targetLine.nombre_obj2,
+    dimension_mm: (parseFloat(targetLine.dimension_mm) || 0) + (parseFloat(otherLine.dimension_mm) || 0),
+    deduce1: otherLine.deduce1,
+    deduce2: targetLine.deduce2,
+    item: targetLine.item || otherLine.item
+  };
+
+  const updatedLines = lines.filter((_, idx) => idx !== lineIndex && idx !== otherLineIndex);
+  handleStateChange([...updatedLines, originalLine]);
+  setFloatingMenu(null);
+};
+
   
  const handleImportDXF = (event) => {
   const file = event.target.files[0];
@@ -868,18 +908,21 @@ const handleUpdateFloatingMenu = () => {
     };
 
     switch (type) {
-      case 'SPL':
-        return (
-          <div style={commonProps}>
-            <p>Modificar SPL</p>
-            <label style={labelStyle}>Nombre:</label>
-            <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
-            <label style={labelStyle}>Deduce:</label>
-            <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
-            <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-            <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
-          </div>
-        );
+case 'SPL':
+  return (
+    <div style={commonProps}>
+      <p>Modificar SPL</p>
+      <label style={labelStyle}>Nombre:</label>
+      <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
+      <label style={labelStyle}>Deduce:</label>
+      <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
+      <div style={{ marginTop: '10px' }}>
+        <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
+        <button onClick={handleDeleteSPL} style={{ backgroundColor: 'lightcoral', marginLeft: '5px' }}>Eliminar SPL</button>
+      </div>
+      <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
+    </div>
+  );
       case 'Conector':
         return (
           <div style={commonProps}>
@@ -1318,7 +1361,7 @@ const handleUpdateFloatingMenu = () => {
       cursor: 'pointer'
     }}
   >
-    ⬅️ Deshacer
+    ⟲ Deshacer
   </button>
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
