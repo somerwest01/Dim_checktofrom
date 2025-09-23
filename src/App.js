@@ -41,11 +41,35 @@ function App() {
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
+
+  // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
-  const [previewSPL, setPreviewSPL] = useState(null);
-  const containerRef = useRef(null);
 
+  // ✅ Nueva referencia para el contenedor principal
+  const containerRef = useRef(null);
+    
+  // ✅ Estados para la funcionalidad de deshacer
+  const [history, setHistory] = useState([[]]);
+  const [historyStep, setHistoryStep] = useState(0);
+
+  // ✅ Nueva función para manejar el historial y los cambios de estado
+  const handleStateChange = (newLines) => {
+      const newHistory = history.slice(0, historyStep + 1);
+      newHistory.push(newLines);
+      setHistory(newHistory);
+      setHistoryStep(newHistory.length - 1);
+      setLines(newLines);
+  };
+    
+  // ✅ Nueva función para deshacer
+  const handleUndo = () => {
+    if (historyStep > 0) {
+      const newStep = historyStep - 1;
+      setHistoryStep(newStep);
+      setLines(history[newStep]);
+    }
+  };
 
   const botonBase = {
   display: 'inline-flex',
@@ -98,7 +122,6 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
-      setPreviewSPL(null); // ✅ Limpia la previsualización del SPL
     }
   };
 
@@ -200,7 +223,7 @@ function findClosestSegment(pos) {
       if (nuevasLineas.length === 0) {
         setStatusMessage('⚠️ No se encontraron líneas válidas en el archivo DXF.');
       } else {
-        setLines([...lines, ...nuevasLineas]);
+        handleStateChange([...lines, ...nuevasLineas]);
         setStatusMessage('✅ Plano base importado desde DXF.');
       }
     } catch (error) {
@@ -289,9 +312,8 @@ const handleStageClick = (e) => {
 
     const updated = [...lines];
     updated.splice(lineIndex, 1, lineA, lineB);
-    setLines(updated);
+    handleStateChange(updated);
     setAddingSPL(false);
-    setPreviewSPL(null); // ✅ Limpia la previsualización al colocar el SPL
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -334,8 +356,7 @@ const handleStageClick = (e) => {
       };
 
       setTempLine(newLine);
-      // ✅ Solución: ajustamos la posición del menú para que no quede encima del cursor
-      setInputPos({ x: pos.x + 15, y: pos.y + 15 });
+      setInputPos(pos);
       setShowInput(true);
       setPoints([]);
       setMousePos(null);
@@ -344,55 +365,31 @@ const handleStageClick = (e) => {
 };
 
 const handleMouseMove = (e) => {
-  const stage = e.target.getStage();
-  const pos = getRelativePointerPosition(stage);
+  if (pencilMode && points.length === 1 && !eraserMode) {
+    const stage = e.target.getStage();
+    const pos = getRelativePointerPosition(stage);
+    const p1 = points[0];
+    let adjustedPos = { ...pos };
 
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 12;
-
-    if (found && found.distance <= proximityPx) {
-      const { line, proj } = found;
-      
-      const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-      const dist1 = totalDim * proj.t;
-      const dist2 = totalDim * (1 - proj.t);
-      const dimensionValue = Math.round(dist1 < dist2 ? dist1 : dist2);
-
-      const startPoint = dist1 < dist2 ? line.p1 : line.p2;
-
-      setPreviewSPL({
-        p1: startPoint,
-        p2: { x: found.proj.x, y: found.proj.y },
-        dimension: dimensionValue
-      });
-    } else {
-      setPreviewSPL(null);
-    }
-  } else {
-    if (pencilMode && points.length === 1 && !eraserMode) {
-      const p1 = points[0];
-      let adjustedPos = { ...pos };
-      if (modoAnguloRecto) {
-        const dx = Math.abs(pos.x - p1.x);
-        const dy = Math.abs(pos.y - p1.y);
-        if (dx > dy) {
-          adjustedPos.y = p1.y;
-        } else {
-          adjustedPos.x = p1.x;
-        }
+    if (modoAnguloRecto) {
+      const dx = Math.abs(pos.x - p1.x);
+      const dy = Math.abs(pos.y - p1.y);
+      if (dx > dy) {
+        adjustedPos.y = p1.y; // Horizontal
+      } else {
+        adjustedPos.x = p1.x; // Vertical
       }
-      setMousePos(adjustedPos);
     }
+
+    setMousePos(adjustedPos);
   }
-  handleMouseMovePan(e);
 };
 
 
   const confirmDimension = () => {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
-      setLines([...lines, tempLine]);
+      handleStateChange([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
       setShowInput(false);
@@ -439,7 +436,7 @@ const updateNombre = () => {
         }
       });
     }
-    setLines(updatedLines);
+    handleStateChange(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
   }
@@ -451,7 +448,7 @@ const updateNombre = () => {
     if (eraserMode) {
       const updatedLines = [...lines];
       updatedLines.splice(index, 1);
-      setLines(updatedLines);
+      handleStateChange(updatedLines);
     }
   };
 const calcularRuta = (start, end) => {
@@ -573,7 +570,7 @@ setRutaCalculada(result.path);
 
   
   const handleResetApp = () => {
-  setLines([]);
+  handleStateChange([]);
   setPoints([]);
   setObj1('Ninguno');
   setObj2('Ninguno');
@@ -609,7 +606,7 @@ setRutaCalculada(result.path);
        reader.onload = (e) => {
            try {
                const contenido = JSON.parse(e.target.result);
-               setLines(contenido);
+               handleStateChange(contenido);
                setStatusMessage('✅ Archivo cargado correctamente.');
            } catch (error) {
                setStatusMessage('❌ Error al cargar el archivo.');
@@ -855,7 +852,7 @@ lines.forEach((line) => {
       });
     }
 
-    setLines(updatedLines);
+    handleStateChange(updatedLines);
     setFloatingMenu(null);
   };
   
@@ -1329,6 +1326,20 @@ lines.forEach((line) => {
       <div style={{ position: 'relative' }} ref={containerRef}>
           
 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '10px' }}>
+  
+  <button
+    onClick={handleUndo}
+    disabled={historyStep === 0}
+    style={{
+      backgroundColor: historyStep > 0 ? 'white' : 'lightgray',
+      border: '1px solid gray',
+      padding: '5px 10px',
+      borderRadius: '5px',
+      cursor: 'pointer'
+    }}
+  >
+    ⬅️ Deshacer
+  </button>
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
     style={{
@@ -1496,40 +1507,6 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
-            
-            {/* ✅ New Visual Preview for SPL Placement */}
-            {previewSPL && (
-                <React.Fragment>
-                    <Line
-                        points={[previewSPL.p1.x, previewSPL.p1.y, previewSPL.p2.x, previewSPL.p2.y]}
-                        stroke="red"
-                        strokeWidth={2}
-                        dash={[4, 2]}
-                    />
-                    <Label
-                        x={(previewSPL.p1.x + previewSPL.p2.x) / 2}
-                        y={(previewSPL.p1.y + previewSPL.p2.y) / 2}
-                        offsetX={(previewSPL.dimension?.toString().length || 1) * 3}
-                        offsetY={-10}
-                    >
-                        <Tag
-                            fill="white"
-                            pointerDirection="none"
-                            cornerRadius={2}
-                            stroke="black"
-                            strokeWidth={0.5}
-                        />
-                        <Text
-                            text={`${previewSPL.dimension} mm`}
-                            fontSize={10}
-                            fill="black"
-                            padding={3}
-                            align="center"
-                        />
-                    </Label>
-                </React.Fragment>
-            )}
-            
           </Layer>
         </Stage>
                   </div>
@@ -1579,7 +1556,7 @@ lines.forEach((line) => {
           } else {
             line.obj2 = tipo;
           }
-          setLines(updated);
+          handleStateChange(updated);
           setSelectorPos(null);
           setSelectorEnd(null);
         }}
