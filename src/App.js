@@ -1202,15 +1202,6 @@ case 'SPL':
       🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
     </button>
     <br /><br />
-   /* 
-   <label>Distancia de propagación (px): </label>
-    <input
-      type="number"
-      value={propagationDistance}
-      onChange={(e) => setPropagationDistance(parseFloat(e.target.value) || 0)}
-      style={{ width: '60px' }}
-    />
-    */
     <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
   </>
 )}
