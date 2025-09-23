@@ -44,36 +44,11 @@ function App() {
 
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
-  const [menuValues, setMenuValues] = useState({ name: '', deduce: '' });
-  
+  const [menuValues, setMenuValues] = useState({ name: '', deduce: '', deduce1: '', deduce2: '' });
+
   // ✅ Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
-  
-  // ✅ Estados para la funcionalidad de deshacer
-  const [history, setHistory] = useState([[]]);
-  const [historyStep, setHistoryStep] = useState(0);
 
-  // ✅ Nuevo estado para la línea temporal del SPL
-  const [tempSPL, setTempSPL] = useState(null);
-
-
-  // ✅ Nueva función para manejar el historial y los cambios de estado
-  const handleStateChange = (newLines) => {
-      const newHistory = history.slice(0, historyStep + 1);
-      newHistory.push(newLines);
-      setHistory(newHistory);
-      setHistoryStep(newHistory.length - 1);
-      setLines(newLines);
-  };
-  
-  // ✅ Nueva función para deshacer
-  const handleUndo = () => {
-    if (historyStep > 0) {
-      const newStep = historyStep - 1;
-      setHistoryStep(newStep);
-      setLines(history[newStep]);
-    }
-  };
 
   const botonBase = {
   display: 'inline-flex',
@@ -126,7 +101,6 @@ useEffect(() => {
       setMousePos(null);   // quita el preview
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
-      setTempSPL(null); // Limpia la vista previa del SPL
     }
   };
 
@@ -228,7 +202,7 @@ function findClosestSegment(pos) {
       if (nuevasLineas.length === 0) {
         setStatusMessage('⚠️ No se encontraron líneas válidas en el archivo DXF.');
       } else {
-        handleStateChange([...lines, ...nuevasLineas]);
+        setLines([...lines, ...nuevasLineas]);
         setStatusMessage('✅ Plano base importado desde DXF.');
       }
     } catch (error) {
@@ -273,12 +247,21 @@ const handleStageClick = (e) => {
 
   // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
   if (addingSPL) {
-    if (!tempSPL) {
+    const found = findClosestSegment(pos);
+    const proximityPx = 12; // ajuste: distancia máxima en px para "aceptar" el drop
+    if (!found || found.distance > proximityPx) {
       setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
       return;
     }
-    const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
 
+    const { lineIndex, proj } = found;
+    const original = lines[lineIndex];
+
+    // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
+    const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
+
+   const dim1 = Math.round(totalDim * proj.t);
+   const dim2 = Math.round(totalDim * (1 - proj.t));
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
@@ -308,9 +291,8 @@ const handleStageClick = (e) => {
 
     const updated = [...lines];
     updated.splice(lineIndex, 1, lineA, lineB);
-    handleStateChange(updated);
+    setLines(updated);
     setAddingSPL(false);
-    setTempSPL(null); // Limpiar la vista previa
     setStatusMessage('🔺 SPL insertado correctamente.');
     return;
   }
@@ -362,33 +344,9 @@ const handleStageClick = (e) => {
 };
 
 const handleMouseMove = (e) => {
-  const stage = e.target.getStage();
-  const pos = getRelativePointerPosition(stage);
-
-  if (addingSPL) {
-    const found = findClosestSegment(pos);
-    const proximityPx = 15; // Aumentar un poco el umbral para facilitar la selección
-
-    if (!found || found.distance > proximityPx) {
-      setTempSPL(null);
-      return;
-    }
-
-    const { proj, line } = found;
-    const totalDim = parseFloat(line.dimension_mm) || Math.hypot(line.p2.x - line.p1.x, line.p2.y - line.p1.y);
-    const dim1 = Math.round(totalDim * proj.t);
-    const dim2 = Math.round(totalDim * (1 - proj.t));
-
-    // Si el mouse está lo suficientemente cerca, actualiza la línea temporal
-    setTempSPL({
-      lineIndex: found.lineIndex,
-      proj,
-      original: line,
-      dim1,
-      dim2
-    });
-
-  } else if (pencilMode && points.length === 1 && !eraserMode) {
+  if (pencilMode && points.length === 1 && !eraserMode) {
+    const stage = e.target.getStage();
+    const pos = getRelativePointerPosition(stage);
     const p1 = points[0];
     let adjustedPos = { ...pos };
 
@@ -401,9 +359,8 @@ const handleMouseMove = (e) => {
         adjustedPos.x = p1.x; // Vertical
       }
     }
+
     setMousePos(adjustedPos);
-  } else {
-    setTempSPL(null);
   }
 };
 
@@ -411,7 +368,7 @@ const handleMouseMove = (e) => {
   const confirmDimension = () => {
     if (tempLine) {
       tempLine.dimension_mm = parseFloat(dimension);
-      handleStateChange([...lines, tempLine]);
+      setLines([...lines, tempLine]);
       setTempLine(null);
       setDimension('');
       setShowInput(false);
@@ -426,8 +383,6 @@ const updateNombre = () => {
     const newName = nameInput;
     const targetPos = targetLine[selectedEnd.end];
 
-    const selectedObjType = selectedEnd.end === 'p1' ? targetLine.obj1 : targetLine.obj2;
-
     // Asignar nombre al extremo seleccionado
     if (selectedEnd.end === 'p1') {
       targetLine.nombre_obj1 = newName;
@@ -435,40 +390,31 @@ const updateNombre = () => {
       targetLine.nombre_obj2 = newName;
     }
 
-    // Lógica de propagación para SPL
-    if (selectedObjType === 'SPL') {
-      updatedLines.forEach((line) => {
-        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj1 = newName;
-        }
-        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj2 = newName;
-        }
-      });
-    } 
-    // Lógica de propagación para BRK
-    else if (selectedObjType === 'BRK') {
-      updatedLines.forEach((line) => {
-        if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj1 = newName;
-        }
-        if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
-          line.nombre_obj2 = newName;
-        }
-      });
-    }
-
+    // Propaga el nombre a todos los extremos unidos en el mismo punto,
+    // sin importar su tipo.
+    updatedLines.forEach((line) => {
+      // Verifica si p1 de la línea actual está en la misma posición que el punto modificado
+      if (Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y) < proximityThreshold) {
+        line.nombre_obj1 = newName;
+      }
+      // Verifica si p2 de la línea actual está en la misma posición que el punto modificado
+      if (Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y) < proximityThreshold) {
+        line.nombre_obj2 = newName;
+      }
+    });
     setLines(updatedLines);
     setSelectedEnd(null);
     setNameInput('');
   }
 };
 
+
+
   const handleLineClick = (index) => {
     if (eraserMode) {
       const updatedLines = [...lines];
       updatedLines.splice(index, 1);
-      handleStateChange(updatedLines);
+      setLines(updatedLines);
     }
   };
 const calcularRuta = (start, end) => {
@@ -590,7 +536,7 @@ setRutaCalculada(result.path);
 
   
   const handleResetApp = () => {
-  handleStateChange([]);
+  setLines([]);
   setPoints([]);
   setObj1('Ninguno');
   setObj2('Ninguno');
@@ -626,7 +572,7 @@ setRutaCalculada(result.path);
        reader.onload = (e) => {
            try {
                const contenido = JSON.parse(e.target.result);
-               handleStateChange(contenido);
+               setLines(contenido);
                setStatusMessage('✅ Archivo cargado correctamente.');
            } catch (error) {
                setStatusMessage('❌ Error al cargar el archivo.');
@@ -647,7 +593,7 @@ const handleImportExcel = (e) => {
     const data = new Uint8Array(evt.target.result);
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName]; // ✅ LÍNEA CORREGIDA
+    const worksheet = workbook.Sheets[sheetName];
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     const updatedSheet = [...jsonData];
 
@@ -775,6 +721,7 @@ lines.forEach((line) => {
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(blob, 'archivo_con_dimensiones_y_validacion.xlsx');
         setStatusMessage('✅ Archivo procesado y listo para descargar.');
+        setArchivoProcesado(true);
         setProcesandoExcel(false); // ✅ Ocultar spinner
       }
     };
@@ -871,7 +818,7 @@ lines.forEach((line) => {
       });
     }
 
-    handleStateChange(updatedLines);
+    setLines(updatedLines);
     setFloatingMenu(null);
   };
   
@@ -1345,20 +1292,6 @@ lines.forEach((line) => {
       <div style={{ position: 'relative' }} ref={containerRef}>
           
 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '10px' }}>
-  
-  <button
-    onClick={handleUndo}
-    disabled={historyStep === 0}
-    style={{
-      backgroundColor: historyStep > 0 ? 'white' : 'lightgray',
-      border: '1px solid gray',
-      padding: '5px 10px',
-      borderRadius: '5px',
-      cursor: 'pointer'
-    }}
-  >
-    ⬅️ Deshacer
-  </button>
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
     style={{
@@ -1526,57 +1459,6 @@ lines.forEach((line) => {
                 strokeWidth={1}
               />
             )}
-            
-            {/* ✅ Renderiza la vista previa del SPL */}
-            {tempSPL && (
-              <Group>
-                <Line
-                  points={[tempSPL.original.p1.x, tempSPL.original.p1.y, tempSPL.proj.x, tempSPL.proj.y]}
-                  stroke="red"
-                  strokeWidth={1}
-                  dash={[2, 2]}
-                />
-                <Label
-                  x={(tempSPL.original.p1.x + tempSPL.proj.x) / 2}
-                  y={(tempSPL.original.p1.y + tempSPL.proj.y) / 2}
-                >
-                  <Tag
-                    fill="white"
-                    pointerDirection="none"
-                    cornerRadius={2}
-                  />
-                  <Text
-                    text={`${tempSPL.dim1}mm`}
-                    fontSize={10}
-                    fill="red"
-                    padding={1}
-                  />
-                </Label>
-                <Line
-                  points={[tempSPL.proj.x, tempSPL.proj.y, tempSPL.original.p2.x, tempSPL.original.p2.y]}
-                  stroke="red"
-                  strokeWidth={1}
-                  dash={[2, 2]}
-                />
-                <Label
-                  x={(tempSPL.proj.x + tempSPL.original.p2.x) / 2}
-                  y={(tempSPL.proj.y + tempSPL.original.p2.y) / 2}
-                >
-                  <Tag
-                    fill="white"
-                    pointerDirection="none"
-                    cornerRadius={2}
-                  />
-                  <Text
-                    text={`${tempSPL.dim2}mm`}
-                    fontSize={10}
-                    fill="red"
-                    padding={1}
-                  />
-                </Label>
-              </Group>
-            )}
-
           </Layer>
         </Stage>
                   </div>
@@ -1626,7 +1508,7 @@ lines.forEach((line) => {
           } else {
             line.obj2 = tipo;
           }
-          handleStateChange(updated);
+          setLines(updated);
           setSelectorPos(null);
           setSelectorEnd(null);
         }}
