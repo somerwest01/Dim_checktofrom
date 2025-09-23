@@ -264,8 +264,8 @@ const handleStageClick = (e) => {
     // dimensión total (si existe dimension_mm la usamos, si no usamos distancia geométrica)
     const totalDim = parseFloat(original.dimension_mm) || Math.hypot(original.p2.x - original.p1.x, original.p2.y - original.p1.y);
 
-   const dim1 = Math.round(totalDim * proj.t);
-   const dim2 = Math.round(totalDim * (1 - proj.t));
+   const dim1 = Math.round(totalDim * found.proj.t);
+   const dim2 = Math.round(totalDim * (1 - found.proj.t));
     // crear las dos nuevas líneas que reemplazarán a la original
     const lineA = {
       p1: { ...original.p1 },
@@ -385,21 +385,15 @@ const handleMouseMove = (e) => {
       const distToP2 = Math.hypot(proj.x - p2.x, proj.y - p2.y);
       
       const startPoint = distToP1 < distToP2 ? p1 : p2;
-      const dimension = (distToP1 < distToP2 ? distToP1 : distToP2).toFixed(2);
       
-      // Calcular el offset para la línea de dimensión, moviéndola fuera de la línea original
-      const lineAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-      const offset = 20; // Distancia de la línea de previsualización con respecto a la original
+      // ✅ MEJORA: La dimensión es la distancia entre el punto inicial y la proyección, redondeada.
+      const dimension = Math.round(Math.hypot(proj.x - startPoint.x, proj.y - startPoint.y));
       
-      const offsetX = -Math.sin(lineAngle) * offset;
-      const offsetY = Math.cos(lineAngle) * offset;
-
+      // ✅ MEJORA: Se quita la lógica de offset, se usan los puntos reales sobre la línea.
       setSplPreview({
-        start: { x: startPoint.x + offsetX, y: startPoint.y + offsetY },
-        end: { x: proj.x + offsetX, y: proj.y + offsetY },
-        dim: dimension,
-        p1: line.p1,
-        p2: line.p2,
+        start: startPoint,
+        end: proj,
+        dim: dimension
       });
     } else {
       setSplPreview(null); // Ocultar la previsualización si no hay una línea cercana
@@ -789,30 +783,6 @@ lines.forEach((line) => {
   reader.readAsArrayBuffer(file);
 };
   
-  const handleWheel = (e) => {
-  e.evt.preventDefault();
-  const stage = e.target.getStage();
-  const oldScale = stage.scaleX();
-
-  const scaleBy = 1.1; // factor de zoom
-  const mousePointTo = {
-    x: stage.getPointerPosition().x / oldScale - stage.x() / oldScale,
-    y: stage.getPointerPosition().y / oldScale - stage.y() / oldScale,
-  };
-
-  const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
-  stage.scale({ x: newScale, y: newScale });
-
-  const newPos = {
-    x: -(mousePointTo.x - stage.getPointerPosition().x / newScale) * newScale,
-    y: -(mousePointTo.y - stage.getPointerPosition().y / newScale) * newScale,
-  };
-  stage.position(newPos);
-  stage.batchDraw();
-};
-
-  
-
   const handleExportExcel = () => {
     setStatusMessage('📤 Procesando archivo para exportar...');
     const exportData = lines.map((line, index) => ({
@@ -1511,32 +1481,23 @@ lines.forEach((line) => {
             {/* ✅ NUEVO: Renderizado de la previsualización del SPL */}
             {splPreview && (
               <Group>
-                {/* Línea de acotación */}
+                {/* Línea de previsualización */}
                 <Line
                   points={[splPreview.start.x, splPreview.start.y, splPreview.end.x, splPreview.end.y]}
                   stroke="green"
-                  strokeWidth={1}
+                  strokeWidth={1.5}
                   dash={[5, 5]}
                 />
-                {/* Líneas de extensión de los extremos */}
-                <Line
-                  points={[splPreview.p1.x, splPreview.p1.y, splPreview.start.x, splPreview.start.y]}
-                  stroke="green"
-                  strokeWidth={0.5}
-                />
-                <Line
-                  points={[splPreview.p2.x, splPreview.p2.y, splPreview.end.x, splPreview.end.y]}
-                  stroke="green"
-                  strokeWidth={0.5}
-                />
+                
                 {/* Texto de la dimensión */}
                 <Text
                   text={`${splPreview.dim} mm`}
                   x={(splPreview.start.x + splPreview.end.x) / 2}
-                  y={(splPreview.start.y + splPreview.end.y) / 2 - 15} // Ligeramente por encima de la línea
+                  y={(splPreview.start.y + splPreview.end.y) / 2 - 10}
                   fontSize={10}
                   fill="green"
                   fontStyle="bold"
+                  offsetX={-5} // Ajuste para que el texto no se superponga
                 />
               </Group>
             )}
