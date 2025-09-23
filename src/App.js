@@ -41,6 +41,7 @@ function App() {
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
   const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
+  const [importedFileName, setImportedFileName] = useState(null);
 
   // ✅ Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
@@ -659,6 +660,7 @@ const handleImportExcel = (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
+  setImportedFileName(file.name);  
   const reader = new FileReader();
   reader.onload = (evt) => {
     const data = new Uint8Array(evt.target.result);
@@ -769,7 +771,7 @@ lines.forEach((line) => {
         });
       });
 
-      updatedSheet[i][22] = distancia.toFixed(2);
+      updatedSheet[i][22] = distancia;
       updatedSheet[i][23] = 'Sí';
     } catch (error) {
       updatedSheet[i][22] = 'Error en fila';
@@ -832,7 +834,7 @@ lines.forEach((line) => {
       item: index + 1,
       nombre_obj1: line.nombre_obj1,
       nombre_obj2: line.nombre_obj2,
-      dimension_mm: (parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0)).toFixed(2),
+      dimension_mm: parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0),
       deduce: line.deduce,
     }));
 
@@ -842,7 +844,7 @@ lines.forEach((line) => {
 
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, 'resultado_procesado.xlsx');
+    saveAs(blob, importedFileName || 'resultado_procesado.xlsx');
 
     setStatusMessage('✅ Archivo listo para descargar.');
     setArchivoProcesado(true);
