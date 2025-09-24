@@ -139,14 +139,14 @@ const renderTablaMenu = () => {
     fontSize: '20px',
     width: '45px',
     overflow: 'hidden',
-    backgroundColor: 'EE82EE',
+    backgroundColor: '#EE82EE',
     fontWeight: 'bold',   
   };
 
   const nameCellStyle = {
     ...cellStyle,
-    backgroundColor: '#f0f8ff',
-    height: '30px', // Altura fija de 30px
+    backgroundColor: '#87CEFA',
+    height: '17px', // Altura fija de 30px
   };
 
   const numericCellStyle = {
@@ -165,6 +165,12 @@ const renderTablaMenu = () => {
     fontSize: smallFontSize,
     fontFamily: tableFontFamily,
     MozAppearance: 'textfield',
+  };
+
+    const webkitInputStyle = {
+    ...inputStyle,
+    WebkitAppearance: 'none',
+    margin: 0,
   };
 
   return (
