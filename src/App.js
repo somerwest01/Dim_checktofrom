@@ -1065,7 +1065,7 @@ case 'SPL':
               setTablaMenu(true);
             }}>Agregar ángulo</button>
           </div>
-            <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
+            <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
           </div>
         );
       case 'BRK':
