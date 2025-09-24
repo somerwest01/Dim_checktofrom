@@ -42,26 +42,29 @@ function App() {
   const [addingSPL, setAddingSPL] = useState(false);
   const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
   const [importedFileName, setImportedFileName] = useState(null);
+  const [tablaMenu, setTablaMenu] = useState(false);
+  const [filas, setFilas] = useState(5);
+  const [columnas, setColumnas] = useState(3);
 
-  // ✅ Nuevo estado para el menú flotante contextual
+  //  Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '' });
   
-  // ✅ Nueva referencia para el contenedor principal
+  //  Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
   
-  // ✅ Estados para la funcionalidad de deshacer
+  //  Estados para la funcionalidad de deshacer
   const [history, setHistory] = useState([[]]);
   const [historyStep, setHistoryStep] = useState(0);
 
-  // ✅ Nuevo estado para la línea temporal del SPL
+  //  Nuevo estado para la línea temporal del SPL
   const [tempSPL, setTempSPL] = useState(null);
   
-  // ✅ NUEVO ESTADO: Distancia de propagación configurable
+  //  NUEVO ESTADO: Distancia de propagación configurable
   const [propagationDistance, setPropagationDistance] = useState(5);
 
 
-  // ✅ Nueva función para manejar el historial y los cambios de estado
+  //  Nueva función para manejar el historial y los cambios de estado
   const handleStateChange = (newLines) => {
       const newHistory = history.slice(0, historyStep + 1);
       newHistory.push(newLines);
@@ -103,6 +106,108 @@ const spinnerStyle = {
   height: '30px',
   animation: 'spin 1s linear infinite',
   margin: '10px auto'
+};
+
+const renderTablaMenu = () => {
+  if (!tablaMenu) return null;
+
+  const tableStyle = {
+    borderCollapse: 'collapse',
+    width: '100%',
+    minWidth: '200px'
+  };
+
+  const cellStyle = {
+    border: '1px solid black',
+    padding: '3px',
+    textAlign: 'center',
+    fontSize: '10px'
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      backgroundColor: 'white',
+      border: '1px solid gray',
+      borderRadius: '10px',
+      boxShadow: '4px 4px 15px rgba(0,0,0,0.4)',
+      zIndex: 200,
+      padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: '400px',
+      maxWidth: '600px'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        width: '100%'
+      }}>
+        <button
+          onClick={() => setTablaMenu(false)}
+          style={{
+            border: 'none',
+            background: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            alignSelf: 'flex-end'
+          }}
+        >
+          &times;
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexGrow: 1 }}>
+        {/* Tabla a la izquierda */}
+        <div style={{ flex: 1, overflowX: 'auto' }}>
+          <table style={tableStyle}>
+            <tbody>
+              {Array.from({ length: filas }).map((_, rowIndex) => (
+                <tr key={rowIndex}>
+                  {Array.from({ length: columnas }).map((_, colIndex) => (
+                    <td key={colIndex} style={cellStyle}>Fila {rowIndex + 1}, Col {colIndex + 1}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Controles a la derecha */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Filas</label>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button onClick={() => setFilas(filas > 1 ? filas - 1 : 1)}>-</button>
+              <button onClick={() => setFilas(filas + 1)}>+</button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Columnas</label>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button onClick={() => setColumnas(columnas > 1 ? columnas - 1 : 1)}>-</button>
+              <button onClick={() => setColumnas(columnas + 1)}>+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Botones de acción */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
+        <button onClick={() => {
+          // Lógica para agregar el ángulo (aún no implementada)
+          setTablaMenu(false);
+        }}>Agregar ángulo</button>
+        <button onClick={() => setTablaMenu(false)}>Cancelar</button>
+      </div>
+    </div>
+  );
 };
 
 
@@ -955,6 +1060,11 @@ case 'SPL':
             <label style={labelStyle}>Deduce:</label>
             <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
             <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
+            <button onClick={() => {
+              setFloatingMenu(null);
+              setTablaMenu(true);
+            }}>Agregar ángulo</button>
+          </div>
             <button onClick={() => setFloatingMenu(null)}>Cancelar</button>
           </div>
         );
@@ -1597,6 +1707,7 @@ case 'SPL':
         
         {/* ✅ Renderiza el menú flotante aquí */}
         {renderFloatingMenu()}
+        {renderTablaMenu()}
 
         {showInput && (
           <div style={{
