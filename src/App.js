@@ -164,6 +164,7 @@ const renderTablaMenu = () => {
     backgroundColor: 'transparent',
     fontSize: smallFontSize,
     fontFamily: tableFontFamily,
+    MozAppearance: 'textfield',
   };
 
   return (
