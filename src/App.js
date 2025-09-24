@@ -1051,23 +1051,24 @@ case 'SPL':
       <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
     </div>
   );
-      case 'Conector':
-        return (
-          <div style={commonProps}>
-            <p>Modificar Conector</p>
-            <label style={labelStyle}>Nombre:</label>
-            <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
-            <label style={labelStyle}>Deduce:</label>
-            <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
-            <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-            <button onClick={() => {
-              setFloatingMenu(null);
-              setTablaMenu(true);
-            }}>Agregar ángulo</button>
-          </div>
-            <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
-          </div>
-        );
+case 'Conector':
+  return (
+    <div style={commonProps}>
+      <p>Modificar Conector</p>
+      <label style={labelStyle}>Nombre:</label>
+      <input type="text" style={inputStyle} value={menuValues.name} onChange={(e) => setMenuValues({ ...menuValues, name: e.target.value })} />
+      <label style={labelStyle}>Deduce:</label>
+      <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
+      <div style={{ marginTop: '10px', display: 'flex', gap: '5px' }}>
+        <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
+        <button onClick={() => {
+          setFloatingMenu(null);
+          setTablaMenu(true);
+        }}>Agregar ángulo</button>
+      </div>
+      <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
+    </div>
+  );
       case 'BRK':
         return (
           <div style={commonProps}>
