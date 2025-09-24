@@ -123,6 +123,23 @@ const renderTablaMenu = () => {
     textAlign: 'center',
     fontSize: '10px'
   };
+    const firstColumnStyle = {
+    ...cellStyle,
+    backgroundColor: '#e0e0e0' // Color de fondo para la primera columna
+  };
+
+    const inputStyle = {
+    width: '100%',
+    boxSizing: 'border-box',
+    border: 'none',
+    textAlign: 'center',
+    backgroundColor: 'transparent'
+  };
+
+  const firstRowInputStyle = {
+    ...inputStyle,
+    fontWeight: 'bold'
+  };
 
   return (
     <div style={{
@@ -167,10 +184,26 @@ const renderTablaMenu = () => {
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <table style={tableStyle}>
             <tbody>
+              {/* Primera fila con celda completa */}
+              <tr>
+                <td colSpan={columnas} style={cellStyle}>
+                  <input type="text" placeholder="Nombre de la tabla" style={firstRowInputStyle} />
+                </td>
+              </tr>
+              {/* Filas restantes */}
               {Array.from({ length: filas }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
                   {Array.from({ length: columnas }).map((_, colIndex) => (
-                    <td key={colIndex} style={cellStyle}>Fila {rowIndex + 1}, Col {colIndex + 1}</td>
+                    <td 
+                      key={colIndex} 
+                      style={colIndex === 0 ? firstColumnStyle : cellStyle}
+                    >
+                      <input 
+                        type="text" 
+                        placeholder={colIndex === 0 ? `Etiqueta` : ``} 
+                        style={inputStyle} 
+                      />
+                    </td>
                   ))}
                 </tr>
               ))}
@@ -209,7 +242,6 @@ const renderTablaMenu = () => {
     </div>
   );
 };
-
 
 const botonExpandido = {
   width: '150px'
