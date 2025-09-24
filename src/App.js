@@ -111,29 +111,34 @@ const spinnerStyle = {
 const renderTablaMenu = () => {
   if (!tablaMenu) return null;
 
+  const standardColumnWidth = '80px';
+  const smallFontSize = '8px';
+
   const tableStyle = {
     borderCollapse: 'collapse',
     width: '100%',
-    minWidth: '200px'
   };
 
   const cellStyle = {
     border: '1px solid black',
     padding: '3px',
     textAlign: 'center',
-    fontSize: '12px',
+    fontSize: smallFontSize,
+    width: standardColumnWidth,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
+    minHeight: '20px', // Altura mínima para asegurar espacio
   };
 
   const firstColumnStyle = {
     ...cellStyle,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#e0e0e0', // Color de fondo para la primera columna
+    fontWeight: 'bold',
   };
 
   const nameCellStyle = {
     ...cellStyle,
-    backgroundColor: '#f0f8ff',
+    backgroundColor: '#f0f8ff', // Color de fondo para las celdas de nombres
   };
 
   const numericCellStyle = {
@@ -148,7 +153,7 @@ const renderTablaMenu = () => {
     border: 'none',
     textAlign: 'center',
     backgroundColor: 'transparent',
-    fontSize: '12px'
+    fontSize: smallFontSize,
   };
 
   return (
@@ -166,7 +171,7 @@ const renderTablaMenu = () => {
       display: 'flex',
       flexDirection: 'column',
       minWidth: '400px',
-      maxWidth: '600px'
+      maxWidth: '600px',
     }}>
       <div style={{
         display: 'flex',
@@ -194,21 +199,21 @@ const renderTablaMenu = () => {
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <table style={tableStyle}>
             <tbody>
-              {/* Primera fila con celdas de Deduce General y Nombres */}
+              {/* Fila de Nombres */}
               <tr>
-                <td style={{ ...cellStyle, fontWeight: 'bold' }}>Deduce General</td>
+                <td style={{ ...cellStyle, border: 'none' }}></td>
                 {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={nameCellStyle}>
-                    <input type="text" placeholder="" style={inputStyle} />
+                    <input type="text" style={inputStyle} />
                   </td>
                 ))}
               </tr>
-              {/* Filas de datos */}
+              {/* Filas de datos y columna unificada */}
               {Array.from({ length: filas }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
-                  <td style={firstColumnStyle}>
-                    <input type="text" placeholder={`Etiqueta`} style={inputStyle} />
-                  </td>
+                  {rowIndex === 0 && (
+                    <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>Deduce General</td>
+                  )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                     <td key={colIndex} style={cellStyle}>
                       <input type="text" style={inputStyle} />
@@ -218,7 +223,7 @@ const renderTablaMenu = () => {
               ))}
               {/* Fila numérica */}
               <tr>
-                <td style={numericCellStyle}></td>
+                <td style={{ ...numericCellStyle, border: 'none' }}></td>
                 {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={numericCellStyle}>
                     {colIndex + 1}
