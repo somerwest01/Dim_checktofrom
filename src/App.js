@@ -111,7 +111,7 @@ const spinnerStyle = {
 const renderTablaMenu = () => {
   if (!tablaMenu) return null;
 
-  const standardColumnWidth = '45px';
+  const standardColumnWidth = '40px';
   const smallFontSize = '9px';
   const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
 
@@ -127,7 +127,7 @@ const renderTablaMenu = () => {
     textAlign: 'center',
     fontSize: smallFontSize,
     width: standardColumnWidth,
-    height: '17px', // Altura fija de 30px
+    height: '14px', // Altura fija de 30px
     overflow: 'hidden',
     whiteSpace: 'nowrap',
   };
@@ -137,16 +137,16 @@ const renderTablaMenu = () => {
     padding: '1px',
     textAlign: 'center',
     fontSize: '20px',
-    width: '45px',
+    width: '40px',
     overflow: 'hidden',
-    backgroundColor: '#EE82EE',
+    backgroundColor: '#F0FFF0',
     fontWeight: 'bold',   
   };
 
   const nameCellStyle = {
     ...cellStyle,
-    backgroundColor: '#87CEFA',
-    height: '17px', // Altura fija de 30px
+    backgroundColor: '#F0FFF0',
+    height: '14px', // Altura fija de 30px
   };
 
   const numericCellStyle = {
@@ -232,12 +232,12 @@ const renderTablaMenu = () => {
                 <tr key={rowIndex}>
                   {rowIndex === 0 && (
                     <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
-                      <input type="number" placeholder="Deduce General" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
+                      <input type="text" placeholder="Deduce General" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
                     </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                     <td key={colIndex} style={cellStyle}>
-                      <input type="number" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={inputStyle} />
+                      <input type="text" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={inputStyle} />
                     </td>
                   ))}
                 </tr>
