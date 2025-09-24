@@ -1088,7 +1088,7 @@ case 'SPL':
     ...(hoverBoton === 'diseño' ? botonExpandido : {})
   }}
 >
-  🖉 {hoverBoton === 'diseño' && 'Diseño'}
+  📏 {hoverBoton === 'diseño' && 'Diseño'}
 </button>
   
   <button
@@ -1144,7 +1144,7 @@ case 'SPL':
     ...(hoverBoton === 'Guardar' ? botonExpandido : {})
   }}
 >
-  🖫 {hoverBoton === 'guardar' && 'Guardar'}
+  💾 {hoverBoton === 'guardar' && 'Guardar'}
 </button>
 
         
@@ -1166,7 +1166,7 @@ case 'SPL':
     ...(hoverBoton === 'abrir' ? botonExpandido : {})
   }}
 >
-  📂 {hoverBoton === 'abrir' && 'Abrir'}
+  📁 {hoverBoton === 'abrir' && 'Abrir'}
 </button>
   </div>
 <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
@@ -1371,7 +1371,7 @@ case 'SPL':
       cursor: 'pointer'
     }}
   >
-    ⟲ Deshacer
+    🔙 Deshacer
   </button>
   <button
     onClick={() => setModoAnguloRecto(!modoAnguloRecto)}
