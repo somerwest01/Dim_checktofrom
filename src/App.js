@@ -112,11 +112,13 @@ const renderTablaMenu = () => {
   if (!tablaMenu) return null;
 
   const standardColumnWidth = '80px';
-  const smallFontSize = '8px';
+  const smallFontSize = '9px';
+  const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
 
   const tableStyle = {
     borderCollapse: 'collapse',
     width: '100%',
+    fontFamily: tableFontFamily,
   };
 
   const cellStyle = {
@@ -125,20 +127,21 @@ const renderTablaMenu = () => {
     textAlign: 'center',
     fontSize: smallFontSize,
     width: standardColumnWidth,
+    height: '30px', // Altura fija de 30px
     overflow: 'hidden',
     whiteSpace: 'nowrap',
-    minHeight: '20px', // Altura mínima para asegurar espacio
   };
 
   const firstColumnStyle = {
     ...cellStyle,
-    backgroundColor: '#e0e0e0', // Color de fondo para la primera columna
+    backgroundColor: '#e0e0e0',
     fontWeight: 'bold',
   };
 
   const nameCellStyle = {
     ...cellStyle,
-    backgroundColor: '#f0f8ff', // Color de fondo para las celdas de nombres
+    backgroundColor: '#f0f8ff',
+    height: '30px', // Altura fija de 30px
   };
 
   const numericCellStyle = {
@@ -149,11 +152,13 @@ const renderTablaMenu = () => {
 
   const inputStyle = {
     width: '100%',
+    height: '100%',
     boxSizing: 'border-box',
     border: 'none',
     textAlign: 'center',
     backgroundColor: 'transparent',
     fontSize: smallFontSize,
+    fontFamily: tableFontFamily,
   };
 
   return (
@@ -172,6 +177,7 @@ const renderTablaMenu = () => {
       flexDirection: 'column',
       minWidth: '400px',
       maxWidth: '600px',
+      fontFamily: tableFontFamily, // Fuente para el contenedor exterior
     }}>
       <div style={{
         display: 'flex',
@@ -187,7 +193,8 @@ const renderTablaMenu = () => {
             cursor: 'pointer',
             padding: '0',
             lineHeight: '1',
-            alignSelf: 'flex-end'
+            alignSelf: 'flex-end',
+            fontFamily: tableFontFamily,
           }}
         >
           &times;
@@ -208,15 +215,17 @@ const renderTablaMenu = () => {
                   </td>
                 ))}
               </tr>
-              {/* Filas de datos y columna unificada */}
+              {/* Filas de datos y columna "Deduce General" */}
               {Array.from({ length: filas }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
                   {rowIndex === 0 && (
-                    <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>Deduce General</td>
+                    <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
+                      <input type="number" placeholder="Deduce General" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
+                    </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                     <td key={colIndex} style={cellStyle}>
-                      <input type="text" style={inputStyle} />
+                      <input type="number" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={inputStyle} />
                     </td>
                   ))}
                 </tr>
