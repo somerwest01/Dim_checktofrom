@@ -121,24 +121,34 @@ const renderTablaMenu = () => {
     border: '1px solid black',
     padding: '3px',
     textAlign: 'center',
-    fontSize: '10px'
-  };
-    const firstColumnStyle = {
-    ...cellStyle,
-    backgroundColor: '#e0e0e0' // Color de fondo para la primera columna
+    fontSize: '12px',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
   };
 
-    const inputStyle = {
+  const firstColumnStyle = {
+    ...cellStyle,
+    backgroundColor: '#e0e0e0',
+  };
+
+  const nameCellStyle = {
+    ...cellStyle,
+    backgroundColor: '#f0f8ff',
+  };
+
+  const numericCellStyle = {
+    ...cellStyle,
+    backgroundColor: '#d3d3d3',
+    fontWeight: 'bold',
+  };
+
+  const inputStyle = {
     width: '100%',
     boxSizing: 'border-box',
     border: 'none',
     textAlign: 'center',
-    backgroundColor: 'transparent'
-  };
-
-  const firstRowInputStyle = {
-    ...inputStyle,
-    fontWeight: 'bold'
+    backgroundColor: 'transparent',
+    fontSize: '12px'
   };
 
   return (
@@ -184,29 +194,37 @@ const renderTablaMenu = () => {
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <table style={tableStyle}>
             <tbody>
-              {/* Primera fila con celda completa */}
+              {/* Primera fila con celdas de Deduce General y Nombres */}
               <tr>
-                <td colSpan={columnas} style={cellStyle}>
-                  <input type="text" placeholder="Nombre de la tabla" style={firstRowInputStyle} />
-                </td>
+                <td style={{ ...cellStyle, fontWeight: 'bold' }}>Deduce General</td>
+                {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
+                  <td key={colIndex} style={nameCellStyle}>
+                    <input type="text" placeholder="" style={inputStyle} />
+                  </td>
+                ))}
               </tr>
-              {/* Filas restantes */}
+              {/* Filas de datos */}
               {Array.from({ length: filas }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
-                  {Array.from({ length: columnas }).map((_, colIndex) => (
-                    <td 
-                      key={colIndex} 
-                      style={colIndex === 0 ? firstColumnStyle : cellStyle}
-                    >
-                      <input 
-                        type="text" 
-                        placeholder={colIndex === 0 ? `Etiqueta` : ``} 
-                        style={inputStyle} 
-                      />
+                  <td style={firstColumnStyle}>
+                    <input type="text" placeholder={`Etiqueta`} style={inputStyle} />
+                  </td>
+                  {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
+                    <td key={colIndex} style={cellStyle}>
+                      <input type="text" style={inputStyle} />
                     </td>
                   ))}
                 </tr>
               ))}
+              {/* Fila numérica */}
+              <tr>
+                <td style={numericCellStyle}></td>
+                {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
+                  <td key={colIndex} style={numericCellStyle}>
+                    {colIndex + 1}
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>
@@ -224,7 +242,7 @@ const renderTablaMenu = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Columnas</label>
             <div style={{ display: 'flex', gap: '5px' }}>
-              <button onClick={() => setColumnas(columnas > 1 ? columnas - 1 : 1)}>-</button>
+              <button onClick={() => setColumnas(columnas > 2 ? columnas - 1 : 2)}>-</button>
               <button onClick={() => setColumnas(columnas + 1)}>+</button>
             </div>
           </div>
