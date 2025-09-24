@@ -111,7 +111,7 @@ const spinnerStyle = {
 const renderTablaMenu = () => {
   if (!tablaMenu) return null;
 
-  const standardColumnWidth = '80px';
+  const standardColumnWidth = '45px';
   const smallFontSize = '9px';
   const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
 
@@ -127,15 +127,20 @@ const renderTablaMenu = () => {
     textAlign: 'center',
     fontSize: smallFontSize,
     width: standardColumnWidth,
-    height: '30px', // Altura fija de 30px
+    height: '17px', // Altura fija de 30px
     overflow: 'hidden',
     whiteSpace: 'nowrap',
   };
 
   const firstColumnStyle = {
-    ...cellStyle,
-    backgroundColor: '#e0e0e0',
-    fontWeight: 'bold',
+    border: '1px solid black',
+    padding: '1px',
+    textAlign: 'center',
+    fontSize: '20px',
+    width: '45px',
+    overflow: 'hidden',
+    backgroundColor: 'EE82EE',
+    fontWeight: 'bold',   
   };
 
   const nameCellStyle = {
