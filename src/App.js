@@ -521,7 +521,7 @@ const handleStageClick = (e) => {
   const menuX = e.evt.clientX + 10;
   const menuY = e.evt.clientY + 10;
 
-  // 🛑 Lógica de AGREGAR SPL (Combinada y Corregida)
+  // 🛑 Lógica de AGREGAR SPL (Prioridad 1)
   if (addingSPL) {
     e.cancelBubble = true;
 
@@ -551,7 +551,6 @@ const handleStageClick = (e) => {
         
       const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
       
-      // crear las dos nuevas líneas que reemplazarán a la original
       const lineA = {
         p1: { ...original.p1 },
         p2: { x: proj.x, y: proj.y },
@@ -589,40 +588,46 @@ const handleStageClick = (e) => {
     }
     
     // Si se hace clic en el lienzo sin snap de SPL ni en un punto/label, CANCELAR el modo SPL
-    setStatusMessage('⚠️ Modo SPL cancelado. Asegúrate de hacer clic sobre una línea o un extremo.');
+    setStatusMessage('⚠️ Modo SPL cancelado. Selecciona una línea o un extremo para modificar.');
     setAddingSPL(false);
     setTempSPL(null);
-    return; // ⬅️ IMPORTANTE: Sigue siendo necesario para evitar que un clic no válido en modo SPL inicie un dibujo.
+    return;
+  }
+
+  // --- Lógica de la Goma (EraserMode) (Prioridad 2) ---
+  if (eraserMode) {
+    if (e.target.attrs.id && e.target.attrs.id.startsWith('line-')) {
+      const index = e.target.attrs.lineIndex;
+      const updatedLines = lines.filter((_, i) => i !== index);
+      handleStateChange(updatedLines);
+      setStatusMessage('➖ Línea eliminada.');
+    }
+    // Si la goma está activa y no se ha hecho clic en una línea, salimos.
+    return; 
   }
 
   // --------------------------------------------------------------------------------------------------
   
-  // --- Lógica del Lápiz (PencilMode) ---
+  // --- Lógica del Lápiz (PencilMode) (Prioridad 3 - Solo si no hay otros modos) ---
   if (pencilMode) {
-    if (eraserMode) return;
-
+    
     // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
     if (drawingStep === 0) {
       const snap = getClosestEndpoint(pos); // Devuelve { point, objType }
 
       if (snap) {
-        // Clic sobre un extremo existente
-        // 🛑 VALIDACIÓN CLAVE: Si el extremo es BRK o Conector, conectar y saltar el menú.
+        // Si el extremo es BRK o Conector, conectar y saltar el menú.
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
-          setPoints([snap.point]); // Usamos el punto de snap para iniciar
-          setTempObj1Type('Ninguno'); // La nueva línea inicia como 'Ninguno' para unirse al objeto
+          setPoints([snap.point]); 
+          setTempObj1Type('Ninguno'); 
           setStatusMessage(`Extremo inicial conectado a ${snap.objType}. Continúe con el punto final.`);
-          setDrawingStep(2); // Pasa directamente a esperar el segundo clic
-          // Aseguramos que la función termina y no ejecuta la lógica de mostrar el menú
+          setDrawingStep(2); 
           return;
         }
-        // Si el extremo es 'Ninguno' o 'SPL', debe caer a la lógica de mostrar el menú.
       }
 
       // Lógica de mostrar el menú (Se ejecuta si snap es null O si snap no es BRK/Conector)
-      // Si no hubo snap, el punto de inicio es la posición del clic
       const startPoint = snap ? snap.point : pos;
-      // Establecer el punto de inicio antes de mostrar el menú para que la lógica de tempLine funcione
       setPoints([startPoint]);
       
       setFloatingMenu({ 
@@ -639,7 +644,6 @@ const handleStageClick = (e) => {
       let endPoint = pos;
       let snap = getClosestEndpoint(pos);
       
-      // Si hacemos snap a otro punto, usamos ese punto como final
       if (snap) {
         endPoint = snap.point;
       }
@@ -664,9 +668,9 @@ const handleStageClick = (e) => {
           p1: startPoint,
           p2: finalPos,
           obj1: tempObj1Type,
-          obj2: snap.objType, // El tipo del extremo al que se unió
+          obj2: snap.objType, 
           nombre_obj1: menuValues.name || '',
-          nombre_obj2: '', // Se conecta, no requiere nombre/deduce
+          nombre_obj2: '', 
           dimension_mm: Math.hypot(finalPos.x - startPoint.x, finalPos.y - startPoint.y).toFixed(2),
           deduce1: menuValues.deduce || '',
           deduce2: '',
@@ -693,7 +697,6 @@ const handleStageClick = (e) => {
       });
       setDrawingStep(3); // Esperando la selección del tipo de objeto 2 (o cancelación)
       
-      // Actualizar tempLine con el ángulo recto si aplica
       setTempLine({
         p1: startPoint,
         p2: finalPos
@@ -702,29 +705,20 @@ const handleStageClick = (e) => {
     } 
     // **3. CONFIRMACIÓN FINAL (drawingStep === 3)**
     else if (drawingStep === 3) {
-      // Si estamos en step 3 y se hace clic de nuevo, es un error, lo reseteamos.
+      // Si estamos en step 3 y se hace clic de nuevo, lo reseteamos (cancelar)
       setPoints([]);
       setTempLine(null);
       setDrawingStep(0);
       setFloatingMenu(null);
-      setStatusMessage('Operación cancelada. Selecciona un punto de inicio para dibujar.');
-    }
-
-  }
-
-  // --- Lógica de la Goma (EraserMode) ---
-  if (eraserMode) {
-    if (e.target.attrs.id && e.target.attrs.id.startsWith('line-')) {
-      const index = e.target.attrs.lineIndex;
-      const updatedLines = lines.filter((_, i) => i !== index);
-      handleStateChange(updatedLines);
-      setStatusMessage('➖ Línea eliminada.');
+      setStatusMessage('Operación de dibujo cancelada.');
     }
   }
 
+  // Lógica de selección/modificación después de cualquier otro modo
   setSelectorPos(null);
   setSelectorEnd(null);
 };
+
 const handleMouseMove = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
