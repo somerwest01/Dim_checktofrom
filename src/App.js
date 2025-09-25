@@ -45,6 +45,7 @@ function App() {
   const [tablaMenu, setTablaMenu] = useState(false);
   const [filas, setFilas] = useState(5);
   const [columnas, setColumnas] = useState(3);
+  const [tempNewLineDetails, setTempNewLineDetails] = useState(null);
 
   const [drawingStep, setDrawingStep] = useState(0); 
   const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
@@ -742,17 +743,28 @@ const handleMouseMove = (e) => {
   }
 };
 
+const confirmDimension = () => {
+  if (!tempNewLineDetails) return; // Evita errores si no hay datos pendientes
 
-  const confirmDimension = () => {
-    if (tempLine) {
-      tempLine.dimension_mm = parseFloat(dimension);
-      handleStateChange([...lines, tempLine]);
-      setTempLine(null);
-      setDimension('');
-      setShowInput(false);
-    }
+  // 1. Crear la línea final con la dimensión ingresada
+  const finalDimension = dimension;
+  const newLine = {
+    ...tempNewLineDetails,
+    dimension_mm: finalDimension, // Usar el valor ingresado por el usuario
   };
 
+  // 2. Dibujar la línea
+  handleStateChange([...lines, newLine]);
+
+  // 3. Resetear todos los estados de dibujo
+  setPoints([]);
+  setTempLine(null);
+  setDrawingStep(0);
+  setShowInput(false); // Oculta el menú
+  setDimension(''); // Limpia el input
+  setTempNewLineDetails(null); // Limpia los detalles temporales
+  setStatusMessage(`✅ Línea completada y dibujada con dimensión ${finalDimension}mm.`);
+};
 
 // ✅ ELIMINADA LA FUNCION updateNombre, su logica se mueve a handleUpdateFloatingMenu
 
@@ -1135,33 +1147,41 @@ const handleExportExcel = () => {
 };
 
 const handleSelectEndType = (type) => {
-  if (floatingMenu.step === 1) {
-    // ➡️ Paso 1: Seleccionando el tipo de Extremo 1
-    setTempObj1Type(type);
-    setDrawingStep(2); 
-    setFloatingMenu(null);
+  // 1. Manejar la selección del Extremo 1 (Paso inicial)
+  if (floatingMenu && floatingMenu.step === 1) {
+    setTempObj1Type(type); // Guarda el tipo de objeto para el Extremo 1
+    setDrawingStep(2);      // Avanza el paso para que el siguiente clic sea el Extremo 2
+    setFloatingMenu(null);  // Oculta el menú
     setStatusMessage(`Extremo 1 establecido como ${type}. Ahora haz clic para el Extremo 2.`);
-  } else if (floatingMenu.step === 2) {
-    // ➡️ Paso 2: Seleccionando el tipo de Extremo 2 -> COMPLETAR LÍNEA
+  }
+
+  // 2. Manejar la selección del Extremo 2 (Último paso antes de la dimensión)
+  else if (floatingMenu && floatingMenu.step === 2) {
     const [p1, p2] = points;
-    const newLine = {
+    const initialDimension = Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2);
+
+    // 1. ALMACENA LOS DETALLES DE LA LÍNEA PENDIENTE DE DIMENSIÓN
+    setTempNewLineDetails({
         p1: p1,
         p2: p2,
         obj1: tempObj1Type,
         obj2: type, // El tipo seleccionado para el Extremo 2
         nombre_obj1: menuValues.name || '',
         nombre_obj2: '',
-        dimension_mm: Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2),
+        // ⚠️ IMPORTANTE: No se incluye 'dimension_mm' aquí.
         deduce1: menuValues.deduce || '',
         deduce2: '',
         item: null,
-    };
-    handleStateChange([...lines, newLine]);
-    setPoints([]);
-    setTempLine(null);
-    setDrawingStep(0);
+    });
+
+    // 2. MUESTRA EL MENÚ DE INGRESO DE DIMENSIÓN
+    setDimension(initialDimension); // Pre-llena el input con la distancia calculada
+    setInputPos(floatingMenu.pos);   // Muestra el input cerca del extremo 2
+    setShowInput(true);             // Muestra el menú de ingreso de dimensión
+
+    // 3. Resetear el menú flotante
     setFloatingMenu(null);
-    setStatusMessage(`✅ Línea completada: ${tempObj1Type} a ${type}.`);
+    setStatusMessage('Ingrese la dimensión final de la línea y presione OK.');
   }
 };
 
