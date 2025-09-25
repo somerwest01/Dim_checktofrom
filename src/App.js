@@ -55,7 +55,8 @@ function App() {
   
   //  Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
-  
+
+  const stageRef = useRef(null);
   //  Estados para la funcionalidad de deshacer
   const [history, setHistory] = useState([[]]);
   const [historyStep, setHistoryStep] = useState(0);
@@ -515,15 +516,16 @@ const handleStageClick = (e) => {
   if (e.evt.button !== 0) return; // solo click izquierdo
 
   const stage = e.target.getStage();
-  const pos = getRelativePointerPosition(stage);
+  const pos = getRelativePointerPosition(stage); // Posición del Stage (afectada por zoom/pan)
 
-  // Variables para la posición del menú flotante
+  // 🛑 CÁLCULO DE POSICIÓN EN PANTALLA (NO AFECTADA POR ZOOM/PAN DEL CANVAS)
+  // Usamos las coordenadas de la ventana (clientX/clientY) para los elementos DOM flotantes
+  // Se añade un desplazamiento (+10px) para que el menú no quede oculto bajo el cursor.
   const menuX = e.evt.clientX + 10;
   const menuY = e.evt.clientY + 10;
 
   // Lógica de agregar SPL (se mantiene)
   if (addingSPL) {
-    // ... (código SPL)
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
       const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
       const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
@@ -554,28 +556,33 @@ const handleStageClick = (e) => {
       if (snap) {
         // Clic sobre un extremo existente
 
-        // 🛑 VALIDACIÓN CLAVE: Si el extremo es BRK o Conector, conectar y saltar el menú.
+        // 🛑 VALIDACIÓN CLAVE: CONEXIÓN AUTOMÁTICA
+        // Si el extremo existente es BRK o Conector (ya tiene objeto definido)
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
-          setPoints([snap.point]); // Usamos el punto de snap para iniciar
-          setTempObj1Type('Ninguno'); // La nueva línea inicia como 'Ninguno' para unirse al objeto
+          // 1. Establecer el punto de inicio de la nueva línea en el punto snappeado
+          setPoints([snap.point]);
+          // 2. Definir que el extremo 1 de la nueva línea será 'Ninguno' (conexión)
+          setTempObj1Type('Ninguno');
           setStatusMessage(`Extremo inicial conectado a ${snap.objType}. Continúe con el punto final.`);
-          setDrawingStep(2); // Pasa directamente a esperar el segundo clic
-          
-          // Aseguramos que la función termina y no ejecuta la lógica de mostrar el menú
-          return; 
+          // 3. Pasar al paso 2 (esperar el segundo clic)
+          setDrawingStep(2);
+          // 4. Salir de la función para NO mostrar el menú flotante
+          return;
         }
-
-        // Si el extremo es 'Ninguno' o 'SPL', debe caer a la lógica de mostrar el menú.
+        
+        // Si el snap existe, pero NO es BRK/Conector (es 'Ninguno' o 'SPL'),
+        // el flujo sigue y el menú se muestra para definir el tipo.
       }
       
       // Lógica de mostrar el menú (Se ejecuta si snap es null O si snap no es BRK/Conector)
       
-      // Si no hubo snap, el punto de inicio es la posición del clic
+      // Determinar el punto de inicio
       const startPoint = snap ? snap.point : pos;
       
-      // Establecer el punto de inicio antes de mostrar el menú para que la lógica de tempLine funcione
+      // 1. Establecer el punto de inicio antes de mostrar el menú (para tempLine)
       setPoints([startPoint]);
 
+      // 2. Mostrar el menú flotante para la selección de Extremo 1
       setFloatingMenu({ x: menuX, y: menuY, step: 1, pos: startPoint });
       setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
       setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
@@ -608,7 +615,7 @@ const handleStageClick = (e) => {
       // Muestra el menú para el Extremo 2
       setPoints([points[0], p2Pos]);
       
-      // La propiedad `snap: !!snap` se usa para la validación dentro de handleSelectEndType
+      // La propiedad `snap: !!snap` se usa para la validación en handleSelectEndType
       setFloatingMenu({ x: menuX, y: menuY, step: 2, pos: p2Pos, snap: !!snap }); 
       setStatusMessage('Seleccione el tipo para el Extremo 2 (Fin de la línea).');
       setDrawingStep(3); // Esperando la selección del tipo de Extremo 2
@@ -617,33 +624,38 @@ const handleStageClick = (e) => {
   }
 };
 const handleSelectEndType = (type) => {
-  if (!floatingMenu) return;
+  // Asegúrate de tener una referencia al Stage (stageRef) en tu componente
+  if (!floatingMenu || !stageRef.current) return;
 
-  const { step, pos } = floatingMenu;
+  const { step, pos, snap: snappedToEnd } = floatingMenu;
 
   if (step === 1) {
-    // Proceso de selección de Extremo 1
+    // ------------------------------------------
+    // PASO 1: Selección de Tipo de Extremo 1 (Inicio)
+    // ------------------------------------------
     
-    // Si el punto no se había definido (no hizo snap), lo definimos ahora
-    if (points.length === 0) {
-      setPoints([pos]);
-    }
+    // Si el punto no se había definido (no hizo snap), ya se definió en handleStageClick, 
+    // pero aseguramos que el punto inicial (startPoint) se estableció en setPoints.
     
     setTempObj1Type(type);
     setFloatingMenu(null);
     setDrawingStep(2); // Pasa a esperar el segundo clic
+    setStatusMessage(`Extremo 1 definido como ${type}. Haga clic en el punto final.`);
     
   } else if (step === 2) {
-    // Proceso de selección de Extremo 2
+    // ------------------------------------------
+    // PASO 2: Selección de Tipo de Extremo 2 (Fin)
+    // ------------------------------------------
     
     const p1 = points[0];
     const p2 = points[1]; // El punto 2 ya está ajustado (recto o snap)
     
     // VALIDACIÓN: Si Extremo 2 hizo snap a un punto existente (BRK/Conector), 
     // su tipo final debe ser 'Ninguno' para que la línea se conecte.
-    const finalObj2Type = floatingMenu.snap ? 'Ninguno' : type;
+    // 'snappedToEnd' viene del floatingMenu en handleStageClick
+    const finalObj2Type = snappedToEnd ? 'Ninguno' : type;
 
-    // Crear la línea final
+    // Crear la línea temporal para mostrar la entrada de dimensión
     const newLine = {
       p1: p1,
       p2: p2,
@@ -657,15 +669,40 @@ const handleSelectEndType = (type) => {
       item: null
     };
 
+    // 🛑 TRADUCIR LA POSICIÓN DEL PUNTO FINAL (p2) A COORDENADAS DE VENTANA (DOM)
+    // Necesitamos la posición en la ventana (no la del canvas) para el input flotante.
+    const stage = stageRef.current;
+    
+    // Obtenemos la posición en la ventana del punto p2. Usamos getBoundingClientRect
+    // del contenedor del Stage y ajustamos con la escala/transformación.
+    const containerRect = stage.container().getBoundingClientRect();
+    const stageTransform = stage.getAbsoluteTransform().copy();
+    const scaleX = stageTransform.getScaleX();
+    const scaleY = stageTransform.getScaleY();
+    
+    // Posición del punto p2 relativa al stage, ajustada por el pan/zoom
+    const stagePos = {
+        x: p2.x * stageTransform.getScaleX() + stageTransform.getTranslation().x,
+        y: p2.y * stageTransform.getScaleY() + stageTransform.getTranslation().y
+    };
+
+    // Coordenadas absolutas en la ventana del navegador (DOM)
+    const inputX = containerRect.left + stagePos.x + window.scrollX + 10;
+    const inputY = containerRect.top + stagePos.y + window.scrollY + 10;
+
     setTempLine(newLine);
-    setInputPos(pos);
-    setShowInput(true);
+    
+    // 🛑 ASIGNAR POSICIÓN DE PANTALLA AJUSTADA AL INPUT
+    setInputPos({ x: inputX, y: inputY });
+    
+    setShowInput(true); // Mostrar el input de dimensión
     
     // Resetear estados de dibujo
     setPoints([]);
     setTempObj1Type('Ninguno');
     setDrawingStep(0);
     setFloatingMenu(null);
+    setStatusMessage('Ingrese la dimensión de la línea.');
   }
 };
 
@@ -1830,25 +1867,41 @@ case 'Conector':
         {renderFloatingMenu()}
         {renderTablaMenu()}
 
-        {showInput && (
-          <div style={{
-            position: 'absolute',
-            left: inputPos.x,
-            top: inputPos.y,
-            background: 'white',
-            border: '1px solid gray',
-            padding: '5px'
-          }}>
-            <label>Dimensión (mm): </label>
-            <input
-              type="number"
-              value={dimension}
-              onChange={(e) => setDimension(e.target.value)}
-              style={{ width: '80px' }}
-            />
-            <button onClick={confirmDimension}>OK</button>
-          </div>
-        )}
+       {showInput && (
+  <div style={{
+    position: 'absolute',
+    left: inputPos.x, // Coordenada X ajustada por handleSelectEndType (coordenadas de ventana DOM)
+    top: inputPos.y,  // Coordenada Y ajustada por handleSelectEndType (coordenadas de ventana DOM)
+    backgroundColor: 'white',
+    border: '1px solid gray',
+    padding: '5px',
+    borderRadius: '5px',
+    zIndex: 20 // Aseguramos que esté por encima del canvas y otros elementos
+  }}>
+    <label>Dimensión (mm): </label>
+    <input
+      type="number"
+      value={dimension}
+      onChange={(e) => setDimension(e.target.value)}
+      // 🛑 NUEVO: onKeyDown handler para confirmar con 'Enter'
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault(); // Previene el comportamiento por defecto (ej. envío de formulario)
+          confirmDimension();
+        }
+      }}
+      style={{ width: '80px', marginLeft: '5px' }}
+      // La propiedad autoFocus puede ser útil para que el usuario pueda escribir inmediatamente
+      autoFocus
+    />
+    <button 
+        onClick={confirmDimension} 
+        style={{ marginLeft: '10px', padding: '5px 10px' }}
+    >
+        OK
+    </button>
+  </div>
+)}
           {selectorPos && selectorEnd && !pencilMode && modoModificarExtremos && (
   <div style={{
     position: 'absolute',
