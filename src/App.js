@@ -518,11 +518,12 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // Variables para la posición del menú flotante
-  const menuX = e.evt.clientX + 10; // Desplazamiento de 10px a la derecha
-  const menuY = e.evt.clientY + 10; // Desplazamiento de 10px hacia abajo
+  const menuX = e.evt.clientX + 10;
+  const menuY = e.evt.clientY + 10;
 
-  // Lógica de agregar SPL, se mantiene
+  // Lógica de agregar SPL (se mantiene)
   if (addingSPL) {
+    // ... (código SPL)
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
       const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
       const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
@@ -545,36 +546,39 @@ const handleStageClick = (e) => {
   // --- Lógica del Lápiz (PencilMode) ---
   if (pencilMode) {
     if (eraserMode) return;
-    
+
     // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
     if (drawingStep === 0) {
       const snap = getClosestEndpoint(pos); // Devuelve { point, objType }
 
       if (snap) {
-        // El clic fue sobre un extremo existente
-        setPoints([snap.point]);
-        
-        // VALIDACIÓN: Si el extremo existente es BRK o Conector
+        // Clic sobre un extremo existente
+
+        // 🛑 VALIDACIÓN CLAVE: Si el extremo es BRK o Conector, conectar y saltar el menú.
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
-          // El extremo 1 de la NUEVA línea se convierte en "Ninguno" (se conecta al objeto existente)
-          setTempObj1Type('Ninguno'); 
+          setPoints([snap.point]); // Usamos el punto de snap para iniciar
+          setTempObj1Type('Ninguno'); // La nueva línea inicia como 'Ninguno' para unirse al objeto
           setStatusMessage(`Extremo inicial conectado a ${snap.objType}. Continúe con el punto final.`);
-          setDrawingStep(2); // Pasa al paso de definir el Extremo 2 (sin menú)
+          setDrawingStep(2); // Pasa directamente a esperar el segundo clic
           
-          // 🛑 AQUÍ ESTÁ LA CORRECCIÓN: Finaliza la ejecución para evitar mostrar el menú.
+          // Aseguramos que la función termina y no ejecuta la lógica de mostrar el menú
           return; 
-        } else {
-          // Si es 'Ninguno' o 'SPL', pide definir el tipo del extremo 1
-          setFloatingMenu({ x: menuX, y: menuY, step: 1, pos: snap.point });
-          setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
-          setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
         }
-      } else {
-        // El clic fue en un espacio vacío, pide definir el tipo del extremo 1
-        setFloatingMenu({ x: menuX, y: menuY, step: 1, pos });
-        setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
-        setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
+
+        // Si el extremo es 'Ninguno' o 'SPL', debe caer a la lógica de mostrar el menú.
       }
+      
+      // Lógica de mostrar el menú (Se ejecuta si snap es null O si snap no es BRK/Conector)
+      
+      // Si no hubo snap, el punto de inicio es la posición del clic
+      const startPoint = snap ? snap.point : pos;
+      
+      // Establecer el punto de inicio antes de mostrar el menú para que la lógica de tempLine funcione
+      setPoints([startPoint]);
+
+      setFloatingMenu({ x: menuX, y: menuY, step: 1, pos: startPoint });
+      setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
+      setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
     } 
     
     // **2. PROCESAR EL SEGUNDO CLIC (drawingStep === 2)**
@@ -602,7 +606,7 @@ const handleStageClick = (e) => {
       }
       
       // Muestra el menú para el Extremo 2
-      setPoints([points[0], p2Pos]); // Guarda los puntos, pero la línea se crea en handleSelectEndType
+      setPoints([points[0], p2Pos]);
       
       // La propiedad `snap: !!snap` se usa para la validación dentro de handleSelectEndType
       setFloatingMenu({ x: menuX, y: menuY, step: 2, pos: p2Pos, snap: !!snap }); 
