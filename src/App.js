@@ -608,12 +608,13 @@ const handleStageClick = (e) => {
   // 3. Lógica del Lápiz (PencilMode) (Prioridad 3)
   if (pencilMode) {
       
-    // **AÑADIDO: Si el clic es sobre el Stage (fondo) y drawingStep no es 0, lo forzamos a 0 para empezar un nuevo dibujo.**
+    // 🔑 CORRECCIÓN CLAVE: Si el clic es sobre el Stage (fondo) y el proceso de dibujo no ha finalizado (drawingStep != 0), lo forzamos a 0.
     if (e.target.attrs.name === 'stage' && drawingStep !== 0) {
         setPoints([]);
         setTempLine(null);
         setFloatingMenu(null);
-        setDrawingStep(0); // Forzar el inicio
+        setDrawingStep(0); // Forzar el reinicio
+        // NO usamos 'return' aquí. El código debe caer al bloque if (drawingStep === 0)
     }
       
     // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
@@ -642,7 +643,7 @@ const handleStageClick = (e) => {
         snap: snap 
       });
       setDrawingStep(1); // Esperando la selección del tipo de objeto 1
-      return; // Importante: salir para esperar la selección del menú
+      return; 
     } 
     // **2. CONFIRMACIÓN DE PUNTO FINAL (drawingStep === 2)**
     else if (drawingStep === 2) {
@@ -706,7 +707,7 @@ const handleStageClick = (e) => {
         p1: startPoint,
         p2: finalPos
       });
-      return; // Importante: salir para esperar la selección del menú
+      return; 
 
     } 
     // **3. CONFIRMACIÓN FINAL (drawingStep === 3)**
@@ -725,7 +726,6 @@ const handleStageClick = (e) => {
   setSelectorPos(null);
   setSelectorEnd(null);
 };
-
 const handleMouseMove = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
