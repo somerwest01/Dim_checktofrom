@@ -525,7 +525,7 @@ const handleStageClick = (e) => {
   if (addingSPL) {
     e.cancelBubble = true;
 
-    // Caso 1 (De App 44): Clic sobre un extremo existente (Para cambiar su tipo a SPL)
+    // Caso 1: Clic sobre un extremo existente (Para cambiar su tipo a SPL)
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
       const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
       const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
@@ -541,12 +541,12 @@ const handleStageClick = (e) => {
 
       handleStateChange(updatedLines);
       setAddingSPL(false);
-      setTempSPL(null); // Limpiar la vista previa
+      setTempSPL(null); 
       setStatusMessage('Extremo existente marcado como SPL.');
       return;
     }
 
-    // Caso 2 (De App 45): Clic en el lienzo con tempSPL (Para dividir la línea)
+    // Caso 2: Clic en el lienzo con tempSPL (Para dividir la línea)
     if (tempSPL) {
         
       const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
@@ -558,7 +558,7 @@ const handleStageClick = (e) => {
         obj1: original.obj1,
         obj2: 'SPL',
         nombre_obj1: original.nombre_obj1 || '',
-        nombre_obj2: 'SPL', // Nombre por defecto para el nuevo SPL
+        nombre_obj2: 'SPL', 
         dimension_mm: dim1,
         deduce1: original.deduce1 || '',
         deduce2: '',
@@ -570,7 +570,7 @@ const handleStageClick = (e) => {
         p2: { ...original.p2 },
         obj1: 'SPL',
         obj2: original.obj2,
-        nombre_obj1: 'SPL', // Nombre por defecto para el nuevo SPL
+        nombre_obj1: 'SPL', 
         nombre_obj2: original.nombre_obj2 || '',
         dimension_mm: dim2,
         deduce1: '',
@@ -579,22 +579,24 @@ const handleStageClick = (e) => {
       };
 
       const updated = [...lines];
-      updated.splice(lineIndex, 1, lineA, lineB); // Elimina la línea original e inserta las dos nuevas
+      updated.splice(lineIndex, 1, lineA, lineB); 
       
       handleStateChange(updated);
       setAddingSPL(false);
-      setTempSPL(null); // Limpiar la vista previa
+      setTempSPL(null); 
       setStatusMessage('🔺 SPL insertado y línea dividida correctamente.');
       return;
     }
     
-    // Si se hace clic en el lienzo sin snap de SPL ni en un punto/label
-    setStatusMessage('⚠️ Clic no válido. Asegúrate de hacer clic sobre una línea para dividirla o un extremo para marcarlo como SPL.');
+    // Si se hace clic en el lienzo sin snap de SPL ni en un punto/label, CANCELAR el modo SPL
+    setStatusMessage('⚠️ Modo SPL cancelado. Asegúrate de hacer clic sobre una línea o un extremo.');
     setAddingSPL(false);
     setTempSPL(null);
-    return;
+    return; // ⬅️ IMPORTANTE: Sigue siendo necesario para evitar que un clic no válido en modo SPL inicie un dibujo.
   }
 
+  // --------------------------------------------------------------------------------------------------
+  
   // --- Lógica del Lápiz (PencilMode) ---
   if (pencilMode) {
     if (eraserMode) return;
@@ -627,7 +629,7 @@ const handleStageClick = (e) => {
         x: menuX, 
         y: menuY, 
         type: 'startPoint', 
-        snap: snap // Pasamos el snap object si existe
+        snap: snap 
       });
       setDrawingStep(1); // Esperando la selección del tipo de objeto 1
 
@@ -636,20 +638,10 @@ const handleStageClick = (e) => {
     else if (drawingStep === 2) {
       let endPoint = pos;
       let snap = getClosestEndpoint(pos);
-      let obj2Type = tempObj1Type; // Por defecto, usa el tipo seleccionado para obj1
-      let name2 = '';
-      let deduce2 = '';
       
       // Si hacemos snap a otro punto, usamos ese punto como final
       if (snap) {
         endPoint = snap.point;
-        obj2Type = snap.objType;
-        // Si el punto final es un objeto, no mostramos el menú, completamos la línea inmediatamente.
-        if (obj2Type === 'BRK' || obj2Type === 'Conector') {
-          // El nombre y deduce del extremo 2 se dejan vacíos si es BRK/Conector, se asume 'Ninguno' o se copia
-        } else {
-          // Si es 'SPL' o 'Ninguno', cae a la lógica de mostrar el menú.
-        }
       }
       
       const [startPoint] = points;
@@ -678,7 +670,7 @@ const handleStageClick = (e) => {
           dimension_mm: Math.hypot(finalPos.x - startPoint.x, finalPos.y - startPoint.y).toFixed(2),
           deduce1: menuValues.deduce || '',
           deduce2: '',
-          item: null, // Asumiendo que item se setea después o no aplica
+          item: null, 
         };
         handleStateChange([...lines, newLine]);
         setPoints([]);
