@@ -517,6 +517,10 @@ const handleStageClick = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
 
+    // Variables para la posición del menú flotante
+  const menuX = e.evt.clientX + 10; // Desplazamiento de 10px a la derecha
+  const menuY = e.evt.clientY + 10; // Desplazamiento de 10px hacia abajo
+
   // Lógica de agregar SPL, se mantiene
   if (addingSPL) {
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
@@ -1148,8 +1152,8 @@ const handleUpdateFloatingMenu = () => {
     
     const commonProps = {
       position: 'absolute',
-      left: x + 10,
-      top: y + 10,
+      left: x,
+      top: y,
       backgroundColor: 'white',
       border: '1px solid gray',
       padding: '10px',
