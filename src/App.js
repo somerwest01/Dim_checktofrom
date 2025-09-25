@@ -512,15 +512,14 @@ const handleDeleteSPL = () => {
   };
 
 const handleStageClick = (e) => {
-  if (e.evt.button !== 0) return; // solo click izquierdo
+  if (e.evt.button !== 0) return;
 
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
 
-  // Variables para la posición del menú flotante
   const menuX = e.evt.clientX + 10;
   const menuY = e.evt.clientY + 10;
-
+  
   // 1. Lógica de AGREGAR SPL (Máxima Prioridad)
   if (addingSPL) {
     e.cancelBubble = true;
@@ -608,21 +607,36 @@ const handleStageClick = (e) => {
   // 3. Lógica del Lápiz (PencilMode) (Prioridad 3)
   if (pencilMode) {
       
-    // 🔑 CORRECCIÓN CLAVE: Si el clic es sobre el Stage (fondo) y el proceso de dibujo no ha finalizado (drawingStep != 0), lo forzamos a 0.
-    if (e.target.attrs.name === 'stage' && drawingStep !== 0) {
-        setPoints([]);
-        setTempLine(null);
-        setFloatingMenu(null);
-        setDrawingStep(0); // Forzar el reinicio
-        // NO usamos 'return' aquí. El código debe caer al bloque if (drawingStep === 0)
+    // 🔑 CORRECCIÓN CLAVE: Usar getType() para una detección robusta del fondo del Stage.
+    const isBackgroundClick = e.target.getType() === 'Stage'; 
+    
+    if (isBackgroundClick) {
+        // Si el clic es en el fondo, y no estamos en drawingStep 0, cancelamos para empezar de nuevo.
+        if (drawingStep !== 0) {
+            setPoints([]);
+            setTempLine(null);
+            setFloatingMenu(null);
+            setDrawingStep(0); // Forzar el reinicio
+            // El código NO sale aquí, cae al if (drawingStep === 0) inmediatamente después.
+        }
+    } else {
+        // Si no es un clic en el fondo, y no es un punto/extremo, y no estamos en paso 2, salimos.
+        // Esto evita que al hacer clic en una línea a medio dibujar, el dibujo se rompa.
+        if (drawingStep !== 2) {
+            // Este bloque no es estrictamente necesario, pero ayuda a evitar errores
+            // si se hace clic en una línea cuando drawingStep es 1 o 3.
+        }
     }
       
     // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
     if (drawingStep === 0) {
+      // Si el clic fue sobre una línea existente, no hacemos nada (el snap solo detecta puntos).
+      // Solo procedemos si es un clic en el fondo o cerca de un punto.
+        
       const snap = getClosestEndpoint(pos); 
 
       if (snap) {
-        // Si el extremo es BRK o Conector, conectar y saltar el menú.
+        // Clic sobre un extremo existente: BRK o Conector (conexión automática)
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
           setPoints([snap.point]); 
           setTempObj1Type('Ninguno'); 
@@ -632,7 +646,7 @@ const handleStageClick = (e) => {
         }
       }
 
-      // Lógica de mostrar el menú (Se ejecuta si snap es null O si snap no es BRK/Conector)
+      // Lógica de mostrar el menú
       const startPoint = snap ? snap.point : pos;
       setPoints([startPoint]);
       
@@ -693,7 +707,6 @@ const handleStageClick = (e) => {
       }
       
       // Caso de Confirmación Manual (SPL, Ninguno, o Sin Snap)
-      // Mostrar menú para definir el extremo 2 (obj2)
       setFloatingMenu({ 
         x: menuX, 
         y: menuY, 
@@ -722,7 +735,7 @@ const handleStageClick = (e) => {
     }
   }
 
-  // 4. Lógica de selección/modificación después de cualquier otro modo
+  // 4. Lógica de selección/modificación (Se ejecuta si no hay modos especiales activos)
   setSelectorPos(null);
   setSelectorEnd(null);
 };
