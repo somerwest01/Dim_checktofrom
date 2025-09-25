@@ -521,7 +521,7 @@ const handleStageClick = (e) => {
   const menuX = e.evt.clientX + 10;
   const menuY = e.evt.clientY + 10;
 
-  // 🛑 Lógica de AGREGAR SPL (Prioridad 1)
+  // 1. Lógica de AGREGAR SPL (Máxima Prioridad)
   if (addingSPL) {
     e.cancelBubble = true;
 
@@ -588,13 +588,13 @@ const handleStageClick = (e) => {
     }
     
     // Si se hace clic en el lienzo sin snap de SPL ni en un punto/label, CANCELAR el modo SPL
-    setStatusMessage('⚠️ Modo SPL cancelado. Selecciona una línea o un extremo para modificar.');
+    setStatusMessage('⚠️ Modo SPL cancelado.');
     setAddingSPL(false);
     setTempSPL(null);
     return;
   }
 
-  // --- Lógica de la Goma (EraserMode) (Prioridad 2) ---
+  // 2. Lógica de la Goma (EraserMode) (Prioridad 2)
   if (eraserMode) {
     if (e.target.attrs.id && e.target.attrs.id.startsWith('line-')) {
       const index = e.target.attrs.lineIndex;
@@ -602,18 +602,23 @@ const handleStageClick = (e) => {
       handleStateChange(updatedLines);
       setStatusMessage('➖ Línea eliminada.');
     }
-    // Si la goma está activa y no se ha hecho clic en una línea, salimos.
     return; 
   }
 
-  // --------------------------------------------------------------------------------------------------
-  
-  // --- Lógica del Lápiz (PencilMode) (Prioridad 3 - Solo si no hay otros modos) ---
+  // 3. Lógica del Lápiz (PencilMode) (Prioridad 3)
   if (pencilMode) {
-    
+      
+    // **AÑADIDO: Si el clic es sobre el Stage (fondo) y drawingStep no es 0, lo forzamos a 0 para empezar un nuevo dibujo.**
+    if (e.target.attrs.name === 'stage' && drawingStep !== 0) {
+        setPoints([]);
+        setTempLine(null);
+        setFloatingMenu(null);
+        setDrawingStep(0); // Forzar el inicio
+    }
+      
     // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
     if (drawingStep === 0) {
-      const snap = getClosestEndpoint(pos); // Devuelve { point, objType }
+      const snap = getClosestEndpoint(pos); 
 
       if (snap) {
         // Si el extremo es BRK o Conector, conectar y saltar el menú.
@@ -637,7 +642,7 @@ const handleStageClick = (e) => {
         snap: snap 
       });
       setDrawingStep(1); // Esperando la selección del tipo de objeto 1
-
+      return; // Importante: salir para esperar la selección del menú
     } 
     // **2. CONFIRMACIÓN DE PUNTO FINAL (drawingStep === 2)**
     else if (drawingStep === 2) {
@@ -701,6 +706,7 @@ const handleStageClick = (e) => {
         p1: startPoint,
         p2: finalPos
       });
+      return; // Importante: salir para esperar la selección del menú
 
     } 
     // **3. CONFIRMACIÓN FINAL (drawingStep === 3)**
@@ -711,10 +717,11 @@ const handleStageClick = (e) => {
       setDrawingStep(0);
       setFloatingMenu(null);
       setStatusMessage('Operación de dibujo cancelada.');
+      return;
     }
   }
 
-  // Lógica de selección/modificación después de cualquier otro modo
+  // 4. Lógica de selección/modificación después de cualquier otro modo
   setSelectorPos(null);
   setSelectorEnd(null);
 };
