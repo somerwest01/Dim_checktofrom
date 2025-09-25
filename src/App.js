@@ -9,8 +9,8 @@ function App() {
   const [mode, setMode] = useState('design');
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
-  const [obj1, setObj1] = useState('Ninguno');
-  const [obj2, setObj2] = useState('Ninguno');
+//  const [obj1, setObj1] = useState('Ninguno');
+//  const [obj2, setObj2] = useState('Ninguno');
   const [dimension, setDimension] = useState('');
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [showInput, setShowInput] = useState(false);
@@ -29,7 +29,7 @@ function App() {
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
-  const [mostrarExtremos, setMostrarExtremos] = useState(false);
+ // const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
   const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
@@ -45,6 +45,9 @@ function App() {
   const [tablaMenu, setTablaMenu] = useState(false);
   const [filas, setFilas] = useState(5);
   const [columnas, setColumnas] = useState(3);
+
+  const [drawingStep, setDrawingStep] = useState(0); 
+  const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
 
   //  Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
@@ -495,10 +498,11 @@ const handleDeleteSPL = () => {
     lines.forEach((line) => {
       ['p1', 'p2'].forEach((end) => {
         const point = line[end];
+        const objType = line[end === 'p1' ? 'obj1' : 'obj2'];
         const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
         // ✅ Usando la nueva variable de estado
         if (dist < propagationDistance && dist < minDist) {
-          closest = { point, obj: line[end === 'p1' ? 'obj1' : 'obj2'] };
+          closest = { point, objType }; 
           minDist = dist;
         }
       });
@@ -513,63 +517,65 @@ const handleStageClick = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
 
-  // --- Si estamos en modo "Agregar SPL" -> encontrar segmento y dividirlo ---
+  // Lógica de agregar SPL, se mantiene
   if (addingSPL) {
-    if (!tempSPL) {
-      setStatusMessage('Acércate a una línea y vuelve a clic para colocar el SPL.');
+    if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
+      const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
+      const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
+
+      const updatedLines = [...lines];
+      const line = updatedLines[lineIndex];
+
+      if (endType === 'p1') {
+        line.obj1 = 'SPL';
+      } else {
+        line.obj2 = 'SPL';
+      }
+
+      handleStateChange(updatedLines);
+      setAddingSPL(false);
       return;
     }
-    const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
-
-    // crear las dos nuevas líneas que reemplazarán a la original
-    const lineA = {
-      p1: { ...original.p1 },
-      p2: { x: proj.x, y: proj.y },
-      obj1: original.obj1,
-      obj2: 'SPL',
-      nombre_obj1: original.nombre_obj1 || '',
-      nombre_obj2: 'SPL', // ✅ Nombre por defecto para el nuevo SPL
-      dimension_mm: dim1,
-      deduce1: original.deduce1 || '',
-      deduce2: '',
-      item: original.item || null
-    };
-
-    const lineB = {
-      p1: { x: proj.x, y: proj.y },
-      p2: { ...original.p2 },
-      obj1: 'SPL',
-      obj2: original.obj2,
-      nombre_obj1: 'SPL', // ✅ Nombre por defecto para el nuevo SPL
-      nombre_obj2: original.nombre_obj2 || '',
-      dimension_mm: dim2,
-      deduce1: '',
-      deduce2: original.deduce2 || '',
-      item: original.item || null
-    };
-
-    const updated = [...lines];
-    updated.splice(lineIndex, 1, lineA, lineB);
-    handleStateChange(updated);
-    setAddingSPL(false);
-    setTempSPL(null); // Limpiar la vista previa
-    setStatusMessage('🔺 SPL insertado correctamente.');
-    return;
   }
 
-  // --- Si no estamos en modo agregar SPL, ejecutar la lógica de lápiz existente ---
+  // --- Lógica del Lápiz (PencilMode) ---
   if (pencilMode) {
     if (eraserMode) return;
+    
+    // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
+    if (drawingStep === 0) {
+      const snap = getClosestEndpoint(pos); // Devuelve { point, objType }
 
-    if (points.length === 0) {
-      const snap = getClosestEndpoint(pos);
       if (snap) {
+        // El clic fue sobre un extremo existente
         setPoints([snap.point]);
+        
+        // VALIDACIÓN: Si el extremo existente es BRK o Conector
+        if (snap.objType === 'BRK' || snap.objType === 'Conector') {
+          // El extremo 1 de la NUEVA línea se convierte en "Ninguno" (se conecta)
+          setTempObj1Type('Ninguno'); 
+          setStatusMessage(`Extremo inicial conectado a ${snap.objType}. Continúe con el punto final.`);
+          setDrawingStep(2); // Pasa al paso de definir el Extremo 2
+        } else {
+          // Si es 'Ninguno' o 'SPL', pide definir el tipo del extremo 1
+          setFloatingMenu({ x: e.evt.clientX, y: e.evt.clientY, step: 1, pos: snap.point });
+          setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
+          setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
+        }
       } else {
-        setPoints([pos]);
+        // El clic fue en un espacio vacío, pide definir el tipo del extremo 1
+        // (El punto se guarda en handleSelectEndType después de la selección)
+        setFloatingMenu({ x: e.evt.clientX, y: e.evt.clientY, step: 1, pos });
+        setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
+        setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
       }
-    } else {
+    } 
+    
+    // **2. PROCESAR EL SEGUNDO CLIC (drawingStep === 2)**
+    else if (drawingStep === 2) { 
       let adjustedPos = { ...pos };
+      
+      // Aplicar Modo Ángulo Recto si está activo
       if (modoAnguloRecto) {
         const p1 = points[0];
         const dx = Math.abs(pos.x - p1.x);
@@ -580,26 +586,76 @@ const handleStageClick = (e) => {
           adjustedPos.x = p1.x; // Vertical
         }
       }
-
-      const newLine = {
-        p1: points[0],
-        p2: adjustedPos,
-        obj1,
-        obj2,
-        nombre_obj1: '',
-        nombre_obj2: '',
-        dimension_mm: null,
-        deduce1: '',
-        deduce2: '',
-        item: null
-      };
-
-      setTempLine(newLine);
-      setInputPos(pos);
-      setShowInput(true);
-      setPoints([]);
-      setMousePos(null);
+      
+      const snap = getClosestEndpoint(adjustedPos);
+      let p2Pos = adjustedPos;
+      
+      // Si se hizo snap al punto final, usamos la posición del snap
+      if(snap) {
+        p2Pos = snap.point;
+      }
+      
+      // Muestra el menú para el Extremo 2
+      setPoints([points[0], p2Pos]); // Guarda los puntos, pero la línea se crea en handleSelectEndType
+      
+      // La propiedad `snap: !!snap` se usa para la validación dentro de handleSelectEndType
+      setFloatingMenu({ x: e.evt.clientX, y: e.evt.clientY, step: 2, pos: p2Pos, snap: !!snap }); 
+      setStatusMessage('Seleccione el tipo para el Extremo 2 (Fin de la línea).');
+      setDrawingStep(3); // Esperando la selección del tipo de Extremo 2
+      setMousePos(null); // Oculta la línea fantasma
     }
+  }
+};
+const handleSelectEndType = (type) => {
+  if (!floatingMenu) return;
+
+  const { step, pos } = floatingMenu;
+
+  if (step === 1) {
+    // Proceso de selección de Extremo 1
+    
+    // Si el punto no se había definido (no hizo snap), lo definimos ahora
+    if (points.length === 0) {
+      setPoints([pos]);
+    }
+    
+    setTempObj1Type(type);
+    setFloatingMenu(null);
+    setDrawingStep(2); // Pasa a esperar el segundo clic
+    
+  } else if (step === 2) {
+    // Proceso de selección de Extremo 2
+    
+    const p1 = points[0];
+    const p2 = points[1]; // El punto 2 ya está ajustado (recto o snap)
+    
+    // VALIDACIÓN: Si Extremo 2 hizo snap a un punto existente (BRK/Conector), 
+    // su tipo final debe ser 'Ninguno' para que la línea se conecte.
+    const finalObj2Type = floatingMenu.snap ? 'Ninguno' : type;
+
+    // Crear la línea final
+    const newLine = {
+      p1: p1,
+      p2: p2,
+      obj1: tempObj1Type, // Usa el tipo guardado en el paso 1
+      obj2: finalObj2Type,
+      nombre_obj1: '',
+      nombre_obj2: '',
+      dimension_mm: null,
+      deduce1: '',
+      deduce2: '',
+      item: null
+    };
+
+    setTempLine(newLine);
+    setInputPos(pos);
+    setShowInput(true);
+    
+    // Resetear estados de dibujo
+    setPoints([]);
+    setTempObj1Type('Ninguno');
+    setDrawingStep(0);
+    setFloatingMenu(null);
   }
 };
 
@@ -630,7 +686,7 @@ const handleMouseMove = (e) => {
       dim2
     });
 
-  } else if (pencilMode && points.length === 1 && !eraserMode) {
+  } else if (pencilMode && drawingStep === 2 && points.length === 1 && !eraserMode) { // MODIFICADO: Añadir drawingStep === 2
     const p1 = points[0];
     let adjustedPos = { ...pos };
 
@@ -1088,7 +1144,8 @@ const handleUpdateFloatingMenu = () => {
   const renderFloatingMenu = () => {
     if (!floatingMenu) return null;
 
-    const { x, y, type } = floatingMenu;
+    const { x, y, type, step } = floatingMenu;
+    
     const commonProps = {
       position: 'absolute',
       left: x + 10,
@@ -1110,6 +1167,18 @@ const handleUpdateFloatingMenu = () => {
       display: 'block',
       fontSize: '12px'
     };
+        if (step === 1 || step === 2) { 
+      return (
+        <div style={commonProps}>
+          <p>Seleccionar Tipo de Extremo {step}</p>
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button onClick={() => handleSelectEndType('Conector')}>Conector</button>
+            <button onClick={() => handleSelectEndType('BRK')}>BRK</button>
+          </div>
+          <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
+        </div>
+      );
+    }
 
     switch (type) {
 case 'SPL':
@@ -1266,18 +1335,6 @@ case 'Conector':
   📁 {hoverBoton === 'excel' && 'Excel'}
 </button>
   
-<button
-  onMouseEnter={() => setHoverBoton('diseño')}
-  onMouseLeave={() => setHoverBoton(null)}
-  onClick={() => setMostrarExtremos(!mostrarExtremos)}
-  style={{
-    ...botonBase,
-    ...(hoverBoton === 'diseño' ? botonExpandido : {})
-  }}
->
-  📏 {hoverBoton === 'diseño' && 'Diseño'}
-</button>
-  
   <button
   onMouseEnter={() => setHoverBoton('calculadora')}
   onMouseLeave={() => setHoverBoton(null)}
@@ -1362,29 +1419,6 @@ case 'Conector':
 
         {true && (
           <>
-
-{mostrarExtremos && (
-  <>
-    <h4 style= {{textAlign: 'center' }}>Seleccione los extremos</h4>
-    <label style= {{fontSize: '12px'}}>Tipo de extremo 1:  </label>
-    <select value={obj1} onChange={(e) => setObj1(e.target.value)}>
-      <option>Ninguno</option>
-      <option>Conector</option>
-      <option>BRK</option>
-      <option>SPL</option>
-    </select>
-    <br /><br />
-    <label style= {{fontSize: '12px'}}>Tipo de extremo 2:  </label>
-    <select value={obj2} onChange={(e) => setObj2(e.target.value)}>
-      <option>Ninguno</option>
-      <option>Conector</option>
-      <option>BRK</option>
-      <option>SPL</option>
-    </select>
-    <br /><br />
-    <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
-  </>
-)}
 
               
             {mostrarCalculadora && (
