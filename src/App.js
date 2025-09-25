@@ -1134,6 +1134,37 @@ const handleExportExcel = () => {
   setProcesandoExcel(false);
 };
 
+const handleSelectEndType = (type) => {
+  if (floatingMenu.step === 1) {
+    // ➡️ Paso 1: Seleccionando el tipo de Extremo 1
+    setTempObj1Type(type);
+    setDrawingStep(2); 
+    setFloatingMenu(null);
+    setStatusMessage(`Extremo 1 establecido como ${type}. Ahora haz clic para el Extremo 2.`);
+  } else if (floatingMenu.step === 2) {
+    // ➡️ Paso 2: Seleccionando el tipo de Extremo 2 -> COMPLETAR LÍNEA
+    const [p1, p2] = points;
+    const newLine = {
+        p1: p1,
+        p2: p2,
+        obj1: tempObj1Type,
+        obj2: type, // El tipo seleccionado para el Extremo 2
+        nombre_obj1: menuValues.name || '',
+        nombre_obj2: '',
+        dimension_mm: Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2),
+        deduce1: menuValues.deduce || '',
+        deduce2: '',
+        item: null,
+    };
+    handleStateChange([...lines, newLine]);
+    setPoints([]);
+    setTempLine(null);
+    setDrawingStep(0);
+    setFloatingMenu(null);
+    setStatusMessage(`✅ Línea completada: ${tempObj1Type} a ${type}.`);
+  }
+};
+
 // ✅ Función para actualizar el menú flotante
 const handleUpdateFloatingMenu = () => {
   if (!floatingMenu) return;
