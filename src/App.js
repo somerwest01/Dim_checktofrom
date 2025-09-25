@@ -521,9 +521,11 @@ const handleStageClick = (e) => {
   const menuX = e.evt.clientX + 10;
   const menuY = e.evt.clientY + 10;
 
-  // Lógica de agregar SPL (se mantiene)
+  // 🛑 Lógica de AGREGAR SPL (Combinada y Corregida)
   if (addingSPL) {
-    // ... (código SPL)
+    e.cancelBubble = true;
+
+    // Caso 1 (De App 44): Clic sobre un extremo existente (Para cambiar su tipo a SPL)
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
       const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
       const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
@@ -539,8 +541,58 @@ const handleStageClick = (e) => {
 
       handleStateChange(updatedLines);
       setAddingSPL(false);
+      setTempSPL(null); // Limpiar la vista previa
+      setStatusMessage('Extremo existente marcado como SPL.');
       return;
     }
+
+    // Caso 2 (De App 45): Clic en el lienzo con tempSPL (Para dividir la línea)
+    if (tempSPL) {
+        
+      const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
+      
+      // crear las dos nuevas líneas que reemplazarán a la original
+      const lineA = {
+        p1: { ...original.p1 },
+        p2: { x: proj.x, y: proj.y },
+        obj1: original.obj1,
+        obj2: 'SPL',
+        nombre_obj1: original.nombre_obj1 || '',
+        nombre_obj2: 'SPL', // Nombre por defecto para el nuevo SPL
+        dimension_mm: dim1,
+        deduce1: original.deduce1 || '',
+        deduce2: '',
+        item: original.item || null
+      };
+      
+      const lineB = {
+        p1: { x: proj.x, y: proj.y },
+        p2: { ...original.p2 },
+        obj1: 'SPL',
+        obj2: original.obj2,
+        nombre_obj1: 'SPL', // Nombre por defecto para el nuevo SPL
+        nombre_obj2: original.nombre_obj2 || '',
+        dimension_mm: dim2,
+        deduce1: '',
+        deduce2: original.deduce2 || '',
+        item: original.item || null
+      };
+
+      const updated = [...lines];
+      updated.splice(lineIndex, 1, lineA, lineB); // Elimina la línea original e inserta las dos nuevas
+      
+      handleStateChange(updated);
+      setAddingSPL(false);
+      setTempSPL(null); // Limpiar la vista previa
+      setStatusMessage('🔺 SPL insertado y línea dividida correctamente.');
+      return;
+    }
+    
+    // Si se hace clic en el lienzo sin snap de SPL ni en un punto/label
+    setStatusMessage('⚠️ Clic no válido. Asegúrate de hacer clic sobre una línea para dividirla o un extremo para marcarlo como SPL.');
+    setAddingSPL(false);
+    setTempSPL(null);
+    return;
   }
 
   // --- Lógica del Lápiz (PencilMode) ---
@@ -553,122 +605,134 @@ const handleStageClick = (e) => {
 
       if (snap) {
         // Clic sobre un extremo existente
-
         // 🛑 VALIDACIÓN CLAVE: Si el extremo es BRK o Conector, conectar y saltar el menú.
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
           setPoints([snap.point]); // Usamos el punto de snap para iniciar
           setTempObj1Type('Ninguno'); // La nueva línea inicia como 'Ninguno' para unirse al objeto
           setStatusMessage(`Extremo inicial conectado a ${snap.objType}. Continúe con el punto final.`);
           setDrawingStep(2); // Pasa directamente a esperar el segundo clic
-          
           // Aseguramos que la función termina y no ejecuta la lógica de mostrar el menú
-          return; 
+          return;
         }
-
         // Si el extremo es 'Ninguno' o 'SPL', debe caer a la lógica de mostrar el menú.
       }
-      
+
       // Lógica de mostrar el menú (Se ejecuta si snap es null O si snap no es BRK/Conector)
-      
       // Si no hubo snap, el punto de inicio es la posición del clic
       const startPoint = snap ? snap.point : pos;
-      
       // Establecer el punto de inicio antes de mostrar el menú para que la lógica de tempLine funcione
       setPoints([startPoint]);
-
-      setFloatingMenu({ x: menuX, y: menuY, step: 1, pos: startPoint });
-      setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
-      setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
-    } 
-    
-    // **2. PROCESAR EL SEGUNDO CLIC (drawingStep === 2)**
-    else if (drawingStep === 2) { 
-      let adjustedPos = { ...pos };
       
-      // Aplicar Modo Ángulo Recto si está activo
-      if (modoAnguloRecto) {
-        const p1 = points[0];
-        const dx = Math.abs(pos.x - p1.x);
-        const dy = Math.abs(pos.y - p1.y);
-        if (dx > dy) {
-          adjustedPos.y = p1.y; // Horizontal
+      setFloatingMenu({ 
+        x: menuX, 
+        y: menuY, 
+        type: 'startPoint', 
+        snap: snap // Pasamos el snap object si existe
+      });
+      setDrawingStep(1); // Esperando la selección del tipo de objeto 1
+
+    } 
+    // **2. CONFIRMACIÓN DE PUNTO FINAL (drawingStep === 2)**
+    else if (drawingStep === 2) {
+      let endPoint = pos;
+      let snap = getClosestEndpoint(pos);
+      let obj2Type = tempObj1Type; // Por defecto, usa el tipo seleccionado para obj1
+      let name2 = '';
+      let deduce2 = '';
+      
+      // Si hacemos snap a otro punto, usamos ese punto como final
+      if (snap) {
+        endPoint = snap.point;
+        obj2Type = snap.objType;
+        // Si el punto final es un objeto, no mostramos el menú, completamos la línea inmediatamente.
+        if (obj2Type === 'BRK' || obj2Type === 'Conector') {
+          // El nombre y deduce del extremo 2 se dejan vacíos si es BRK/Conector, se asume 'Ninguno' o se copia
         } else {
-          adjustedPos.x = p1.x; // Vertical
+          // Si es 'SPL' o 'Ninguno', cae a la lógica de mostrar el menú.
         }
       }
       
-      const snap = getClosestEndpoint(adjustedPos);
-      let p2Pos = adjustedPos;
-      
-      // Si se hizo snap al punto final, usamos la posición del snap
-      if(snap) {
-        p2Pos = snap.point;
+      const [startPoint] = points;
+      let finalPos = { ...endPoint };
+
+      // Aplicar modo ángulo recto si está activo
+      if (modoAnguloRecto) {
+        const dx = Math.abs(finalPos.x - startPoint.x);
+        const dy = Math.abs(finalPos.y - startPoint.y);
+        if (dx > dy) {
+          finalPos.y = startPoint.y; // Horizontal
+        } else {
+          finalPos.x = startPoint.x; // Vertical
+        }
+      }
+
+      // 🛑 Caso de Compleción Automática (Snap a BRK/Conector)
+      if (snap && (snap.objType === 'BRK' || snap.objType === 'Conector')) {
+        const newLine = {
+          p1: startPoint,
+          p2: finalPos,
+          obj1: tempObj1Type,
+          obj2: snap.objType, // El tipo del extremo al que se unió
+          nombre_obj1: menuValues.name || '',
+          nombre_obj2: '', // Se conecta, no requiere nombre/deduce
+          dimension_mm: Math.hypot(finalPos.x - startPoint.x, finalPos.y - startPoint.y).toFixed(2),
+          deduce1: menuValues.deduce || '',
+          deduce2: '',
+          item: null, // Asumiendo que item se setea después o no aplica
+        };
+        handleStateChange([...lines, newLine]);
+        setPoints([]);
+        setTempLine(null);
+        setDrawingStep(0);
+        setStatusMessage(`✅ Línea completada y conectada a ${snap.objType}.`);
+        setFloatingMenu(null);
+        setMenuValues({ name: '', deduce: '' });
+        return;
       }
       
-      // Muestra el menú para el Extremo 2
-      setPoints([points[0], p2Pos]);
+      // Caso de Confirmación Manual (SPL, Ninguno, o Sin Snap)
+      // Mostrar menú para definir el extremo 2 (obj2)
+      setFloatingMenu({ 
+        x: menuX, 
+        y: menuY, 
+        type: 'endPoint', 
+        snap: snap,
+        p2: finalPos
+      });
+      setDrawingStep(3); // Esperando la selección del tipo de objeto 2 (o cancelación)
       
-      // La propiedad `snap: !!snap` se usa para la validación dentro de handleSelectEndType
-      setFloatingMenu({ x: menuX, y: menuY, step: 2, pos: p2Pos, snap: !!snap }); 
-      setStatusMessage('Seleccione el tipo para el Extremo 2 (Fin de la línea).');
-      setDrawingStep(3); // Esperando la selección del tipo de Extremo 2
-      setMousePos(null); // Oculta la línea fantasma
+      // Actualizar tempLine con el ángulo recto si aplica
+      setTempLine({
+        p1: startPoint,
+        p2: finalPos
+      });
+
+    } 
+    // **3. CONFIRMACIÓN FINAL (drawingStep === 3)**
+    else if (drawingStep === 3) {
+      // Si estamos en step 3 y se hace clic de nuevo, es un error, lo reseteamos.
+      setPoints([]);
+      setTempLine(null);
+      setDrawingStep(0);
+      setFloatingMenu(null);
+      setStatusMessage('Operación cancelada. Selecciona un punto de inicio para dibujar.');
+    }
+
+  }
+
+  // --- Lógica de la Goma (EraserMode) ---
+  if (eraserMode) {
+    if (e.target.attrs.id && e.target.attrs.id.startsWith('line-')) {
+      const index = e.target.attrs.lineIndex;
+      const updatedLines = lines.filter((_, i) => i !== index);
+      handleStateChange(updatedLines);
+      setStatusMessage('➖ Línea eliminada.');
     }
   }
+
+  setSelectorPos(null);
+  setSelectorEnd(null);
 };
-const handleSelectEndType = (type) => {
-  if (!floatingMenu) return;
-
-  const { step, pos } = floatingMenu;
-
-  if (step === 1) {
-    // Proceso de selección de Extremo 1
-    
-    // Si el punto no se había definido (no hizo snap), lo definimos ahora
-    if (points.length === 0) {
-      setPoints([pos]);
-    }
-    
-    setTempObj1Type(type);
-    setFloatingMenu(null);
-    setDrawingStep(2); // Pasa a esperar el segundo clic
-    
-  } else if (step === 2) {
-    // Proceso de selección de Extremo 2
-    
-    const p1 = points[0];
-    const p2 = points[1]; // El punto 2 ya está ajustado (recto o snap)
-    
-    // VALIDACIÓN: Si Extremo 2 hizo snap a un punto existente (BRK/Conector), 
-    // su tipo final debe ser 'Ninguno' para que la línea se conecte.
-    const finalObj2Type = floatingMenu.snap ? 'Ninguno' : type;
-
-    // Crear la línea final
-    const newLine = {
-      p1: p1,
-      p2: p2,
-      obj1: tempObj1Type, // Usa el tipo guardado en el paso 1
-      obj2: finalObj2Type,
-      nombre_obj1: '',
-      nombre_obj2: '',
-      dimension_mm: null,
-      deduce1: '',
-      deduce2: '',
-      item: null
-    };
-
-    setTempLine(newLine);
-    setInputPos(pos);
-    setShowInput(true);
-    
-    // Resetear estados de dibujo
-    setPoints([]);
-    setTempObj1Type('Ninguno');
-    setDrawingStep(0);
-    setFloatingMenu(null);
-  }
-};
-
 const handleMouseMove = (e) => {
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
