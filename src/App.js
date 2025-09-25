@@ -519,8 +519,14 @@ const handleStageClick = (e) => {
   const pos = getRelativePointerPosition(stage);
 
   // Variables para la posición del menú flotante
-  const menuX = e.evt.clientX + 10;
-  const menuY = e.evt.clientY + 10;
+  const menuX = e.evt.clientX;
+  const menuY = e.evt.clientY;
+  if (containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        // El menú HTML debe posicionarse relativo al contenedor
+        menuX = e.evt.clientX - containerRect.left; 
+        menuY = e.evt.clientY - containerRect.top;  
+    }
 
   // 1. Lógica de AGREGAR SPL (Máxima Prioridad)
   if (addingSPL) {
@@ -630,6 +636,7 @@ const handleStageClick = (e) => {
       // Lógica de mostrar el menú
       const startPoint = snap ? snap.point : pos;
       setPoints([startPoint]);
+      setTempLine({ p1: startPoint, p2: startPoint });
 
       setFloatingMenu({ x: menuX, y: menuY, step: 1, pos: startPoint });
       setStatusMessage('Seleccione el tipo para el Extremo 1 (Inicio de la línea).');
