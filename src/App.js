@@ -457,57 +457,6 @@ const handleDeleteSPL = () => {
   handleStateChange([...updatedLines, mergedLine]);
   setFloatingMenu(null);
 };
- 
- const handleImportDXF = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const parser = new window.DxfParser();
-      const dxf = parser.parseSync(new TextDecoder().decode(e.target.result));
-      const nuevasLineas = [];
-
-      dxf.entities.forEach((ent) => {
-        if (
-          ent.type === 'LINE' &&
-          ent.start?.x !== undefined &&
-          ent.start?.y !== undefined &&
-          ent.end?.x !== undefined &&
-          ent.end?.y !== undefined
-        ) {
-          nuevasLineas.push({
-            p1: { x: ent.start.x, y: ent.start.y },
-            p2: { x: ent.end.x, y: ent.end.y },
-            obj1: 'Ninguno',
-            obj2: 'Ninguno',
-            nombre_obj1: '',
-            nombre_obj2: '',
-            dimension_mm: null,
-            deduce1: '',
-            deduce2: '',
-            item: null
-          });
-        }
-      });
-
-      if (nuevasLineas.length === 0) {
-        setStatusMessage('⚠️ No se encontraron líneas válidas en el archivo DXF.');
-      } else {
-        handleStateChange([...lines, ...nuevasLineas]);
-        setStatusMessage('✅ Plano base importado desde DXF.');
-      }
-    } catch (error) {
-      console.error('Error al procesar DXF:', error);
-      setStatusMessage('❌ Error al importar archivo DXF.');
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-};
-
-
 
   const [hoverBoton, setHoverBoton] = useState(null);
 
@@ -1483,16 +1432,6 @@ case 'Conector':
   onChange={handleImportDXF}
   style={{ display: 'none' }}
 />
-<button
-  onClick={() => document.getElementById('importarDXF').click()}
-  style={{
-    ...botonBase,
-    ...{ width: '150px', marginTop: '5px' }
-  }}
->
-  📐 Importar DXF
-</button>
-
   
 <div style={{ marginTop: '10px' }}>
   <button
