@@ -316,6 +316,9 @@ useEffect(() => {
       setShowInput(false); // oculta el input flotante de dimensión
       setFloatingMenu(null); // Oculta el menú flotante
       setTempSPL(null); // Limpia la vista previa del SPL
+      if (pencilMode) {
+        cancelDrawing();
+      }
     }
   };
 
@@ -378,6 +381,26 @@ function findClosestSegment(pos) {
   });
   return best;
 }
+const cancelDrawing = () => {
+    // 1. Resetear el paso de dibujo a 0 (listo para empezar)
+    setDrawingStep(0); 
+    
+    // 2. Limpiar los puntos temporales
+    setPoints([]); 
+    
+    // 3. Ocultar y limpiar el menú flotante (Extremo 1 y 2)
+    setFloatingMenu(null); 
+    
+    // 4. Ocultar y limpiar el menú de dimensión (si está visible)
+    setShowInput(false); 
+    setDimension('');
+    
+    // 5. Limpiar la línea temporal
+    setTempLine(null); 
+    
+    // 6. Restablecer el mensaje de estado
+    setStatusMessage('Listo para dibujar una nueva línea.');
+};
 
 const handleDeleteSPL = () => {
   if (!floatingMenu) return;
