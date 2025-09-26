@@ -985,7 +985,6 @@ setRutaCalculada(result.path);
    };
 
 const handleImportExcel = (e) => {
-  setStatusMessage('Importando archivo...');
   setProcesandoExcel(true);
 
   const file = e.target.files[0];
@@ -1108,9 +1107,7 @@ const handleImportExcel = (e) => {
         const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
         saveAs(blob, importedFileName || 'resultado_procesado.xlsx');
-        setStatusMessage('✅ Archivo procesado y listo para descargar.');
         setProcesandoExcel(false);
-        // ✅ Nuevos estados añadidos
         setImportedFileName(null);
         setTotalCircuitos(0);
         setCircuitosProcesados(0);
@@ -1673,7 +1670,6 @@ case 'Conector':
       📤 Exportar archivo procesado
     </button>
     <br /><br />
-    <p style={{ fontStyle: 'italic', color: 'blue' }}>{statusMessage}</p>
 
         {procesandoExcel && (
   <div style={{ textAlign: 'center' }}>
