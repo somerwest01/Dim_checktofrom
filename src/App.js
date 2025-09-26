@@ -771,7 +771,7 @@ const confirmDimension = () => {
   if (!tempNewLineDetails) return; // Evita errores si no hay datos pendientes
 
   // 1. Crear la línea final con la dimensión ingresada
-  const finalDimension = dimension;
+ const finalDimension = parseFloat(dimension).toFixed(0); 
   const newLine = {
     ...tempNewLineDetails,
     dimension_mm: finalDimension, // Usar el valor ingresado por el usuario
@@ -803,11 +803,13 @@ const calcularRuta = (start, end) => {
   const graph = {};
   lines.forEach((line) => {
     const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+    const dimension = parseFloat(dimension_mm);
+    
+    if (!nombre_obj1 || !nombre_obj2 || isNaN(dimension) || dimension <= 0) return;
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-    graph[nombre_obj1][nombre_obj2] = dimension_mm;
-    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+    graph[nombre_obj1][nombre_obj2] = dimension;
+    graph[nombre_obj2][nombre_obj1] = dimension;
   });
 
   const distances = {};
@@ -847,7 +849,9 @@ const calcularRutaReal = () => {
 
   lines.forEach((line) => {
     const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-    if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+    const dimension = parseFloat(dimension_mm);
+    
+    if (!nombre_obj1 || !nombre_obj2 || isNaN(dimension) || dimension <= 0) return;
 
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
@@ -1011,11 +1015,13 @@ const handleImportExcel = (e) => {
     const graph = {};
     lines.forEach((line) => {
       const { nombre_obj1, nombre_obj2, dimension_mm } = line;
-      if (!nombre_obj1 || !nombre_obj2 || !dimension_mm) return;
+      const dimension = parseFloat(dimension_mm);
+      
+      if (!nombre_obj1 || !nombre_obj2 || isNaN(dimension) || dimension <= 0) return;
       if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
       if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
-      graph[nombre_obj1][nombre_obj2] = dimension_mm;
-      graph[nombre_obj2][nombre_obj1] = dimension_mm;
+      graph[nombre_obj1][nombre_obj2] = dimension;
+      graph[nombre_obj2][nombre_obj1] = dimension;
     });
 
     const dijkstra = (start, end) => {
