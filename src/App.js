@@ -856,8 +856,8 @@ const calcularRutaReal = () => {
     if (!graph[nombre_obj1]) graph[nombre_obj1] = {};
     if (!graph[nombre_obj2]) graph[nombre_obj2] = {};
 
-    graph[nombre_obj1][nombre_obj2] = dimension_mm;
-    graph[nombre_obj2][nombre_obj1] = dimension_mm;
+    graph[nombre_obj1][nombre_obj2] = dimension; 
+    graph[nombre_obj2][nombre_obj1] = dimension;
   });
 
   const dijkstra = (start, end) => {
