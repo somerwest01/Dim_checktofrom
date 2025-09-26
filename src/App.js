@@ -1423,15 +1423,6 @@ case 'Conector':
 >
   🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
 </button>
-</div>
-
-  <input
-  type="file"
-  accept=".dxf"
-  id="importarDXF"
-  onChange={handleImportDXF}
-  style={{ display: 'none' }}
-/>
   
 <div style={{ marginTop: '10px' }}>
   <button
