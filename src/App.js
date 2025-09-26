@@ -517,10 +517,11 @@ const handleStageClick = (e) => {
 
   const stage = e.target.getStage();
   const pos = getRelativePointerPosition(stage);
+  const containerRect = containerRef.current.getBoundingClientRect();
 
   // Variables para la posición del menú flotante
-  const menuX = e.evt.clientX + 10;
-  const menuY = e.evt.clientY + 10;
+const menuX = (e.evt.clientX - containerRect.left) + 10;
+const menuY = (e.evt.clientY - containerRect.top) + 10;
 
   // 1. Lógica de AGREGAR SPL (Máxima Prioridad)
   if (addingSPL) {
