@@ -1423,6 +1423,7 @@ case 'Conector':
 >
   🧹 {hoverBoton === 'limpiar' && 'Limpiar'}
 </button>
+  </div>
   
 <div style={{ marginTop: '10px' }}>
   <button
