@@ -1178,7 +1178,7 @@ const handleSelectEndType = (type) => {
     // 2. MUESTRA EL MENÚ DE INGRESO DE DIMENSIÓN
    // setDimension(initialDimension); // Pre-llena el input con la distancia calculada
     setDimension('');
-    setInputPos(floatingMenu.pos);   // Muestra el input cerca del extremo 2
+    setInputPos({ x: floatingMenu.x, y: floatingMenu.y });   // Muestra el input cerca del extremo 2
     setShowInput(true);             // Muestra el menú de ingreso de dimensión
 
     // 3. Resetear el menú flotante
