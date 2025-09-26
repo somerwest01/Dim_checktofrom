@@ -1158,7 +1158,7 @@ const handleSelectEndType = (type) => {
   // 2. Manejar la selección del Extremo 2 (Último paso antes de la dimensión)
   else if (floatingMenu && floatingMenu.step === 2) {
     const [p1, p2] = points;
-    const initialDimension = Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2);
+    // const initialDimension = Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2);
 
     // 1. ALMACENA LOS DETALLES DE LA LÍNEA PENDIENTE DE DIMENSIÓN
     setTempNewLineDetails({
@@ -1175,7 +1175,8 @@ const handleSelectEndType = (type) => {
     });
 
     // 2. MUESTRA EL MENÚ DE INGRESO DE DIMENSIÓN
-    setDimension(initialDimension); // Pre-llena el input con la distancia calculada
+   // setDimension(initialDimension); // Pre-llena el input con la distancia calculada
+    setDimension('');
     setInputPos(floatingMenu.pos);   // Muestra el input cerca del extremo 2
     setShowInput(true);             // Muestra el menú de ingreso de dimensión
 
