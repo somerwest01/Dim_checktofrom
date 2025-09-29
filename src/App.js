@@ -67,11 +67,13 @@ function App() {
   //  NUEVO ESTADO: Distancia de propagación configurable
   const [propagationDistance, setPropagationDistance] = useState(5);
 
-    const initialAngleTableConfig = {
+   const initialAngleTableConfig = {
+    filas: 5, // AÑADIDO
+    columnas: 3, // AÑADIDO
     deduceGeneral: '',
-    rowDeduce: Array(5).fill(''), // Deduce por fila (uno por fila)
-    colNames: Array(2).fill(''),  // Nombres de las columnas de Cavidad
-    cavityData: Array(5).fill(Array(2).fill('')), // Datos de las cavidades
+    rowDeduce: Array(5).fill(''), 
+    colNames: Array(2).fill(''),  
+    cavityData: Array(5).fill(Array(2).fill('')), 
   };
 
 
@@ -565,15 +567,6 @@ const saveAngleConfiguration = () => {
     
     // Cerrar el menú
     setActiveAngleConfig(null);
-};
-
-const initialAngleTableConfig = {
-    filas: 5,
-    columnas: 3,
-    deduceGeneral: '',
-    rowDeduce: Array(5).fill(''),
-    colNames: Array(2).fill(''),
-    cavityData: Array(5).fill(Array(2).fill('')),
 };
 
 const handleOpenAngleMenu = (endDetails) => {
