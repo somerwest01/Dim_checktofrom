@@ -9,6 +9,8 @@ function App() {
   const [mode, setMode] = useState('design');
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
+//  const [obj1, setObj1] = useState('Ninguno');
+//  const [obj2, setObj2] = useState('Ninguno');
   const [dimension, setDimension] = useState('');
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [showInput, setShowInput] = useState(false);
@@ -27,6 +29,7 @@ function App() {
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
+ // const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
   const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
@@ -39,13 +42,10 @@ function App() {
   const [addingSPL, setAddingSPL] = useState(false);
   const [modoModificarExtremos, setModoModificarExtremos] = useState(false);
   const [importedFileName, setImportedFileName] = useState(null);
-  //const [tablaMenu, setTablaMenu] = useState(false);
- // const [filas, setFilas] = useState(5);
- // const [columnas, setColumnas] = useState(3);
+  const [tablaMenu, setTablaMenu] = useState(false);
+  const [filas, setFilas] = useState(5);
+  const [columnas, setColumnas] = useState(3);
   const [tempNewLineDetails, setTempNewLineDetails] = useState(null);
-  const [activeAngleConfig, setActiveAngleConfig] = useState(null);
-
-  const [nextBrkIndex, setNextBrkIndex] = useState(1); 
 
   const [drawingStep, setDrawingStep] = useState(0); 
   const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
@@ -66,15 +66,6 @@ function App() {
   
   //  NUEVO ESTADO: Distancia de propagación configurable
   const [propagationDistance, setPropagationDistance] = useState(5);
-
-   const initialAngleTableConfig = {
-    filas: 5, // AÑADIDO
-    columnas: 3, // AÑADIDO
-    deduceGeneral: '',
-    rowDeduce: Array(5).fill(''), 
-    colNames: Array(2).fill(''),  
-    cavityData: Array(5).fill(Array(2).fill('')), 
-  };
 
 
   //  Nueva función para manejar el historial y los cambios de estado
@@ -120,158 +111,71 @@ const spinnerStyle = {
   animation: 'spin 1s linear infinite',
   margin: '10px auto'
 };
-  const getAngleDeduction = (line, cavity) => {
-    if (!line.angleConfig) return 0;
-
-    const { deduceGeneral, rowDeductions, cavityMap } = line.angleConfig;
-    const searchCavity = String(cavity).toUpperCase();
-    
-    // Iterar sobre la matriz de cavidades por fila
-    for (let r = 0; r < cavityMap.length; r++) {
-        const row = cavityMap[r];
-        // Buscar la cavidad en los elementos de la fila (ignorando case)
-        if (row.map(c => String(c).toUpperCase()).includes(searchCavity)) {
-            // Cavidad encontrada: Sumar Deduce General + Deduce por Fila
-            // Se usa rowDeductions[r] o 0 si no existe
-            return deduceGeneral + (rowDeductions[r] || 0);
-        }
-    }
-    
-    return 0; // Cavidad no encontrada
-};
-
-// Función de procesamiento de Excel (ejemplo simplificado)
-const exportToExcelWithAngleDeduction = (originalData) => {
-    // Esta función simula la parte de validación y suma
-    
-    const wsname = 'Hoja1';
-    // Se asume que originalData es la matriz de datos del Excel (Array of Arrays)
-    let processedData = originalData.map(row => [...row]); // Clonar datos
-
-    // Índice de las columnas J y Q (J=9, Q=16)
-    const colJIndex = 9; // Columna J (índice 9)
-    const colQIndex = 16; // Columna Q (índice 16)
-    
-    // Nueva columna para la deducción total (e.g., al final)
-    const newColIndex = processedData[0].length;
-    processedData[0][newColIndex] = 'Deduce_Angulo'; // Agregar el encabezado
-    
-    // Iterar sobre las filas de datos (a partir de la segunda fila)
-    for (let i = 1; i < processedData.length; i++) {
-        const row = processedData[i];
-        let totalDeduction = 0;
-        
-        const cavity1 = row[colJIndex]; // Valor de Columna J
-        const cavity2 = row[colQIndex]; // Valor de Columna Q
-
-        // Aplicar la lógica de deducción buscando la cavidad en todos los conectores con ángulo
-        for (const line of lines) {
-            // Solo revisa si la línea tiene configuración de ángulo Y tiene un conector
-            if (line.angleConfig && (line.obj1 === 'Conector' || line.obj2 === 'Conector')) {
-                if (cavity1) {
-                    totalDeduction += getAngleDeduction(line, cavity1);
-                }
-                if (cavity2) {
-                    totalDeduction += getAngleDeduction(line, cavity2);
-                }
-            }
-        }
-
-        row[newColIndex] = totalDeduction; // Asignar la suma a la nueva columna
-    }
-    
-    // Simular exportación
-    const newWs = XLSX.utils.aoa_to_sheet(processedData);
-    const newWb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(newWb, newWs, wsname);
-    
-    saveAs(new Blob([XLSX.write(newWb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }), 'Archivo_Angulo_Procesado.xlsx');
-    setStatusMessage('Archivo de Excel procesado con deducciones de ángulo.');
-};
-
-const AngleSymbol = ({ line }) => {
-  let configToUse = null;
-  let x, y, end;
-
-  // 1. Verificar si p2 es un conector con configuración
-  if (line.obj2 === 'Conector' && line.angleConfig?.p2) {
-    configToUse = line.angleConfig.p2;
-    x = line.p2.x;
-    y = line.p2.y;
-    end = 'p2';
-  } 
-  // 2. Verificar si p1 es un conector con configuración (si p2 no tiene o no es conector)
-  else if (line.obj1 === 'Conector' && line.angleConfig?.p1) {
-    configToUse = line.angleConfig.p1;
-    x = line.p1.x;
-    y = line.p1.y;
-    end = 'p1';
-  }
-
-  if (!configToUse) return null;
-
-  // Parámetros de dibujo
-  const offset = 20; 
-  const offsetX = 20; 
-  const offsetY = 20; 
-  const size = 15;
-
-  return (
-    <Group x={x + offsetX} y={y + offsetY}>
-      {/* Símbolo de cuadrado (referencia de 90 grados) */}
-      <Rect
-        x={0}
-        y={0}
-        width={size}
-        height={size}
-        stroke="red"
-        strokeWidth={1}
-        fill="rgba(255, 0, 0, 0.1)"
-      />
-      {/* Etiqueta de referencia */}
-      <Text 
-        text={`ANGULO ${end.toUpperCase()}`} // Referencia al extremo (P1 o P2)
-        fontSize={8} 
-        fill="red" 
-        x={0} 
-        y={size + 2} 
-      />
-    </Group>
-  );
-};
-// REEMPLAZAR COMPLETAMENTE ESTA FUNCIÓN con la nueva lógica de activeAngleConfig
 
 const renderTablaMenu = () => {
-  if (!activeAngleConfig) return null;
+  if (!tablaMenu) return null;
 
-  // Obtener la configuración activa y los detalles del extremo
-  const { config, endDetails } = activeAngleConfig;
-  const { filas, columnas } = config;
-
-  const handleFilasChange = (newFilas) => {
-    const safeFilas = Math.max(1, newFilas);
-    updateAngleTableConfig('filas', safeFilas);
-  };
-
-  const handleColumnasChange = (newColumnas) => {
-    // Mínimo de 2 columnas para Cavidades + 1 para Deduce Fila = 3.
-    const safeColumnas = Math.max(3, newColumnas);
-    updateAngleTableConfig('columnas', safeColumnas);
-  };
-  
-  // Estilos y cálculos (mantén estos del código anterior)
-  const standardColumnWidth = '60px';
+  const standardColumnWidth = '40px';
   const smallFontSize = '9px';
-  const tableFontFamily = 'Arial, sans-serif'; 
-  const tableStyle = { borderCollapse: 'collapse', width: '100%', fontFamily: tableFontFamily };
-  const cellStyle = { border: '1px solid black', padding: '3px', textAlign: 'center', fontSize: smallFontSize, width: standardColumnWidth, height: '14px', overflow: 'hidden', whiteSpace: 'nowrap', };
-  const firstColumnStyle = { ...cellStyle, borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright', width: '40px', backgroundColor: '#F0FFF0', fontWeight: 'bold', };
-  const nameCellStyle = { ...cellStyle, backgroundColor: '#F0FFF0', height: '14px', };
-  const deduceFilaHeaderStyle = { ...nameCellStyle, width: '80px', fontWeight: 'bold', };
-  const numericCellStyle = { ...cellStyle, backgroundColor: '#d3d3d3', fontWeight: 'bold', };
-  const inputStyle = { width: '100%', height: '100%', boxSizing: 'border-box', border: 'none', textAlign: 'center', backgroundColor: 'transparent', fontSize: smallFontSize, fontFamily: tableFontFamily, MozAppearance: 'textfield', };
+  const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
 
-  const cavityInputColumns = Math.max(0, columnas - 1); 
+  const tableStyle = {
+    borderCollapse: 'collapse',
+    width: '100%',
+    fontFamily: tableFontFamily,
+  };
+
+  const cellStyle = {
+    border: '1px solid black',
+    padding: '3px',
+    textAlign: 'center',
+    fontSize: smallFontSize,
+    width: standardColumnWidth,
+    height: '14px', // Altura fija de 30px
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+  };
+
+  const firstColumnStyle = {
+    border: '1px solid black',
+    padding: '1px',
+    textAlign: 'center',
+    fontSize: '20px',
+    width: '40px',
+    overflow: 'hidden',
+    backgroundColor: '#F0FFF0',
+    fontWeight: 'bold',   
+  };
+
+  const nameCellStyle = {
+    ...cellStyle,
+    backgroundColor: '#F0FFF0',
+    height: '14px', // Altura fija de 30px
+  };
+
+  const numericCellStyle = {
+    ...cellStyle,
+    backgroundColor: '#d3d3d3',
+    fontWeight: 'bold',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    height: '100%',
+    boxSizing: 'border-box',
+    border: 'none',
+    textAlign: 'center',
+    backgroundColor: 'transparent',
+    fontSize: smallFontSize,
+    fontFamily: tableFontFamily,
+    MozAppearance: 'textfield',
+  };
+
+    const webkitInputStyle = {
+    ...inputStyle,
+    WebkitAppearance: 'none',
+    margin: 0,
+  };
 
   return (
     <div style={{
@@ -289,35 +193,41 @@ const renderTablaMenu = () => {
       flexDirection: 'column',
       minWidth: '400px',
       maxWidth: '600px',
-      fontFamily: tableFontFamily,
+      fontFamily: tableFontFamily, // Fuente para el contenedor exterior
     }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-        <button onClick={() => setActiveAngleConfig(null)} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', padding: '0', lineHeight: '1', alignSelf: 'flex-end', fontFamily: tableFontFamily, }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        width: '100%'
+      }}>
+        <button
+          onClick={() => setTablaMenu(false)}
+          style={{
+            border: 'none',
+            background: 'none',
+            fontSize: '20px',
+            cursor: 'pointer',
+            padding: '0',
+            lineHeight: '1',
+            alignSelf: 'flex-end',
+            fontFamily: tableFontFamily,
+          }}
+        >
           &times;
         </button>
       </div>
-      <p style={{textAlign: 'center', fontWeight: 'bold', marginBottom: '15px'}}>
-        Tabla de Ángulo para Línea {endDetails.lineIndex + 1}, Extremo {endDetails.end.toUpperCase()}
-      </p>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '20px', flexGrow: 1 }}>
         {/* Tabla a la izquierda */}
         <div style={{ flex: 1, overflowX: 'auto' }}>
           <table style={tableStyle}>
             <tbody>
-              {/* Fila de Nombres (Deduce por fila label + Cavity names) */}
+              {/* Fila de Nombres */}
               <tr>
                 <td style={{ ...cellStyle, border: 'none' }}></td>
-                <td style={deduceFilaHeaderStyle}>Deduce por fila</td> 
-                {Array.from({ length: cavityInputColumns }).map((_, colIndex) => (
+                {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={nameCellStyle}>
-                    <input
-                      type="text"
-                      placeholder={`Cavidad ${colIndex + 1}`}
-                      value={config.colNames[colIndex] || ''}
-                      onChange={(e) => updateAngleTableConfig('colNames', e.target.value, 0, colIndex)}
-                      style={inputStyle}
-                    />
+                    <input type="text" style={inputStyle} />
                   </td>
                 ))}
               </tr>
@@ -325,44 +235,26 @@ const renderTablaMenu = () => {
               {Array.from({ length: filas }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
                   {rowIndex === 0 && (
-                    <td
-                      rowSpan={filas}
-                      style={{...firstColumnStyle, verticalAlign: 'middle'}}
-                    >
-                      {/* Input para Deduce General */}
-                      <input
-                        type="text"
-                        placeholder="Deduce General"
-                        value={config.deduceGeneral}
-                        onChange={(e) => updateAngleTableConfig('deduceGeneral', e.target.value, 0, 0)}
-                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                        style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}}
-                      />
+                    <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
+                      <input type="text" placeholder="Deduce General" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
                     </td>
                   )}
-                  {/* Columna Deduce por fila */}
-                  <td style={cellStyle}>
-                    <input
-                      type="text"
-                      value={config.rowDeduce[rowIndex] || ''}
-                      onChange={(e) => updateAngleTableConfig('rowDeduce', e.target.value, rowIndex, 0)}
-                      onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')}
-                      style={inputStyle}
-                    />
-                  </td>
-                  {/* Celdas de Cavidades */}
-                  {Array.from({ length: cavityInputColumns }).map((_, colIndex) => (
+                  {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                     <td key={colIndex} style={cellStyle}>
-                      <input
-                        type="text"
-                        value={config.cavityData[rowIndex] ? config.cavityData[rowIndex][colIndex] : ''}
-                        onChange={(e) => updateAngleTableConfig('cavityData', e.target.value.toUpperCase(), rowIndex, colIndex)}
-                        style={inputStyle}
-                      />
+                      <input type="text" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={inputStyle} />
                     </td>
                   ))}
                 </tr>
               ))}
+              {/* Fila numérica */}
+              <tr>
+                <td style={{ ...numericCellStyle, border: 'none' }}></td>
+                {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
+                  <td key={colIndex} style={numericCellStyle}>
+                    {colIndex + 1}
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>
@@ -370,18 +262,18 @@ const renderTablaMenu = () => {
         {/* Controles a la derecha */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Filas (Deduce/Cavidad)</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Filas</label>
             <div style={{ display: 'flex', gap: '5px' }}>
-              <button onClick={() => handleFilasChange(filas > 1 ? filas - 1 : 1)}>-</button>
-              <button onClick={() => handleFilasChange(filas + 1)}>+</button>
+              <button onClick={() => setFilas(filas > 1 ? filas - 1 : 1)}>-</button>
+              <button onClick={() => setFilas(filas + 1)}>+</button>
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Columnas (Cavidades)</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Columnas</label>
             <div style={{ display: 'flex', gap: '5px' }}>
-              <button onClick={() => handleColumnasChange(columnas > 3 ? columnas - 1 : 3)}>-</button>
-              <button onClick={() => handleColumnasChange(columnas + 1)}>+</button>
+              <button onClick={() => setColumnas(columnas > 2 ? columnas - 1 : 2)}>-</button>
+              <button onClick={() => setColumnas(columnas + 1)}>+</button>
             </div>
           </div>
         </div>
@@ -389,12 +281,16 @@ const renderTablaMenu = () => {
 
       {/* Botones de acción */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
-        <button onClick={saveAngleConfiguration} style={{ fontWeight: 'bold' }}>Guardar Ángulo</button> 
-        <button onClick={() => setActiveAngleConfig(null)}>Cancelar</button>
+        <button onClick={() => {
+          // Lógica para agregar el ángulo (aún no implementada)
+          setTablaMenu(false);
+        }}>Agregar ángulo</button>
+        <button onClick={() => setTablaMenu(false)}>Cancelar</button>
       </div>
     </div>
   );
 };
+
 const botonExpandido = {
   width: '150px'
 };
@@ -429,177 +325,6 @@ useEffect(() => {
   window.addEventListener("keydown", handleKeyDown);
   return () => window.removeEventListener("keydown", handleKeyDown);
 }, []);
-
-useEffect(() => {
-    if (!activeAngleConfig) return;
-
-    const { filas, columnas } = activeAngleConfig.config;
-
-    setActiveAngleConfig(prevActive => {
-        if (!prevActive) return null;
-
-        const prev = prevActive.config;
-        const cavityInputColumns = Math.max(0, columnas - 1); 
-    
-        const newRowDeduce = Array(filas).fill(0).map((_, r) => prev.rowDeduce[r] || '');
-        const newColNames = Array(cavityInputColumns).fill(0).map((_, i) => prev.colNames[i] || '');
-    
-        const newCavityData = Array(filas).fill(0).map((_, r) => {
-            const existingRow = prev.cavityData[r] || Array(cavityInputColumns).fill('');
-            return Array(cavityInputColumns).fill(0).map((_, c) => existingRow[c] || '');
-        });
-        
-        return {
-            ...prevActive,
-            config: {
-                ...prev,
-                rowDeduce: newRowDeduce,
-                colNames: newColNames,
-                cavityData: newCavityData,
-                filas,
-                columnas,
-            }
-        };
-    });
-}, [activeAngleConfig ? activeAngleConfig.config.filas : null, activeAngleConfig ? activeAngleConfig.config.columnas : null]);
-
-useEffect(() => {
-    setAngleTableConfig(prev => {
-      // Las columnas de la cuadrícula son: 1 para Deduce por fila + N para Cavidades
-      const totalGridColumns = columnas > 1 ? columnas - 1 : 1; 
-      const cavityInputColumns = Math.max(0, totalGridColumns - 1); // Solo las columnas de Cavidad
-  
-      const newRowDeduce = Array(filas).fill(0).map((_, r) => prev.rowDeduce[r] || '');
-      const newColNames = Array(cavityInputColumns).fill(0).map((_, i) => prev.colNames[i] || '');
-  
-      const newCavityData = Array(filas).fill(0).map((_, r) => {
-        const existingRow = prev.cavityData[r] || Array(cavityInputColumns).fill('');
-        return Array(cavityInputColumns).fill(0).map((_, c) => existingRow[c] || '');
-      });
-      
-      return {
-        ...prev,
-        rowDeduce: newRowDeduce,
-        colNames: newColNames,
-        cavityData: newCavityData,
-      };
-    });
-}, [filas, columnas]);
-
-const updateAngleTableConfig = (type, value, rowIndex, colIndex) => {
-    setActiveAngleConfig(prevActive => {
-        if (!prevActive) return null;
-        
-        let newConfig = { ...prevActive.config };
-        
-        const numericValue = value.replace(/[^0-9]/g, ''); // Solo números para deducciones
-
-        if (type === 'filas') {
-            newConfig.filas = value;
-        } else if (type === 'columnas') {
-            newConfig.columnas = value;
-        } else if (type === 'deduceGeneral') {
-            newConfig.deduceGeneral = numericValue;
-        } else if (type === 'rowDeduce') {
-            const newRowDeduce = [...newConfig.rowDeduce];
-            newRowDeduce[rowIndex] = numericValue;
-            newConfig.rowDeduce = newRowDeduce;
-        } else if (type === 'colNames') {
-            const newColNames = [...newConfig.colNames];
-            newColNames[colIndex] = value;
-            newConfig.colNames = newColNames;
-        } else if (type === 'cavityData') {
-            const newCavityData = newConfig.cavityData.map((row, rIdx) =>
-                rIdx === rowIndex ? row.map((cell, cIdx) => (cIdx === colIndex ? value.toUpperCase() : cell)) : row
-            );
-            newConfig.cavityData = newCavityData;
-        }
-
-        return { ...prevActive, config: newConfig };
-    });
-};
-
-const saveAngleConfiguration = () => {
-    if (!activeAngleConfig) return;
-
-    const { endDetails, config } = activeAngleConfig;
-    const { lineIndex, end } = endDetails;
-    const { deduceGeneral, rowDeduce, colNames, cavityData } = config;
-
-    // 1. Validación
-    const finalDeduceGeneral = parseInt(deduceGeneral);
-    if (isNaN(finalDeduceGeneral)) {
-        alert("Por favor, ingrese un valor numérico válido para 'Deduce General'.");
-        return;
-    }
-    
-    // 2. Mapear deducciones de fila a números
-    const finalRowDeductions = rowDeduce.map(d => parseInt(d) || 0);
-
-    // 3. Estructura final a guardar en el extremo
-    const finalAngleConfig = {
-        deduceGeneral: finalDeduceGeneral,
-        rowDeductions: finalRowDeductions, 
-        colHeaders: colNames,
-        cavityMap: cavityData,
-    };
-
-    // 4. Actualizar la línea
-    const updatedLines = lines.map((line, index) => {
-        if (index === lineIndex) {
-            const newLine = { ...line };
-            
-            // Inicializar el objeto angleConfig si no existe
-            if (!newLine.angleConfig) {
-                newLine.angleConfig = {};
-            }
-            
-            // Guardar en el extremo correcto (p1 o p2)
-            newLine.angleConfig[end] = finalAngleConfig;
-            
-            return newLine;
-        }
-        return line;
-    });
-
-    handleStateChange(updatedLines); 
-    setStatusMessage(`Configuración de ángulo guardada en el extremo ${end.toUpperCase()} de la Línea ${updatedLines[lineIndex].name || lineIndex + 1}.`);
-    
-    // Cerrar el menú
-    setActiveAngleConfig(null);
-};
-
-const handleOpenAngleMenu = (endDetails) => {
-    const line = lines[endDetails.lineIndex];
-    const endType = endDetails.end === 'p1' ? 'obj1' : 'obj2';
-
-    // La configuración de ángulo se guarda en la línea como angleConfig.p1 o angleConfig.p2
-    const currentConfig = line.angleConfig?.[endType];
-
-    let configToEdit = { ...initialAngleTableConfig };
-
-    if (currentConfig) {
-        // Cargar la configuración existente (incluyendo dimensiones de la tabla)
-        configToEdit = {
-            filas: currentConfig.cavityMap.length,
-            columnas: currentConfig.colHeaders.length + 1, // +1 por la columna de deduce
-            deduceGeneral: String(currentConfig.deduceGeneral),
-            rowDeduce: currentConfig.rowDeductions.map(String),
-            colNames: currentConfig.colHeaders,
-            cavityData: currentConfig.cavityMap,
-        };
-    }
-
-    // Almacenar la configuración a editar junto con los detalles del extremo
-    setActiveAngleConfig({
-        endDetails, // { lineIndex, end }
-        config: configToEdit,
-    });
-    
-    // Ocultar el menú flotante de selección de tipo
-    setSelectorPos(null);
-    setSelectorEnd(null); 
-};
 
 
 const handleMouseMovePan = (e) => {
@@ -675,127 +400,6 @@ const cancelDrawing = () => {
     
     // 6. Restablecer el mensaje de estado
     setStatusMessage('Listo para dibujar una nueva línea.');
-};
-// Función auxiliar para encontrar el nombre de un nodo BRK existente en una posición
-const getExistingBrkName = (pos, currentLines, distanceThreshold) => {
-  for (const line of currentLines) {
-    for (const end of ['p1', 'p2']) {
-      const objType = line[end === 'p1' ? 'obj1' : 'obj2'];
-      const name = line[end === 'p1' ? 'nombre_obj1' : 'nombre_obj2'];
-      const point = line[end];
-
-      // Solo considera nodos BRK con un nombre asignado
-      if (objType === 'BRK' && name) {
-        const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
-        // Si la distancia es menor que el umbral de propagación, es el mismo nodo
-        if (dist < distanceThreshold) { 
-          return name;
-        }
-      }
-    }
-  }
-  return null;
-};
-
-// Función para actualizar el nombre de un nodo BRK en TODAS las líneas conectadas
-const updateBrkNodeName = (pos, newName, currentLines, distanceThreshold) => {
-    // Si el nuevo nombre es vacío o un placeholder, no renombra
-    if (!newName || newName.startsWith('BRK-') && !Number.isNaN(parseInt(newName.substring(4)))) {
-        return currentLines; // No se permite renombrar a BRK-X manual
-    }
-    
-    const updatedLines = currentLines.map(line => {
-        let newLine = { ...line };
-        let changed = false;
-
-        // Verificar p1
-        if (line.obj1 === 'BRK' && Math.hypot(pos.x - line.p1.x, line.p1.y - pos.y) < distanceThreshold) {
-            newLine.nombre_obj1 = newName;
-            changed = true;
-        }
-        // Verificar p2
-        if (line.obj2 === 'BRK' && Math.hypot(pos.x - line.p2.x, line.p2.y - pos.y) < distanceThreshold) {
-            newLine.nombre_obj2 = newName;
-            changed = true;
-        }
-        return changed ? newLine : line;
-    });
-    return updatedLines;
-};
-// Esta es la nueva función que debe crear
-const handleFloatingMenuConfirm = () => {
-  if (!floatingMenu) return;
-
-  const { pos: point, step } = floatingMenu;
-  const type = nameInput1;
-  const name = nameInput2;
-  const deduce = dimension;
-
-  let finalName = name;
-  let updatedLines = lines;
-  let nextIdx = nextBrkIndex;
-  
-  if (type === 'BRK') {
-    const existingName = getExistingBrkName(point, lines, propagationDistance);
-
-    if (name) { 
-      if (existingName && existingName !== name) {
-          updatedLines = updateBrkNodeName(point, name, lines, propagationDistance);
-          handleStateChange(updatedLines); 
-      }
-      finalName = name;
-    } else {
-      if (existingName) {
-        finalName = existingName;
-      } else {
-        finalName = `BRK-${nextBrkIndex}`;
-        nextIdx += 1;
-      }
-    }
-  }
-
-  if (step === 1) {
-    setTempObj1Type(type);
-    setMenuValues({ type: type, name: finalName, deduce: deduce });
-    setFloatingMenu(null);
-    setDrawingStep(2); 
-    setStatusMessage(`Extremo 1 (${finalName || type}) configurado. Haga clic en el punto final.`);
-    setNextBrkIndex(nextIdx);
-    
-  } else if (step === 3) {
-    const [p1, p2] = points;
-    const { type: p1Type, name: p1Name, deduce: p1Deduce } = menuValues;
-
-    let finalP1Name = p1Name;
-    if (p1Type === 'BRK' && !p1Name) {
-        finalP1Name = getExistingBrkName(p1, lines, propagationDistance);
-    }
-
-    const newLine = {
-      p1: p1,
-      p2: p2,
-      obj1: p1Type,
-      obj2: type,
-      nombre_obj1: finalP1Name || '',
-      nombre_obj2: finalName || '',
-      dimension_mm: Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2),
-      deduce1: p1Deduce || '',
-      deduce2: deduce || '',
-      item: null,
-    };
-    
-    handleStateChange([...updatedLines.filter(l => l.nombre_obj1 !== 'TEMP' && l.nombre_obj2 !== 'TEMP'), newLine]);
-    setPoints([]);
-    setTempLine(null);
-    setDrawingStep(0);
-    setFloatingMenu(null);
-    setStatusMessage(`✅ Línea completada: ${finalP1Name || p1Type} a ${finalName || type}.`);
-    setNextBrkIndex(nextIdx);
-  }
-  
-  setNameInput1('');
-  setNameInput2('');
-  setDimension('');
 };
 
 const handleDeleteSPL = () => {
@@ -1029,19 +633,13 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
         // Lógica de autocompletar si se conecta a un BRK/Conector
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
             const [p1] = points;
-            let nombreObj2 = '';
-            if (snap.objType === 'BRK') {
-            // El punto final se conectó a un BRK existente, usar su nombre.
-            nombreObj2 = getExistingBrkName(p2Pos, lines, propagationDistance) || '';
-        }
             const newLine = {
                 p1: p1,
                 p2: p2Pos,
                 obj1: tempObj1Type,
                 obj2: snap.objType,
-              
                 nombre_obj1: menuValues.name || '',
-                nombre_obj2: nombreObj2,
+                nombre_obj2: '',
                 dimension_mm: Math.hypot(p2Pos.x - p1.x, p2Pos.y - p1.y).toFixed(2),
                 deduce1: menuValues.deduce || '',
                 deduce2: '',
@@ -1673,7 +1271,10 @@ case 'Conector':
       <input type="number" style={inputStyle} value={menuValues.deduce} onChange={(e) => setMenuValues({ ...menuValues, deduce: e.target.value })} />
       <div style={{ marginTop: '10px', display: 'flex', gap: '5px' }}>
         <button onClick={handleUpdateFloatingMenu}>Actualizar</button>
-        //<button onClick={() => {setFloatingMenu(null);setTablaMenu(true);}}>Agregar ángulo</button>
+        <button onClick={() => {
+          setFloatingMenu(null);
+          setTablaMenu(true);
+        }}>Agregar ángulo</button>
       </div>
       <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
     </div>
@@ -2166,7 +1767,6 @@ case 'Conector':
                   strokeWidth={.5}
                   onClick={() => handleLineClick(i)}
                 />
-                   <AngleSymbol line={line} /> 
                 <Label
                 x={(line.p1.x + line.p2.x) / 2}
                 y={(line.p1.y + line.p2.y) / 2}
@@ -2181,7 +1781,7 @@ case 'Conector':
                 strokeWidth={0.5}
   />
   <Text
-    text={`${line.name ? line.name + ' ' : ''}${line.dimension_mm ?? ''} ${line.angleConfig ? ' [ANGULO]' : ''}`}
+    text={`${line.dimension_mm ?? ''}`}
     fontSize={7}
     fill="black"
     padding={1}         // Espacio entre texto y fondo
@@ -2324,22 +1924,6 @@ case 'Conector':
         {tipo}
       </button>
     ))}
-      {(lines[selectorEnd.lineIndex][selectorEnd.end === 'p1' ? 'obj1' : 'obj2'] === 'Conector') && (
-        <button 
-            onClick={() => handleOpenAngleMenu(selectorEnd)}
-            style={{ 
-                marginTop: '10px', 
-                padding: '5px', 
-                border: '1px solid gray', 
-                borderRadius: '5px', 
-                backgroundColor: '#ffe0b2', // Color distinto
-                fontWeight: 'bold'
-            }}
-        >
-            📐 Configurar Ángulo
-        </button>
-    )}
-</div>
   </div>
 )}
 
