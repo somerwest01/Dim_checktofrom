@@ -9,8 +9,6 @@ function App() {
   const [mode, setMode] = useState('design');
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
-//  const [obj1, setObj1] = useState('Ninguno');
-//  const [obj2, setObj2] = useState('Ninguno');
   const [dimension, setDimension] = useState('');
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [showInput, setShowInput] = useState(false);
@@ -29,7 +27,6 @@ function App() {
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
- // const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
   const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
@@ -46,6 +43,8 @@ function App() {
   const [filas, setFilas] = useState(5);
   const [columnas, setColumnas] = useState(3);
   const [tempNewLineDetails, setTempNewLineDetails] = useState(null);
+
+  const [nextBrkIndex, setNextBrkIndex] = useState(1); 
 
   const [drawingStep, setDrawingStep] = useState(0); 
   const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
@@ -401,6 +400,127 @@ const cancelDrawing = () => {
     // 6. Restablecer el mensaje de estado
     setStatusMessage('Listo para dibujar una nueva línea.');
 };
+// Función auxiliar para encontrar el nombre de un nodo BRK existente en una posición
+const getExistingBrkName = (pos, currentLines, distanceThreshold) => {
+  for (const line of currentLines) {
+    for (const end of ['p1', 'p2']) {
+      const objType = line[end === 'p1' ? 'obj1' : 'obj2'];
+      const name = line[end === 'p1' ? 'nombre_obj1' : 'nombre_obj2'];
+      const point = line[end];
+
+      // Solo considera nodos BRK con un nombre asignado
+      if (objType === 'BRK' && name) {
+        const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
+        // Si la distancia es menor que el umbral de propagación, es el mismo nodo
+        if (dist < distanceThreshold) { 
+          return name;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+// Función para actualizar el nombre de un nodo BRK en TODAS las líneas conectadas
+const updateBrkNodeName = (pos, newName, currentLines, distanceThreshold) => {
+    // Si el nuevo nombre es vacío o un placeholder, no renombra
+    if (!newName || newName.startsWith('BRK-') && !Number.isNaN(parseInt(newName.substring(4)))) {
+        return currentLines; // No se permite renombrar a BRK-X manual
+    }
+    
+    const updatedLines = currentLines.map(line => {
+        let newLine = { ...line };
+        let changed = false;
+
+        // Verificar p1
+        if (line.obj1 === 'BRK' && Math.hypot(pos.x - line.p1.x, line.p1.y - pos.y) < distanceThreshold) {
+            newLine.nombre_obj1 = newName;
+            changed = true;
+        }
+        // Verificar p2
+        if (line.obj2 === 'BRK' && Math.hypot(pos.x - line.p2.x, line.p2.y - pos.y) < distanceThreshold) {
+            newLine.nombre_obj2 = newName;
+            changed = true;
+        }
+        return changed ? newLine : line;
+    });
+    return updatedLines;
+};
+// Esta es la nueva función que debe crear
+const handleFloatingMenuConfirm = () => {
+  if (!floatingMenu) return;
+
+  const { pos: point, step } = floatingMenu;
+  const type = nameInput1;
+  const name = nameInput2;
+  const deduce = dimension;
+
+  let finalName = name;
+  let updatedLines = lines;
+  let nextIdx = nextBrkIndex;
+  
+  if (type === 'BRK') {
+    const existingName = getExistingBrkName(point, lines, propagationDistance);
+
+    if (name) { 
+      if (existingName && existingName !== name) {
+          updatedLines = updateBrkNodeName(point, name, lines, propagationDistance);
+          handleStateChange(updatedLines); 
+      }
+      finalName = name;
+    } else {
+      if (existingName) {
+        finalName = existingName;
+      } else {
+        finalName = `BRK-${nextBrkIndex}`;
+        nextIdx += 1;
+      }
+    }
+  }
+
+  if (step === 1) {
+    setTempObj1Type(type);
+    setMenuValues({ type: type, name: finalName, deduce: deduce });
+    setFloatingMenu(null);
+    setDrawingStep(2); 
+    setStatusMessage(`Extremo 1 (${finalName || type}) configurado. Haga clic en el punto final.`);
+    setNextBrkIndex(nextIdx);
+    
+  } else if (step === 3) {
+    const [p1, p2] = points;
+    const { type: p1Type, name: p1Name, deduce: p1Deduce } = menuValues;
+
+    let finalP1Name = p1Name;
+    if (p1Type === 'BRK' && !p1Name) {
+        finalP1Name = getExistingBrkName(p1, lines, propagationDistance);
+    }
+
+    const newLine = {
+      p1: p1,
+      p2: p2,
+      obj1: p1Type,
+      obj2: type,
+      nombre_obj1: finalP1Name || '',
+      nombre_obj2: finalName || '',
+      dimension_mm: Math.hypot(p2.x - p1.x, p2.y - p1.y).toFixed(2),
+      deduce1: p1Deduce || '',
+      deduce2: deduce || '',
+      item: null,
+    };
+    
+    handleStateChange([...updatedLines.filter(l => l.nombre_obj1 !== 'TEMP' && l.nombre_obj2 !== 'TEMP'), newLine]);
+    setPoints([]);
+    setTempLine(null);
+    setDrawingStep(0);
+    setFloatingMenu(null);
+    setStatusMessage(`✅ Línea completada: ${finalP1Name || p1Type} a ${finalName || type}.`);
+    setNextBrkIndex(nextIdx);
+  }
+  
+  setNameInput1('');
+  setNameInput2('');
+  setDimension('');
+};
 
 const handleDeleteSPL = () => {
   if (!floatingMenu) return;
@@ -633,13 +753,19 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
         // Lógica de autocompletar si se conecta a un BRK/Conector
         if (snap.objType === 'BRK' || snap.objType === 'Conector') {
             const [p1] = points;
+            let nombreObj2 = '';
+            if (snap.objType === 'BRK') {
+            // El punto final se conectó a un BRK existente, usar su nombre.
+            nombreObj2 = getExistingBrkName(p2Pos, lines, propagationDistance) || '';
+        }
             const newLine = {
                 p1: p1,
                 p2: p2Pos,
                 obj1: tempObj1Type,
                 obj2: snap.objType,
+              
                 nombre_obj1: menuValues.name || '',
-                nombre_obj2: '',
+                nombre_obj2: nombreObj2,
                 dimension_mm: Math.hypot(p2Pos.x - p1.x, p2Pos.y - p1.y).toFixed(2),
                 deduce1: menuValues.deduce || '',
                 deduce2: '',
