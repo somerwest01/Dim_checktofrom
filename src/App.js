@@ -46,6 +46,13 @@ function App() {
   const [filas, setFilas] = useState(5);
   const [columnas, setColumnas] = useState(3);
   const [tempNewLineDetails, setTempNewLineDetails] = useState(null);
+  const [connectorAngleData, setConnectorAngleData] = useState({
+  lineIndex: null, // Índice de la línea que contiene el conector
+  end: null,       // 'p1' o 'p2'
+  data: [],        // Array bidimensional para el contenido de la tabla
+  filas: 5,        // Filas específicas de este conector
+  columnas: 3,     // Columnas específicas de este conector
+});
 
   const [drawingStep, setDrawingStep] = useState(0); 
   const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
@@ -115,6 +122,9 @@ const spinnerStyle = {
 const renderTablaMenu = () => {
   if (!tablaMenu) return null;
 
+  const { lineIndex, end, data, filas, columnas } = connectorAngleData;
+  if (lineIndex === null) return null;
+
   const standardColumnWidth = '40px';
   const smallFontSize = '9px';
   const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
@@ -176,7 +186,19 @@ const renderTablaMenu = () => {
     WebkitAppearance: 'none',
     margin: 0,
   };
-
+  const handleDataChange = (rowIndex, colIndex, value) => {
+      // Función para actualizar un valor específico de la tabla
+      const newData = JSON.parse(JSON.stringify(data)); // Copia profunda
+      if (!newData[rowIndex]) newData[rowIndex] = [];
+      newData[rowIndex][colIndex] = value;
+      setConnectorAngleData(prev => ({ ...prev, data: newData }));
+  };
+  
+  // Función para actualizar el valor general (ej. el que está en vertical)
+  const handleGeneralDeduceChange = (value) => {
+      setConnectorAngleData(prev => ({ ...prev, generalDeduce: value }));
+  };
+  
   return (
     <div style={{
       position: 'fixed',
@@ -236,12 +258,24 @@ const renderTablaMenu = () => {
                 <tr key={rowIndex}>
                   {rowIndex === 0 && (
                     <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
-                      <input type="text" placeholder="Deduce General" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
+                      <input 
+                        type="text" 
+                        placeholder="Deduce General" 
+                        value={connectorAngleData.generalDeduce || ''}
+                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
                     </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                     <td key={colIndex} style={cellStyle}>
-                      <input type="text" onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={inputStyle} />
+                      <input 
+                          type="text"
+                          value={data[rowIndex]?.[colIndex] || ''}
+                          onInput={(e) => {
+                            const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                            handleDataChange(rowIndex, colIndex, rawValue);
+                            }}
+                          style={inputStyle}
+                        />
                     </td>
                   ))}
                 </tr>
@@ -264,16 +298,16 @@ const renderTablaMenu = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Filas</label>
             <div style={{ display: 'flex', gap: '5px' }}>
-              <button onClick={() => setFilas(filas > 1 ? filas - 1 : 1)}>-</button>
-              <button onClick={() => setFilas(filas + 1)}>+</button>
+  <button onClick={() => setConnectorAngleData(prev => ({ ...prev, filas: prev.filas > 1 ? prev.filas - 1 : 1 }))}>-</button>
+  <button onClick={() => setConnectorAngleData(prev => ({ ...prev, filas: prev.filas + 1 }))}>+</button>
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Columnas</label>
             <div style={{ display: 'flex', gap: '5px' }}>
-              <button onClick={() => setColumnas(columnas > 2 ? columnas - 1 : 2)}>-</button>
-              <button onClick={() => setColumnas(columnas + 1)}>+</button>
+  <button onClick={() => setConnectorAngleData(prev => ({ ...prev, columnas: prev.columnas > 1 ? prev.columnas - 1 : 1 }))}>-</button>
+  <button onClick={() => setConnectorAngleData(prev => ({ ...prev, columnas: prev.columnas + 1 }))}>+</button>
             </div>
           </div>
         </div>
@@ -282,10 +316,38 @@ const renderTablaMenu = () => {
       {/* Botones de acción */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
         <button onClick={() => {
-          // Lógica para agregar el ángulo (aún no implementada)
-          setTablaMenu(false);
-        }}>Agregar ángulo</button>
-        <button onClick={() => setTablaMenu(false)}>Cancelar</button>
+    // 1. Crear el objeto de datos a guardar
+    const { lineIndex, end, data, filas, columnas, generalDeduce } = connectorAngleData;
+
+    if (lineIndex === null || end === null) {
+      setTablaMenu(false);
+      return;
+    }
+
+    const newAngleData = { data, filas, columnas, generalDeduce }; // Agregue el deduce general si lo necesita
+
+    // 2. Crear una copia de las líneas y actualizar la línea objetivo
+    const updatedLines = [...lines];
+    
+    if (end === 'p1') {
+      updatedLines[lineIndex].angle_data1 = newAngleData;
+    } else {
+      updatedLines[lineIndex].angle_data2 = newAngleData;
+    }
+
+    // 3. Guardar el estado
+    handleStateChange(updatedLines); 
+    
+    // 4. Resetear y cerrar
+    setTablaMenu(false);
+    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '' });
+  }}>Agregar ángulo</button>
+          <button onClick={() => {
+    setTablaMenu(false);
+    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '' }); // Resetear al cancelar
+  }}>
+    Cancelar
+  </button>
       </div>
     </div>
   );
@@ -644,6 +706,8 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
                 deduce1: menuValues.deduce || '',
                 deduce2: '',
                 item: null,
+                angle_data1: null, 
+                angle_data2: null,
             };
             handleStateChange([...lines, newLine]);
             setPoints([]);
@@ -1274,6 +1338,21 @@ case 'Conector':
         <button onClick={() => {
           setFloatingMenu(null);
           setTablaMenu(true);
+
+          const line = lines[floatingMenu.lineIndex];
+          const end = floatingMenu.end; // 'p1' o 'p2'
+          
+          const existingData = end === 'p1' ? line.angle_data1 : line.angle_data2;
+          
+          setConnectorAngleData({
+              lineIndex: floatingMenu.lineIndex,
+              end: end,
+              // Carga los datos existentes, o usa valores predeterminados
+              data: existingData?.data || [], 
+              filas: existingData?.filas || 5,
+              columnas: existingData?.columnas || 3,
+          });
+    
         }}>Agregar ángulo</button>
       </div>
       <button onClick={() => setFloatingMenu(null)} style={{ marginTop: '5px' }}>Cancelar</button>
