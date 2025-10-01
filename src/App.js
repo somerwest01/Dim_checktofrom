@@ -52,6 +52,8 @@ function App() {
   data: [],        // Array bidimensional para el contenido de la tabla
   filas: 5,        // Filas específicas de este conector
   columnas: 3,     // Columnas específicas de este conector
+  generalDeduce: '',      // Para el valor que se guarda en vertical
+  columnNames: [], 
 });
 
   const [drawingStep, setDrawingStep] = useState(0); 
@@ -193,6 +195,13 @@ const renderTablaMenu = () => {
       newData[rowIndex][colIndex] = value;
       setConnectorAngleData(prev => ({ ...prev, data: newData }));
   };
+  const handleColumnNameChange = (colIndex, value) => {
+    setConnectorAngleData(prev => {
+        const newColumnNames = [...prev.columnNames];
+        newColumnNames[colIndex] = value;
+        return { ...prev, columnNames: newColumnNames };
+    });
+};
   
   // Función para actualizar el valor general (ej. el que está en vertical)
   const handleGeneralDeduceChange = (value) => {
@@ -249,7 +258,12 @@ const renderTablaMenu = () => {
                 <td style={{ ...cellStyle, border: 'none' }}></td>
                 {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={nameCellStyle}>
-                    <input type="text" style={inputStyle} />
+                    <input 
+                      type="text" 
+                      style={inputStyle} 
+                      value={connectorAngleData.columnNames[colIndex] || ''}
+                      onChange={(e) => handleColumnNameChange(colIndex, e.target.value)}
+                    />
                   </td>
                 ))}
               </tr>
@@ -326,14 +340,14 @@ const renderTablaMenu = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
         <button onClick={() => {
     // 1. Crear el objeto de datos a guardar
-    const { lineIndex, end, data, filas, columnas, generalDeduce } = connectorAngleData;
+    const { lineIndex, end, data, filas, columnas, generalDeduce, columnNames } = connectorAngleData;
 
     if (lineIndex === null || end === null) {
       setTablaMenu(false);
       return;
     }
 
-    const newAngleData = { data, filas, columnas, generalDeduce }; // Agregue el deduce general si lo necesita
+    const newAngleData = { data, filas, columnas, generalDeduce, columnNames }; // Agregue el deduce general si lo necesita
 
     // 2. Crear una copia de las líneas y actualizar la línea objetivo
     const updatedLines = [...lines];
@@ -1356,10 +1370,11 @@ case 'Conector':
           setConnectorAngleData({
               lineIndex: floatingMenu.lineIndex,
               end: end,
-              // Carga los datos existentes, o usa valores predeterminados
               data: existingData?.data || [], 
               filas: existingData?.filas || 5,
               columnas: existingData?.columnas || 3,
+              generalDeduce: existingData?.generalDeduce || '',
+              columnNames: existingData?.columnNames || [],
           });
     
         }}>Agregar ángulo</button>
