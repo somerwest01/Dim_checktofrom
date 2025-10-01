@@ -260,9 +260,18 @@ const renderTablaMenu = () => {
                     <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
                       <input 
                         type="text" 
-                        placeholder="Deduce General" 
+                        placeholder="Deduce General:" 
                         value={connectorAngleData.generalDeduce || ''}
-                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
+                        onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const sanitizedValue = rawValue.replace(/[^0-9]/g, '');
+                          setConnectorAngleData(prev => ({
+                            ...prev,
+                            generalDeduce: sanitizedValue
+                            }));
+                        }}
+                        style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}}  
+                      />
                     </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
