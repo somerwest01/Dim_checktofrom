@@ -1402,8 +1402,41 @@ case 'Conector':
     };
 
     switch (tipo) {
-      case 'Conector':
-        return <Rect {...commonProps} x={x - 5} y={y - 5} width={10} height={10} fill={isHovered ? 'Lime' : 'DeepSkyBlue'} />;
+      case 'Conector':{
+        const hasAngleData = end === 'p1' ? !!line.angle_data1 : !!line.angle_data2;
+                return (
+
+          <Group x={x} y={y} {...commonProps}>
+            {}
+            <Rect 
+              x={-5} y={-5} width={10} height={10} 
+              fill={isHovered ? 'Lime' : 'DeepSkyBlue'}
+              // Propiedades para identificar el objeto
+              id={commonProps.key}
+              lineIndex={index}
+              endType={end}
+            />
+
+            {}
+            {hasAngleData && (
+              <RegularPolygon
+                sides={4}          // Cuadrado
+                radius={3}         // Tamaño pequeño
+                fill="red"         // Color distintivo
+                stroke="darkred"
+                strokeWidth={0.5}
+                rotation={45}      // Rota 45° para que parezca un diamante
+                // **POSICIONAMIENTO:** // Lo movemos a la esquina inferior derecha del conector (10, 10)
+                x={8} 
+                y={8}
+                // Hacemos que sea transparente a los clics
+                listening={false} 
+              />
+            )}
+          </Group>
+        );
+      }
+        
       case 'BRK':
         return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'Lime' : 'black'} />;
       case 'SPL': {
