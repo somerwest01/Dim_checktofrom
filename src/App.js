@@ -1199,7 +1199,7 @@ lines.forEach((line) => {
                   
                   finalDeduction = deduceGeneral + deducePorColumna;
                 } 
-              }
+              
             } else {
               // Si es un número o está vacío, usa el valor numérico simple
               finalDeduction = parseFloat(deduce) || 0;
