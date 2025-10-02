@@ -1143,6 +1143,47 @@ lines.forEach((line) => {
               const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
               
               if (excelCavity) {
+                          let foundRowIndex = -1;
+                          let foundColIndex = -1;  
+                
+                  for (let r = 1; r < angleData.data.length; r++) {
+                  const row = angleData.data[r];
+
+                  for (let c = 1; c < row.length; c++) { 
+                    // Si encontramos la cavidad
+                    if (String(row[c] || '').trim() === excelCavity) {
+                        foundRowIndex = r;
+                        foundColIndex = c;
+                        break; // Salir del bucle de columnas
+                    }
+                }
+                if (foundRowIndex !== -1) {
+                    break; // Salir del bucle de filas
+                }
+            }
+                   // 3. Cálculo de la Deducción (Paso 3)
+            if (foundRowIndex !== -1 && foundColIndex !== -1) {
+                
+                // Deduce General: Columna 1 de la fila encontrada (angleData.data[r][1])
+                const deduceGeneral = parseFloat(angleData.data[foundRowIndex][1]) || 0; 
+                
+                // Deduce por Columna: Fila 0 de la columna encontrada (angleData.data[0][c])
+                const deducePorColumna = parseFloat(angleData.data[0][foundColIndex]) || 0; 
+                
+                finalDeduction = deduceGeneral + deducePorColumna;
+            } 
+            // Si no se encuentra la cavidad en la tabla, la deducción es 0.
+        }
+    } else {
+        // Si no es 'ANG', usar el valor numérico simple
+        finalDeduction = parseFloat(deduce) || 0;
+    }
+
+    // Asignar la deducción final
+    updatedSheet[i][excelDeduceCol] = finalDeduction;
+}         
+                    
+                
                 const cavityRowIndex = angleData.data.findIndex(row => 
                   row.length > 0 && String(row[0] || '').trim() === excelCavity
                 );
