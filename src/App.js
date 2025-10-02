@@ -1047,73 +1047,6 @@ const handleImportExcel = (e) => {
       updatedSheet[1][23] = 'Ruta encontrada';
       updatedSheet[1][24] = 'Deduce Lado 1';
       updatedSheet[1][25] = 'Deduce Lado 2';
-
-            lines.forEach((line) => {
-            const from_item = updatedSheet[i][0]; // Asumiendo que [0] es el nombre del FROM
-            const to_item = updatedSheet[i][1];   // Asumiendo que [1] es el nombre del TO
-
-            // Definición de los extremos de la línea con sus datos de ángulo y columna de cavidad en Excel
-            const extremos = [
-              {
-                nombre: line.nombre_obj1,
-                deduce: line.deduce1,
-                angleData: line.angle_data1,
-                // Columna J (10) del Excel, índice 9 (0-indexed)
-                cavityExcelIndex: 9 
-              },
-              {
-                nombre: line.nombre_obj2,
-                deduce: line.deduce2,
-                angleData: line.angle_data2,
-                // Columna Q (17) del Excel, índice 16 (0-indexed)
-                cavityExcelIndex: 16 
-              }
-            ];
-
-            extremos.forEach(({ nombre, deduce, angleData, cavityExcelIndex }) => {
-              // Determinar a qué lado del Excel corresponde (columna 24 o 25)
-              let excelDeduceCol = -1; 
-              if (nombre === from_item) excelDeduceCol = 24;
-              else if (nombre === to_item) excelDeduceCol = 25;
-
-              if (excelDeduceCol !== -1) {
-                let finalDeduction = 0;
-
-                if (deduce === 'ANG' && angleData && angleData.data) {
-                  // 1. Obtener la cavidad del Excel (columna J o Q)
-                  const excelCavity = String(updatedSheet[i][cavityExcelIndex]).trim(); 
-                  
-                  if (excelCavity) {
-                    // 2. Buscar la cavidad en la tabla de ángulo (primera columna del array 'data', índice 0)
-                    const cavityRowIndex = angleData.data.findIndex(row => 
-                      row.length > 0 && String(row[0]).trim() === excelCavity
-                    );
-
-                    if (cavityRowIndex !== -1) {
-                      const cavityDataRow = angleData.data[cavityRowIndex];
-                      
-                      // Índice 1 = Deduce General (primera columna de datos, después del nombre de la cavidad)
-                      const deduceGeneral = parseFloat(cavityDataRow[1]) || 0; 
-                      
-                      // Índice 2 = Deduce por Columna (primera fila del array 'data', segunda columna de datos)
-                      // Asumimos el índice [2] como la columna del ángulo a usar.
-                      const deducePorColumna = parseFloat(angleData.data[0][2]) || 0; 
-                      
-                      // 3. Calcular la deducción final sumando ambos valores
-                      finalDeduction = deduceGeneral + deducePorColumna;
-                    } 
-                    // Si no se encuentra la cavidad, la deducción se mantiene en 0.
-                  }
-                } else {
-                  // Si no es 'ANG', usar el valor numérico normal del deduce
-                  finalDeduction = parseFloat(deduce) || 0;
-                }
-                
-                // 4. Asignar la deducción final a la columna correspondiente del Excel
-                updatedSheet[i][excelDeduceCol] = finalDeduction;
-              }
-            });
-          });
     }
 
     const graph = {};
@@ -1173,18 +1106,66 @@ const handleImportExcel = (e) => {
           }
 
           const distancia = dijkstra(from_item, to_item);
-          updatedSheet[i][24] = '';
-          updatedSheet[i][25] = '';
-          lines.forEach((line) => {
-            const extremos = [
-              { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-              { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-            ];
-            extremos.forEach(({ nombre, valor }) => {
-              if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
-              if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
-            });
-          });
+updatedSheet[i][24] = 0; // Inicializamos a 0
+updatedSheet[i][25] = 0; // Inicializamos a 0
+
+lines.forEach((line) => {
+    // Definición de los extremos de la línea con sus datos de ángulo y columna de cavidad en Excel
+    const extremos = [
+      // Extremo 1 de la línea: nombre_obj1 (asociado a from_item = row[15] / Columna Q)
+      {
+        nombre: line.nombre_obj1,
+        deduce: line.deduce1,
+        angleData: line.angle_data1,
+        cavityExcelIndex: 16, // Columna Q (17) en el Excel
+        excelDeduceCol: 24,   // Columna Y
+      },
+      // Extremo 2 de la línea: nombre_obj2 (asociado a to_item = row[8] / Columna J)
+      {
+        nombre: line.nombre_obj2,
+        deduce: line.deduce2,
+        angleData: line.angle_data2,
+        cavityExcelIndex: 9,  // Columna J (10) en el Excel
+        excelDeduceCol: 25,   // Columna Z
+      }
+    ];
+
+    extremos.forEach(({ nombre, deduce, angleData, cavityExcelIndex, excelDeduceCol }) => {
+        let isMatch = false;
+        if (excelDeduceCol === 24 && nombre === from_item) isMatch = true;
+        if (excelDeduceCol === 25 && nombre === to_item) isMatch = true;
+
+        if (isMatch) {
+            let finalDeduction = 0;
+            
+            // Si el deduce es 'ANG', usa la lógica de tabla
+            if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data) {
+              const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
+              
+              if (excelCavity) {
+                const cavityRowIndex = angleData.data.findIndex(row => 
+                  row.length > 0 && String(row[0] || '').trim() === excelCavity
+                );
+
+                if (cavityRowIndex !== -1) {
+                  const cavityDataRow = angleData.data[cavityRowIndex];
+                  
+                  // Deducción General (Índice 1 de la fila) + Deducción por Columna (Índice 2 de la primera fila)
+                  const deduceGeneral = parseFloat(cavityDataRow[1]) || 0; 
+                  const deducePorColumna = parseFloat(angleData.data[0][2]) || 0; 
+                  
+                  finalDeduction = deduceGeneral + deducePorColumna;
+                } 
+              }
+            } else {
+              // Si es un número o está vacío, usa el valor numérico simple
+              finalDeduction = parseFloat(deduce) || 0;
+            }
+
+            updatedSheet[i][excelDeduceCol] = finalDeduction;
+        }
+    });
+});
 
           if (distancia === null) {
             updatedSheet[i][22] = 'Ruta no encontrada';
