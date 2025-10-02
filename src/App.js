@@ -1743,7 +1743,7 @@ case 'Conector':
 
           <td style={{ border: '1px solid gray' }}>
             <input
-              type="number"
+              type="text"
               value={line.deduce1}
               onChange={(e) => {
                 const updated = [...lines];
@@ -1769,7 +1769,7 @@ case 'Conector':
 
           <td style={{ border: '1px solid gray' }}>
             <input
-              type="number"
+              type="text"
               value={line.deduce2}
               onChange={(e) => {
                 const updated = [...lines];
