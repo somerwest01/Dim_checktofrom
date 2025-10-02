@@ -1146,13 +1146,15 @@ lines.forEach((line) => {
                 const cavityRowIndex = angleData.data.findIndex(row => 
                   row.length > 0 && String(row[0] || '').trim() === excelCavity
                 );
+              const deduceColumnIndex = angleData.data[0].findIndex(header => 
 
-                if (cavityRowIndex !== -1) {
+                String(header || '').trim() === excelCavity
+              );
+
+                if (cavityRowIndex !== -1 && deduceColumnIndex !== -1) {
                   const cavityDataRow = angleData.data[cavityRowIndex];
-                  
-                  // Deducción General (Índice 1 de la fila) + Deducción por Columna (Índice 2 de la primera fila)
-                  const deduceGeneral = parseFloat(cavityDataRow[1]) || 0; 
-                  const deducePorColumna = parseFloat(angleData.data[0][2]) || 0; 
+                  const deduceGeneral = parseFloat(cavityDataRow[1]) || 0;
+                  const deducePorColumna = parseFloat(angleData.data[0][deduceColumnaIndex]) || 0;
                   
                   finalDeduction = deduceGeneral + deducePorColumna;
                 } 
