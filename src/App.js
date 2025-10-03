@@ -1166,8 +1166,8 @@ if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data
         // 3. Cálculo de la Deducción (Suma Coordenada)
         if (foundRowIndex !== -1 && foundColIndex !== -1) {
             
-            // Deduce General: Columna 1 de la fila encontrada
-            const deduceGeneral = parseFloat(angleData.data[foundRowIndex][1]) || 0; 
+            // Deduce General: Columna 0 de la fila encontrada
+            const deduceGeneral = parseFloat(angleData.data[foundRowIndex][0]) || 0; 
             
             // Deduce por Columna: Fila 0 (encabezado de columna) de la columna encontrada
             const deducePorColumna = parseFloat(angleData.data[0][foundColIndex]) || 0; 
