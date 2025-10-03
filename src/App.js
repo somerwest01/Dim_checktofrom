@@ -1136,35 +1136,53 @@ lines.forEach((line) => {
         if (excelDeduceCol === 25 && nombre === to_item) isMatch = true;
 
         if (isMatch) {
-            let finalDeduction = 0;
-            
-            // Si el deduce es 'ANG', usa la lógica de tabla
-            if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data) {
-              const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
-              
-              if (excelCavity) {
-                const cavityRowIndex = angleData.data.findIndex(row => 
-                  row.length > 0 && String(row[0] || '').trim() === excelCavity
-                );
-              const deduceColumnIndex = angleData.data[0].findIndex(header => 
+let finalDeduction = 0;
 
-                String(header || '').trim() === excelCavity
-              );
-
-                if (cavityRowIndex !== -1 && deduceColumnIndex !== -1) {
-                  const cavityDataRow = angleData.data[cavityRowIndex];
-                  const deduceGeneral = parseFloat(cavityDataRow[1]) || 0;
-                  const deducePorColumna = parseFloat(angleData.data[0][deduceColumnaIndex]) || 0;
-                  
-                  finalDeduction = deduceGeneral + deducePorColumna;
-                } 
-              }
-            } else {
-              // Si es un número o está vacío, usa el valor numérico simple
-              finalDeduction = parseFloat(deduce) || 0;
+// Si el deduce es 'ANG', usa la lógica de tabla (Coordenadas)
+if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data) {
+    // 1. Obtener la cavidad del Excel (índice 9 o 16)
+    const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
+    
+    if (excelCavity) {
+        let foundRowIndex = -1;
+        let foundColIndex = -1; 
+        
+        // 2. Búsqueda de Coordenadas: Buscar la cavidad en el cuerpo de la tabla (r>0, c>0)
+        for (let r = 1; r < angleData.data.length; r++) {
+            const row = angleData.data[r];
+            for (let c = 1; c < row.length; c++) { 
+                // Si encontramos la cavidad
+                if (String(row[c] || '').trim() === excelCavity) {
+                    foundRowIndex = r;
+                    foundColIndex = c;
+                    break; // Cavidad encontrada, salir del bucle de columnas
+                }
             }
+            if (foundRowIndex !== -1) {
+                break; // Salir del bucle de filas
+            }
+        }
+        
+        // 3. Cálculo de la Deducción (Suma Coordenada)
+        if (foundRowIndex !== -1 && foundColIndex !== -1) {
+            
+            // Deduce General: Columna 1 de la fila encontrada
+            const deduceGeneral = parseFloat(angleData.data[foundRowIndex][1]) || 0; 
+            
+            // Deduce por Columna: Fila 0 (encabezado de columna) de la columna encontrada
+            const deducePorColumna = parseFloat(angleData.data[0][foundColIndex]) || 0; 
+            
+            finalDeduction = deduceGeneral + deducePorColumna;
+        } 
+        // Si no se encuentra la cavidad en la tabla, finalDeduction se queda en 0.
+    }
+} else {
+    // Si no es 'ANG', usar el valor numérico simple
+    finalDeduction = parseFloat(deduce) || 0;
+}
 
-            updatedSheet[i][excelDeduceCol] = finalDeduction;
+// Asignar la deducción final a la columna del Excel
+updatedSheet[i][excelDeduceCol] = finalDeduction;
         }
     });
 });
