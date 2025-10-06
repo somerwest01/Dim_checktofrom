@@ -1139,8 +1139,7 @@ lines.forEach((line) => {
 let finalDeduction = 0;
 
 // Si el deduce es 'ANG', usa la lógica de tabla (Coordenadas)
-if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data) {
-    // 1. Obtener la cavidad del Excel (índice 9 o 16)
+if (String(deduce).trim().toUpperCase() === 'ANG' && angleData) {
     const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
     
     if (excelCavity) {
