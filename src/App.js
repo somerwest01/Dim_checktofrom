@@ -1141,7 +1141,7 @@ let finalDeduction = 0;
 // Si el deduce es 'ANG', usa la lógica de tabla (Coordenadas)
 if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data) {
     // 1. Obtener la cavidad del Excel (índice 9 o 16)
-/*    const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
+    const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
     
     if (excelCavity) {
         let foundRowIndex = -1;
@@ -1162,7 +1162,7 @@ if (String(deduce).trim().toUpperCase() === 'ANG' && angleData && angleData.data
                 break; // Salir del bucle de filas
             }
         }
-        */
+        
         // 3. Cálculo de la Deducción (Suma Coordenada)
         if (foundRowIndex !== -1 && foundColIndex !== -1) {
             
