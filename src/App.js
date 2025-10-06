@@ -354,11 +354,14 @@ const renderTablaMenu = () => {
   const newAngleData = { data, filas, columnas, generalDeduce, columnDeduce }; 
   
     const updatedLines = [...lines];
-    
+        const lineToUpdate = updatedLines[lineIndex];
+        
     if (end === 'p1') {
       updatedLines[lineIndex].angle_data1 = newAngleData;
+      lineToUpdate.deduce1 = "ANG"; 
     } else {
       updatedLines[lineIndex].angle_data2 = newAngleData;
+      lineToUpdate.deduce2 = "ANG";
     }
 
     // 3. Guardar el estado
@@ -1671,15 +1674,32 @@ case 'Conector':
 </td>
 
           <td style={{ border: '1px solid gray' }}>
-            <input
-              type="number"
-              value={line.deduce1}
-              onChange={(e) => {
-                const updated = [...lines];
-                updated[index].deduce1 = e.target.value;
-                setLines(updated);
-              }}
-              style={{ width: '50px', textAlign: 'center' }}
+  {line.deduce1 === 'ANG' ? (
+    // Caso 1: Mostrar "ANG" (Conector con Ángulo asignado)
+    <span 
+      style={{ 
+        display: 'block', 
+        width: '50px', 
+        textAlign: 'center', 
+        fontWeight: 'bold', 
+        color: '#308014', // Color verde para destacar
+        padding: '5px 0' // Ajuste de padding para centrar verticalmente
+      }}
+    >
+      ANG
+    </span>
+  ) : (
+    // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
+    <input
+      type="number"
+      value={line.deduce1}
+      onChange={(e) => {
+        const updated = [...lines];
+        // Permite guardar valores numéricos en el estado
+        updated[index].deduce1 = e.target.value; 
+        setLines(updated);
+      }}
+      style={{ width: '50px', textAlign: 'center' }}
             />
           </td>
           
@@ -1697,15 +1717,33 @@ case 'Conector':
 </td>
 
           <td style={{ border: '1px solid gray' }}>
-            <input
-              type="number"
-              value={line.deduce2}
-              onChange={(e) => {
-                const updated = [...lines];
-                updated[index].deduce2 = e.target.value;
-                setLines(updated);
-              }}
-              style={{ width: '50px', textAlign: 'center' }}
+  {line.deduce2 === 'ANG' ? (
+    // Caso 1: Mostrar "ANG" (Conector con Ángulo asignado al extremo 2)
+    <span 
+      style={{ 
+        display: 'block', 
+        width: '50px', 
+        textAlign: 'center', 
+        fontWeight: 'bold', 
+        color: '#308014', // Color verde para destacar
+        padding: '5px 0' // Ajuste de padding para centrar verticalmente
+      }}
+    >
+      ANG
+    </span>
+  ) : (
+    // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
+    <input
+      type="number"
+      value={line.deduce2}
+      onChange={(e) => {
+        const updated = [...lines];
+        // Permite guardar valores numéricos en el estado
+        updated[index].deduce2 = e.target.value; 
+        setLines(updated);
+      }}
+      style={{ width: '50px', textAlign: 'center' }}
+
             />
           </td>
           
