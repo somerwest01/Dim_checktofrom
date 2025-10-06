@@ -1171,7 +1171,7 @@ if (String(deduce).trim().toUpperCase() === 'ANG' && angleData) {
             // Deduce por Columna: Fila 0 (encabezado de columna) de la columna encontrada
             const deducePorColumna = parseFloat(angleData.data[0][foundColIndex]) || 0;
             
-            finalDeduction = deduceGeneral;
+            finalDeduction = deduceGeneral + deducePorColumna;
         } 
         // Si no se encuentra la cavidad en la tabla, finalDeduction se queda en 0.
     }
