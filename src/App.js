@@ -338,14 +338,12 @@ const renderTablaMenu = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
         <button onClick={() => {
     // 1. Crear el objeto de datos a guardar
-    const { lineIndex, end, data, filas, columnas, generalDeduce } = connectorAngleData;
+    const { lineIndex, end, data, filas, columnas, generalDeduce, columnDeduce } = connectorAngleData;
 
     if (lineIndex === null || end === null) {
       setTablaMenu(false);
       return;
     }
-
-    const { lineIndex, end, data, filas, columnas, generalDeduce, columnDeduce } = connectorAngleData;
 
       if (lineIndex === null || end === null) {
     setTablaMenu(false);
