@@ -1701,8 +1701,7 @@ case 'Conector':
       }}
       style={{ width: '50px', textAlign: 'center' }}
             />
-          </td>
-                )}
+      )}
 </td>
           
 <td style={{ border: '1px solid gray' }}>
