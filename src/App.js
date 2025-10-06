@@ -53,6 +53,7 @@ function App() {
   filas: 5,        // Filas específicas de este conector
   columnas: 3,     // Columnas específicas de este conector
   generalDeduce: '',
+  columnDeduce: [],
 });
 
   const [drawingStep, setDrawingStep] = useState(0); 
@@ -187,6 +188,16 @@ const renderTablaMenu = () => {
     WebkitAppearance: 'none',
     margin: 0,
   };
+  const handleColumnDeduceChange = (colIndex, value) => {
+      // Opcional: acepta solo números
+      const numericValue = value.replace(/[^0-9]/g, ''); 
+      setConnectorAngleData(prev => {
+          const newDeduce = [...prev.columnDeduce];
+          newDeduce[colIndex] = numericValue;
+          return { ...prev, columnDeduce: newDeduce };
+      });
+  };
+  
   const handleDataChange = (rowIndex, colIndex, value) => {
       // Función para actualizar un valor específico de la tabla
       const newData = JSON.parse(JSON.stringify(data)); // Copia profunda
@@ -251,7 +262,14 @@ const renderTablaMenu = () => {
                 <td style={{ ...cellStyle, border: 'none' }}></td>
                 {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={nameCellStyle}>
-                    <input type="text" style={inputStyle} />
+                   <input 
+                      type="text" 
+                      // ✅ CONECTADO: Usar el valor del estado
+                      value={connectorAngleData.columnDeduce[colIndex] || ''} 
+                      // ✅ CONECTADO: Llamar al handler al escribir
+                      onInput={(e) => handleColumnDeduceChange(colIndex, e.target.value)}
+                      style={inputStyle} 
+                    />
                   </td>
                 ))}
               </tr>
@@ -327,9 +345,16 @@ const renderTablaMenu = () => {
       return;
     }
 
-    const newAngleData = { data, filas, columnas, generalDeduce }; // Agregue el deduce general si lo necesita
+    const { lineIndex, end, data, filas, columnas, generalDeduce, columnDeduce } = connectorAngleData;
 
-    // 2. Crear una copia de las líneas y actualizar la línea objetivo
+      if (lineIndex === null || end === null) {
+    setTablaMenu(false);
+    return;
+  }
+
+  // ✅ Incluir columnDeduce en el objeto que se guarda en la línea
+  const newAngleData = { data, filas, columnas, generalDeduce, columnDeduce }; 
+  
     const updatedLines = [...lines];
     
     if (end === 'p1') {
@@ -343,11 +368,11 @@ const renderTablaMenu = () => {
     
     // 4. Resetear y cerrar
     setTablaMenu(false);
-    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '' });
+    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '', columnDeduce: [] });
   }}>Agregar ángulo</button>
           <button onClick={() => {
     setTablaMenu(false);
-    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '' }); // Resetear al cancelar
+    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '', columnDeduce: [] }); // Resetear al cancelar
   }}>
     Cancelar
   </button>
@@ -1355,6 +1380,7 @@ case 'Conector':
               filas: existingData?.filas || 5,
               columnas: existingData?.columnas || 3,
               generalDeduce: existingData?.generalDeduce || '',
+              columnDeduce: existingData?.columnDeduce || [],
           });
     
         }}>Agregar ángulo</button>
