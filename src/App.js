@@ -52,6 +52,7 @@ function App() {
   data: [],        // Array bidimensional para el contenido de la tabla
   filas: 5,        // Filas específicas de este conector
   columnas: 3,     // Columnas específicas de este conector
+  generalDeduce: '',
 });
 
   const [drawingStep, setDrawingStep] = useState(0); 
@@ -196,6 +197,7 @@ const renderTablaMenu = () => {
   
   // Función para actualizar el valor general (ej. el que está en vertical)
   const handleGeneralDeduceChange = (value) => {
+      const numericValue = value.replace(/[^0-9.]/g, '');
       setConnectorAngleData(prev => ({ ...prev, generalDeduce: value }));
   };
   
@@ -262,7 +264,8 @@ const renderTablaMenu = () => {
                         type="text" 
                         placeholder="Deduce General" 
                         value={connectorAngleData.generalDeduce || ''}
-                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
+                        onInput={(e) => handleGeneralDeduceChange(e.target.value)} 
+                        style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
                     </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
@@ -1351,6 +1354,7 @@ case 'Conector':
               data: existingData?.data || [], 
               filas: existingData?.filas || 5,
               columnas: existingData?.columnas || 3,
+              generalDeduce: existingData?.generalDeduce || '',
           });
     
         }}>Agregar ángulo</button>
