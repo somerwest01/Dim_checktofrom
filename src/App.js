@@ -52,8 +52,6 @@ function App() {
   data: [],        // Array bidimensional para el contenido de la tabla
   filas: 5,        // Filas específicas de este conector
   columnas: 3,     // Columnas específicas de este conector
-  generalDeduce: '',      // Para el valor que se guarda en vertical
-  columnNames: [], 
 });
 
   const [drawingStep, setDrawingStep] = useState(0); 
@@ -195,13 +193,6 @@ const renderTablaMenu = () => {
       newData[rowIndex][colIndex] = value;
       setConnectorAngleData(prev => ({ ...prev, data: newData }));
   };
-  const handleColumnNameChange = (colIndex, value) => {
-    setConnectorAngleData(prev => {
-        const newColumnNames = [...prev.columnNames];
-        newColumnNames[colIndex] = value;
-        return { ...prev, columnNames: newColumnNames };
-    });
-};
   
   // Función para actualizar el valor general (ej. el que está en vertical)
   const handleGeneralDeduceChange = (value) => {
@@ -258,12 +249,7 @@ const renderTablaMenu = () => {
                 <td style={{ ...cellStyle, border: 'none' }}></td>
                 {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
                   <td key={colIndex} style={nameCellStyle}>
-                    <input 
-                      type="text" 
-                      style={inputStyle} 
-                      value={connectorAngleData.columnNames[colIndex] || ''}
-                      onChange={(e) => handleColumnNameChange(colIndex, e.target.value)}
-                    />
+                    <input type="text" style={inputStyle} />
                   </td>
                 ))}
               </tr>
@@ -274,18 +260,9 @@ const renderTablaMenu = () => {
                     <td rowSpan={filas} style={{...firstColumnStyle, verticalAlign: 'middle', borderRight: 'none', writingMode: 'vertical-lr', textOrientation: 'upright'}}>
                       <input 
                         type="text" 
-                        placeholder="Deduce General:" 
+                        placeholder="Deduce General" 
                         value={connectorAngleData.generalDeduce || ''}
-                        onChange={(e) => {
-                          const rawValue = e.target.value;
-                          const sanitizedValue = rawValue.replace(/[^0-9]/g, '');
-                          setConnectorAngleData(prev => ({
-                            ...prev,
-                            generalDeduce: sanitizedValue
-                            }));
-                        }}
-                        style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}}  
-                      />
+                        onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} style={{...inputStyle, writingMode: 'initial', textOrientation: 'initial', height: '100%', width: '100%'}} />
                     </td>
                   )}
                   {Array.from({ length: columnas - 1 }).map((_, colIndex) => (
@@ -340,24 +317,22 @@ const renderTablaMenu = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px', gap: '10px' }}>
         <button onClick={() => {
     // 1. Crear el objeto de datos a guardar
-    const { lineIndex, end, data, filas, columnas, generalDeduce, columnNames } = connectorAngleData;
+    const { lineIndex, end, data, filas, columnas, generalDeduce } = connectorAngleData;
 
     if (lineIndex === null || end === null) {
       setTablaMenu(false);
       return;
     }
 
-    const newAngleData = { data, filas, columnas, generalDeduce, columnNames }; // Agregue el deduce general si lo necesita
+    const newAngleData = { data, filas, columnas, generalDeduce }; // Agregue el deduce general si lo necesita
 
     // 2. Crear una copia de las líneas y actualizar la línea objetivo
     const updatedLines = [...lines];
     
     if (end === 'p1') {
       updatedLines[lineIndex].angle_data1 = newAngleData;
-    updatedLines[lineIndex].deduce1 = 'ANG';  
     } else {
       updatedLines[lineIndex].angle_data2 = newAngleData;
-    updatedLines[lineIndex].deduce2 = 'ANG';   
     }
 
     // 3. Guardar el estado
@@ -365,7 +340,7 @@ const renderTablaMenu = () => {
     
     // 4. Resetear y cerrar
     setTablaMenu(false);
-    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '', columnNames: [] });
+    setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '' });
   }}>Agregar ángulo</button>
           <button onClick={() => {
     setTablaMenu(false);
@@ -1106,85 +1081,18 @@ const handleImportExcel = (e) => {
           }
 
           const distancia = dijkstra(from_item, to_item);
-updatedSheet[i][24] = 0; // Inicializamos a 0
-updatedSheet[i][25] = 0; // Inicializamos a 0
-
-lines.forEach((line) => {
-    // Definición de los extremos de la línea con sus datos de ángulo y columna de cavidad en Excel
-    const extremos = [
-      // Extremo 1 de la línea: nombre_obj1 (asociado a from_item = row[15] / Columna Q)
-      {
-        nombre: line.nombre_obj1,
-        deduce: line.deduce1,
-        angleData: line.angle_data1,
-        cavityExcelIndex: 16, // Columna Q (17) en el Excel
-        excelDeduceCol: 24,   // Columna Y
-      },
-      // Extremo 2 de la línea: nombre_obj2 (asociado a to_item = row[8] / Columna J)
-      {
-        nombre: line.nombre_obj2,
-        deduce: line.deduce2,
-        angleData: line.angle_data2,
-        cavityExcelIndex: 9,  // Columna J (10) en el Excel
-        excelDeduceCol: 25,   // Columna Z
-      }
-    ];
-
-    extremos.forEach(({ nombre, deduce, angleData, cavityExcelIndex, excelDeduceCol }) => {
-        let isMatch = false;
-        if (excelDeduceCol === 24 && nombre === from_item) isMatch = true;
-        if (excelDeduceCol === 25 && nombre === to_item) isMatch = true;
-
-        if (isMatch) {
-let finalDeduction = 0;
-
-// Si el deduce es 'ANG', usa la lógica de tabla (Coordenadas)
-if (String(deduce).trim().toUpperCase() === 'ANG' && angleData) {
-    const excelCavity = String(updatedSheet[i][cavityExcelIndex] || '').trim();
-    
-    if (excelCavity) {
-        let foundRowIndex = -1;
-        let foundColIndex = -1; 
-        
-        // 2. Búsqueda de Coordenadas: Buscar la cavidad en el cuerpo de la tabla (r>0, c>0)
-        for (let r = 1; r < angleData.data.length; r++) {
-            const row = angleData.data[r];
-            for (let c = 1; c < row.length; c++) { 
-                // Si encontramos la cavidad
-                if (String(row[c] || '').trim() === excelCavity) {
-                    foundRowIndex = r;
-                    foundColIndex = c;
-                    break; // Cavidad encontrada, salir del bucle de columnas
-                }
-            }
-            if (foundRowIndex !== -1) {
-                break; // Salir del bucle de filas
-            }
-        }
-        
-        // 3. Cálculo de la Deducción (Suma Coordenada)
-        if (foundRowIndex !== -1 && foundColIndex !== -1) {
-            
-            // Deduce General: Columna 0 de la fila encontrada
-            const deduceGeneral = parseFloat(angleData.generalDeduce) || 0; 
-            
-            // Deduce por Columna: Fila 0 (encabezado de columna) de la columna encontrada
-            const deducePorColumna = parseFloat(angleData.data[0][foundColIndex]) || 0;
-            
-            finalDeduction = deduceGeneral + deducePorColumna;
-        } 
-        // Si no se encuentra la cavidad en la tabla, finalDeduction se queda en 0.
-    }
-} else {
-    // Si no es 'ANG', usar el valor numérico simple
-    finalDeduction = parseFloat(deduce) || 0;
-}
-
-// Asignar la deducción final a la columna del Excel
-updatedSheet[i][excelDeduceCol] = finalDeduction;
-        }
-    });
-});
+          updatedSheet[i][24] = '';
+          updatedSheet[i][25] = '';
+          lines.forEach((line) => {
+            const extremos = [
+              { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+              { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+            ];
+            extremos.forEach(({ nombre, valor }) => {
+              if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
+              if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
+            });
+          });
 
           if (distancia === null) {
             updatedSheet[i][22] = 'Ruta no encontrada';
@@ -1335,17 +1243,11 @@ const handleUpdateFloatingMenu = () => {
     targetLine.nombre_obj1 = newName;
     if (type === 'Conector' || type === 'SPL') {
       targetLine.deduce1 = newDeduce;
-      if (type === 'Conector' && newDeduce !== 'ANG') { 
-        targetLine.angle_data1 = null; 
-      }      
     }
   } else {
     targetLine.nombre_obj2 = newName;
     if (type === 'Conector' || type === 'SPL') {
       targetLine.deduce2 = newDeduce;
-        if (type === 'Conector' && newDeduce !== 'ANG') { 
-        targetLine.angle_data2 = null; 
-      }
     }
   }
   
@@ -1445,11 +1347,10 @@ case 'Conector':
           setConnectorAngleData({
               lineIndex: floatingMenu.lineIndex,
               end: end,
+              // Carga los datos existentes, o usa valores predeterminados
               data: existingData?.data || [], 
               filas: existingData?.filas || 5,
               columnas: existingData?.columnas || 3,
-              generalDeduce: existingData?.generalDeduce || '',
-              columnNames: existingData?.columnNames || [],
           });
     
         }}>Agregar ángulo</button>
@@ -1743,7 +1644,7 @@ case 'Conector':
 
           <td style={{ border: '1px solid gray' }}>
             <input
-              type="text"
+              type="number"
               value={line.deduce1}
               onChange={(e) => {
                 const updated = [...lines];
@@ -1769,7 +1670,7 @@ case 'Conector':
 
           <td style={{ border: '1px solid gray' }}>
             <input
-              type="text"
+              type="number"
               value={line.deduce2}
               onChange={(e) => {
                 const updated = [...lines];
