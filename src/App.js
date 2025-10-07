@@ -358,10 +358,10 @@ const renderTablaMenu = () => {
         
     if (end === 'p1') {
       updatedLines[lineIndex].angle_data1 = newAngleData;
-      lineToUpdate.deduce1 = "ANG"; 
+      lineToUpdate.deduce1 = "ang"; 
     } else {
       updatedLines[lineIndex].angle_data2 = newAngleData;
-      lineToUpdate.deduce2 = "ANG";
+      lineToUpdate.deduce2 = "ang";
     }
 
     // 3. Guardar el estado
@@ -1193,12 +1193,12 @@ const handleExportExcel = () => {
     console.log(`Línea ${index + 1} - generalDeduce P1:`, line.angle_data1?.generalDeduce);
     
 
-    const deduceGeneralP1 = line.deduce1 === 'ANG' 
+    const deduceGeneralP1 = line.deduce1 === 'ang' 
       ? (line.angle_data1?.generalDeduce || '') 
       : '';
 
 
-    const deduceGeneralP2 = line.deduce2 === 'ANG' 
+    const deduceGeneralP2 = line.deduce2 === 'ang' 
       ? (line.angle_data2?.generalDeduce || '') 
       : '';
 
@@ -1695,7 +1695,7 @@ case 'Conector':
 </td>
 
           <td style={{ border: '1px solid gray' }}>
-  {line.deduce1 === 'ANG' ? (
+  {line.deduce1 === 'ang' ? (
     // Caso 1: Mostrar "ANG" (Conector con Ángulo asignado)
     <span 
       style={{ 
@@ -1706,7 +1706,7 @@ case 'Conector':
         color: '#308014', // Color verde para destacar
         padding: '5px 0' // Ajuste de padding para centrar verticalmente
       }}
-    >ANG</span>
+    >ang</span>
   ) : (
     // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
     <input
@@ -1737,7 +1737,7 @@ case 'Conector':
 </td>
 
           <td style={{ border: '1px solid gray' }}>
-  {line.deduce2 === 'ANG' ? (
+  {line.deduce2 === 'ang' ? (
     // Caso 1: Mostrar "ANG" (Conector con Ángulo asignado al extremo 2)
     <span 
       style={{ 
@@ -1748,7 +1748,7 @@ case 'Conector':
         color: '#308014', // Color verde para destacar
         padding: '5px 0' // Ajuste de padding para centrar verticalmente
       }}
-    >ANG</span>
+    >ang</span>
   ) : (
     // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
     <input
