@@ -1051,6 +1051,8 @@ const handleImportExcel = (e) => {
       updatedSheet[1][23] = 'Ruta encontrada';
       updatedSheet[1][24] = 'Deduce Lado 1';
       updatedSheet[1][25] = 'Deduce Lado 2';
+      updatedSheet[1][26] = 'Deduce General (AA)';      // AA
+      updatedSheet[1][27] = 'Deduce por columna (AB)';  // AB
     }
 
     const graph = {};
@@ -1097,47 +1099,100 @@ const handleImportExcel = (e) => {
 
     const processChunk = () => {
       const end = Math.min(i + chunkSize, updatedSheet.length);
-      for (; i < end; i++) {
-        try {
-          const row = updatedSheet[i];
-          const to_item = row[8];
-          const from_item = row[15];
+     
+for (; i < end; i++) {
+  try {
+    const row = updatedSheet[i] || [];
+    const to_item = row[8];    // columna I
+    const from_item = row[15]; // columna P
 
-          if (!from_item || !to_item) {
-            updatedSheet[i][22] = 'Extremos faltantes';
-            updatedSheet[i][23] = 'No';
-            continue;
+    // cavidades según tu especificación:
+    const cavityTo = row[9];   // J (si to_item viene de I)
+    const cavityFrom = row[16];// Q (si from_item viene de P)
+
+    if (!from_item && !to_item) {
+      updatedSheet[i][22] = 'Extremos faltantes';
+      updatedSheet[i][23] = 'No';
+      continue;
+    }
+
+    const distancia = dijkstra(from_item, to_item);
+
+    // Limpiar/initializar columnas de salida
+    updatedSheet[i][24] = ''; // Deduce Lado 1 (numérico, legado)
+    updatedSheet[i][25] = ''; // Deduce Lado 2 (numérico, legado)
+    updatedSheet[i][26] = ''; // AA -> Deduce General
+    updatedSheet[i][27] = ''; // AB -> Deduce por columna
+
+    // --- helper: busca dentro de angle_data la cavidad y devuelve {general, column} ---
+    const findAngleForEndpoint = (endpointName, cavityVal) => {
+      if (!endpointName || cavityVal === undefined || cavityVal === null) return null;
+      for (const line of lines) {
+        // revisa p1
+        if (line.nombre_obj1 === endpointName && line.deduce1 === 'ang' && line.angle_data1) {
+          const ad = line.angle_data1;
+          for (let r = 0; r < (ad.data?.length || 0); r++) {
+            for (let c = 0; c < (ad.data[r]?.length || 0); c++) {
+              const cell = ad.data[r][c];
+              if (cell != null && cell.toString().trim() === cavityVal.toString().trim()) {
+                return { general: ad.generalDeduce ?? '', column: ad.columnDeduce?.[c] ?? '' };
+              }
+            }
           }
-
-          const distancia = dijkstra(from_item, to_item);
-          updatedSheet[i][24] = '';
-          updatedSheet[i][25] = '';
-          lines.forEach((line) => {
-            const extremos = [
-              { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
-              { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
-            ];
-            extremos.forEach(({ nombre, valor }) => {
-              if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
-              if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
-            });
-          });
-
-          if (distancia === null) {
-            updatedSheet[i][22] = 'Ruta no encontrada';
-            updatedSheet[i][23] = 'No';
-            continue;
+        }
+        // revisa p2
+        if (line.nombre_obj2 === endpointName && line.deduce2 === 'ang' && line.angle_data2) {
+          const ad = line.angle_data2;
+          for (let r = 0; r < (ad.data?.length || 0); r++) {
+            for (let c = 0; c < (ad.data[r]?.length || 0); c++) {
+              const cell = ad.data[r][c];
+              if (cell != null && cell.toString().trim() === cavityVal.toString().trim()) {
+                return { general: ad.generalDeduce ?? '', column: ad.columnDeduce?.[c] ?? '' };
+              }
+            }
           }
-
-          updatedSheet[i][22] = distancia;
-          updatedSheet[i][23] = 'Sí';
-        } catch (error) {
-          updatedSheet[i][22] = 'Error en fila';
-          updatedSheet[i][23] = 'No';
-          console.error(`Error en fila ${i}:`, error);
         }
       }
+      return null;
+    };
 
+    // --- Mantener la lógica anterior para valores numéricos de deduce ---
+    lines.forEach((line) => {
+      const extremos = [
+        { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
+        { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
+      ];
+      extremos.forEach(({ nombre, valor }) => {
+        if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
+        if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
+      });
+    });
+
+    // --- Ahora verifica ángulos: prioriza 'from' si aplica, si no usa 'to' ---
+    const angleFrom = findAngleForEndpoint(from_item, cavityFrom);
+    const angleTo = findAngleForEndpoint(to_item, cavityTo);
+    const angleToWrite = angleFrom || angleTo;
+
+    if (angleToWrite) {
+      updatedSheet[i][26] = angleToWrite.general; // AA
+      updatedSheet[i][27] = angleToWrite.column;  // AB
+    }
+
+    if (distancia === null) {
+      updatedSheet[i][22] = 'Ruta no encontrada';
+      updatedSheet[i][23] = 'No';
+      continue;
+    }
+
+    updatedSheet[i][22] = distancia;
+    updatedSheet[i][23] = 'Sí';
+
+  } catch (error) {
+    updatedSheet[i][22] = 'Error en fila';
+    updatedSheet[i][23] = 'No';
+    console.error(`Error en fila ${i}:`, error);
+  }
+}
       setCircuitosProcesados(i - 2);
 
       if (i < updatedSheet.length) {
