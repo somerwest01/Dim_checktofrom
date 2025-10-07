@@ -1189,6 +1189,8 @@ const handleExportExcel = () => {
   setStatusMessage('📤 Procesando archivo para exportar...');
   
   const exportData = lines.map((line, index) => {
+    console.log(`Línea ${index + 1} - deduce1:`, line.deduce1);
+    console.log(`Línea ${index + 1} - generalDeduce P1:`, line.angle_data1?.generalDeduce);
     
 
     const deduceGeneralP1 = line.deduce1 === 'ANG' 
