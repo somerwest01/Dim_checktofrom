@@ -1190,14 +1190,12 @@ const handleExportExcel = () => {
   
   const exportData = lines.map((line, index) => {
     
-    // 1. Lógica para el Deduce General P1 (Columna AA)
-    // Verifica si line.deduce1 es "ANG" y, si lo es, extrae generalDeduce de angle_data1.
+
     const deduceGeneralP1 = line.deduce1 === 'ANG' 
       ? (line.angle_data1?.generalDeduce || '') 
       : '';
 
-    // 2. Lógica para el Deduce General P2 (Columna AB)
-    // Verifica si line.deduce2 es "ANG" y, si lo es, extrae generalDeduce de angle_data2.
+
     const deduceGeneralP2 = line.deduce2 === 'ANG' 
       ? (line.angle_data2?.generalDeduce || '') 
       : '';
@@ -1207,16 +1205,11 @@ const handleExportExcel = () => {
       item: index + 1,
       nombre_obj1: line.nombre_obj1,
       nombre_obj2: line.nombre_obj2,
-      // Nota: Si line.deduce es "ANG", parseFloat(line.deduce) fallará. 
-      // Si la columna 'deduce' en tu Excel debe reflejar la suma, 
-      // necesitarás una lógica más robusta aquí. Por ahora, solo usamos line.deduce.
       dimension_mm: parseFloat(line.dimension_mm || 0) + parseFloat(line.deduce || 0),
       deduce: line.deduce,
       
-      // ✅ NUEVAS COLUMNAS REQUERIDAS
-      // AA: Deduce General del Ángulo P1
+
       'AA': deduceGeneralP1, 
-      // AB: Deduce General del Ángulo P2
       'AB': deduceGeneralP2,
     };
   });
@@ -1711,9 +1704,7 @@ case 'Conector':
         color: '#308014', // Color verde para destacar
         padding: '5px 0' // Ajuste de padding para centrar verticalmente
       }}
-    >
-      ANG
-    </span>
+    >ANG</span>
   ) : (
     // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
     <input
@@ -1755,9 +1746,7 @@ case 'Conector':
         color: '#308014', // Color verde para destacar
         padding: '5px 0' // Ajuste de padding para centrar verticalmente
       }}
-    >
-      ANG
-    </span>
+    >ANG</span>
   ) : (
     // Caso 2: Mostrar el Input Numérico (Sin conector de ángulo)
     <input
