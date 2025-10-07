@@ -1051,8 +1051,6 @@ const handleImportExcel = (e) => {
       updatedSheet[1][23] = 'Ruta encontrada';
       updatedSheet[1][24] = 'Deduce Lado 1';
       updatedSheet[1][25] = 'Deduce Lado 2';
-      updatedSheet[1][26] = 'Deduce General (AA)';      // AA
-      updatedSheet[1][27] = 'Deduce por columna (AB)';  // AB
     }
 
     const graph = {};
@@ -1105,10 +1103,8 @@ for (; i < end; i++) {
     const row = updatedSheet[i] || [];
     const to_item = row[8];    // columna I
     const from_item = row[15]; // columna P
-
-    // cavidades según tu especificación:
-    const cavityTo = row[9];   // J (si to_item viene de I)
-    const cavityFrom = row[16];// Q (si from_item viene de P)
+    const cavityTo = row[9];   // J
+    const cavityFrom = row[16];// Q
 
     if (!from_item && !to_item) {
       updatedSheet[i][22] = 'Extremos faltantes';
@@ -1118,45 +1114,45 @@ for (; i < end; i++) {
 
     const distancia = dijkstra(from_item, to_item);
 
-    // Limpiar/initializar columnas de salida
-    updatedSheet[i][24] = ''; // Deduce Lado 1 (numérico, legado)
-    updatedSheet[i][25] = ''; // Deduce Lado 2 (numérico, legado)
-    updatedSheet[i][26] = ''; // AA -> Deduce General
-    updatedSheet[i][27] = ''; // AB -> Deduce por columna
+    updatedSheet[i][24] = ''; // Deduce Lado 1
+    updatedSheet[i][25] = ''; // Deduce Lado 2
 
-    // --- helper: busca dentro de angle_data la cavidad y devuelve {general, column} ---
-    const findAngleForEndpoint = (endpointName, cavityVal) => {
-      if (!endpointName || cavityVal === undefined || cavityVal === null) return null;
+    // --- helper: busca dentro de angle_data la cavidad y devuelve la suma ---
+    const findAngleSumForEndpoint = (endpointName, cavityVal) => {
+      if (!endpointName || cavityVal == null) return null;
       for (const line of lines) {
-        // revisa p1
-        if (line.nombre_obj1 === endpointName && line.deduce1 === 'ang' && line.angle_data1) {
-          const ad = line.angle_data1;
-          for (let r = 0; r < (ad.data?.length || 0); r++) {
-            for (let c = 0; c < (ad.data[r]?.length || 0); c++) {
-              const cell = ad.data[r][c];
+        const checkAngle = (angleData) => {
+          if (!angleData || !Array.isArray(angleData.data)) return null;
+          for (let r = 0; r < angleData.data.length; r++) {
+            for (let c = 0; c < angleData.data[r].length; c++) {
+              const cell = angleData.data[r][c];
               if (cell != null && cell.toString().trim() === cavityVal.toString().trim()) {
-                return { general: ad.generalDeduce ?? '', column: ad.columnDeduce?.[c] ?? '' };
+                const g = parseFloat(angleData.generalDeduce ?? 0);
+                const colVal = parseFloat(angleData.columnDeduce?.[c] ?? 0);
+                return g + colVal;
               }
             }
           }
+          return null;
+        };
+
+        if (line.nombre_obj1 === endpointName && line.deduce1 === 'ang') {
+          const res = checkAngle(line.angle_data1);
+          if (res !== null) return res;
         }
-        // revisa p2
-        if (line.nombre_obj2 === endpointName && line.deduce2 === 'ang' && line.angle_data2) {
-          const ad = line.angle_data2;
-          for (let r = 0; r < (ad.data?.length || 0); r++) {
-            for (let c = 0; c < (ad.data[r]?.length || 0); c++) {
-              const cell = ad.data[r][c];
-              if (cell != null && cell.toString().trim() === cavityVal.toString().trim()) {
-                return { general: ad.generalDeduce ?? '', column: ad.columnDeduce?.[c] ?? '' };
-              }
-            }
-          }
+        if (line.nombre_obj2 === endpointName && line.deduce2 === 'ang') {
+          const res = checkAngle(line.angle_data2);
+          if (res !== null) return res;
         }
       }
       return null;
     };
 
-    // --- Mantener la lógica anterior para valores numéricos de deduce ---
+    // --- Primero revisamos ángulos ---
+    const angleFromSum = findAngleSumForEndpoint(from_item, cavityFrom);
+    const angleToSum = findAngleSumForEndpoint(to_item, cavityTo);
+
+    // --- Luego aplicamos valores numéricos normales ---
     lines.forEach((line) => {
       const extremos = [
         { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
@@ -1168,15 +1164,9 @@ for (; i < end; i++) {
       });
     });
 
-    // --- Ahora verifica ángulos: prioriza 'from' si aplica, si no usa 'to' ---
-    const angleFrom = findAngleForEndpoint(from_item, cavityFrom);
-    const angleTo = findAngleForEndpoint(to_item, cavityTo);
-    const angleToWrite = angleFrom || angleTo;
-
-    if (angleToWrite) {
-      updatedSheet[i][26] = angleToWrite.general; // AA
-      updatedSheet[i][27] = angleToWrite.column;  // AB
-    }
+    // --- Si hay un ángulo, lo sobreescribe en el deduce correspondiente ---
+    if (angleFromSum !== null) updatedSheet[i][24] = angleFromSum;
+    if (angleToSum !== null) updatedSheet[i][25] = angleToSum;
 
     if (distancia === null) {
       updatedSheet[i][22] = 'Ruta no encontrada';
@@ -1186,13 +1176,13 @@ for (; i < end; i++) {
 
     updatedSheet[i][22] = distancia;
     updatedSheet[i][23] = 'Sí';
-
   } catch (error) {
     updatedSheet[i][22] = 'Error en fila';
     updatedSheet[i][23] = 'No';
     console.error(`Error en fila ${i}:`, error);
   }
 }
+
       setCircuitosProcesados(i - 2);
 
       if (i < updatedSheet.length) {
