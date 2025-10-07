@@ -1591,7 +1591,7 @@ case 'Conector':
   fontFamily: 'Segoe UI, Roboto, sans-serif'
 }}>
 
-        <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Caculadora de dimensiones</h3>
+        <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Calculadora de dimensiones</h3>
         <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
       
