@@ -1114,10 +1114,9 @@ for (; i < end; i++) {
 
     const distancia = dijkstra(from_item, to_item);
 
-    updatedSheet[i][24] = ''; // Deduce Lado 1
-    updatedSheet[i][25] = ''; // Deduce Lado 2
+    updatedSheet[i][24] = ''; // Deduce Lado 1 (columna I)
+    updatedSheet[i][25] = ''; // Deduce Lado 2 (columna P)
 
-    // --- helper: busca dentro de angle_data la cavidad y devuelve la suma ---
     const findAngleSumForEndpoint = (endpointName, cavityVal) => {
       if (!endpointName || cavityVal == null) return null;
       for (const line of lines) {
@@ -1148,25 +1147,25 @@ for (; i < end; i++) {
       return null;
     };
 
-    // --- Primero revisamos ángulos ---
-    const angleFromSum = findAngleSumForEndpoint(from_item, cavityFrom);
-    const angleToSum = findAngleSumForEndpoint(to_item, cavityTo);
-
-    // --- Luego aplicamos valores numéricos normales ---
+    // Buscar deduces normales
     lines.forEach((line) => {
       const extremos = [
         { nombre: line.nombre_obj1, valor: parseFloat(line.deduce1) },
         { nombre: line.nombre_obj2, valor: parseFloat(line.deduce2) }
       ];
       extremos.forEach(({ nombre, valor }) => {
-        if (nombre === from_item && !isNaN(valor)) updatedSheet[i][24] = valor;
-        if (nombre === to_item && !isNaN(valor)) updatedSheet[i][25] = valor;
+        // 🔄 CORRECCIÓN: columna I → lado 1, columna P → lado 2
+        if (nombre === to_item && !isNaN(valor)) updatedSheet[i][24] = valor;   // Lado 1
+        if (nombre === from_item && !isNaN(valor)) updatedSheet[i][25] = valor; // Lado 2
       });
     });
 
-    // --- Si hay un ángulo, lo sobreescribe en el deduce correspondiente ---
-    if (angleFromSum !== null) updatedSheet[i][24] = angleFromSum;
-    if (angleToSum !== null) updatedSheet[i][25] = angleToSum;
+    // Buscar ángulos y sobreescribir si aplica
+    const angleToSum = findAngleSumForEndpoint(to_item, cavityTo);       // I → Lado 1
+    const angleFromSum = findAngleSumForEndpoint(from_item, cavityFrom); // P → Lado 2
+
+    if (angleToSum !== null) updatedSheet[i][24] = angleToSum;
+    if (angleFromSum !== null) updatedSheet[i][25] = angleFromSum;
 
     if (distancia === null) {
       updatedSheet[i][22] = 'Ruta no encontrada';
@@ -1182,6 +1181,7 @@ for (; i < end; i++) {
     console.error(`Error en fila ${i}:`, error);
   }
 }
+
 
       setCircuitosProcesados(i - 2);
 
