@@ -1887,18 +1887,6 @@ case 'Conector':
     🧽 {eraserMode ? 'Desactivar borrador' : 'Activar borrador'}
   </button>
     
-    <button
-  onClick={() => setModoModificarExtremos(!modoModificarExtremos)}
-  style={{
-    backgroundColor: modoModificarExtremos ? 'Lime' : 'white',
-    border: '1px solid gray',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    cursor: 'pointer'
-  }}
->
-  🔧 {modoModificarExtremos ? 'Modificar activos' : 'Modificar extremos'}
-</button>
   <button
   onClick={() => {
     setAddingSPL(!addingSPL);
