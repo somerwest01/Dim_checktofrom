@@ -9,8 +9,6 @@ function App() {
   const [mode, setMode] = useState('design');
   const [lines, setLines] = useState([]);
   const [points, setPoints] = useState([]);
-//  const [obj1, setObj1] = useState('Ninguno');
-//  const [obj2, setObj2] = useState('Ninguno');
   const [dimension, setDimension] = useState('');
   const [inputPos, setInputPos] = useState({ x: 0, y: 0 });
   const [showInput, setShowInput] = useState(false);
@@ -29,14 +27,13 @@ function App() {
   const [archivoProcesado, setArchivoProcesado] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
- // const [mostrarExtremos, setMostrarExtremos] = useState(false);
   const [mostrarExcel, setMostrarExcel] = useState(false);
   const [procesandoExcel, setProcesandoExcel] = useState(0);
   const [totalCircuitos, setTotalCircuitos] = useState(0);
   const [circuitosProcesados, setCircuitosProcesados] = useState(0);
   const [modoAnguloRecto, setModoAnguloRecto] = useState(false);
-  const [selectorPos, setSelectorPos] = useState(null); // posición del panel flotante
-  const [selectorEnd, setSelectorEnd] = useState(null); // info del extremo seleccionad
+  const [selectorPos, setSelectorPos] = useState(null); 
+  const [selectorEnd, setSelectorEnd] = useState(null); 
   const [isPanning, setIsPanning] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [addingSPL, setAddingSPL] = useState(false);
@@ -47,37 +44,26 @@ function App() {
   const [columnas, setColumnas] = useState(3);
   const [tempNewLineDetails, setTempNewLineDetails] = useState(null);
   const [connectorAngleData, setConnectorAngleData] = useState({
-  lineIndex: null, // Índice de la línea que contiene el conector
-  end: null,       // 'p1' o 'p2'
-  data: [],        // Array bidimensional para el contenido de la tabla
-  filas: 5,        // Filas específicas de este conector
-  columnas: 3,     // Columnas específicas de este conector
+  lineIndex: null,
+  end: null,       
+  data: [], 
+  filas: 5,
+  columnas: 3,  
   generalDeduce: '',
   columnDeduce: [],
 });
-
   const [drawingStep, setDrawingStep] = useState(0); 
   const [tempObj1Type, setTempObj1Type] = useState('Ninguno'); 
-
-  //  Nuevo estado para el menú flotante contextual
   const [floatingMenu, setFloatingMenu] = useState(null);
   const [menuValues, setMenuValues] = useState({ name: '', deduce: '' });
-  
-  //  Nueva referencia para el contenedor principal
   const containerRef = useRef(null);
-  
-  //  Estados para la funcionalidad de deshacer
   const [history, setHistory] = useState([[]]);
   const [historyStep, setHistoryStep] = useState(0);
-
-  //  Nuevo estado para la línea temporal del SPL
   const [tempSPL, setTempSPL] = useState(null);
-  
-  //  NUEVO ESTADO: Distancia de propagación configurable
   const [propagationDistance, setPropagationDistance] = useState(5);
 
 
-  //  Nueva función para manejar el historial y los cambios de estado
+  //  FUNCIONES 
   const handleStateChange = (newLines) => {
       const newHistory = history.slice(0, historyStep + 1);
       newHistory.push(newLines);
@@ -86,7 +72,6 @@ function App() {
       setLines(newLines);
   };
   
-  // ✅ Nueva función para deshacer
   const handleUndo = () => {
     if (historyStep > 0) {
       const newStep = historyStep - 1;
@@ -129,7 +114,7 @@ const renderTablaMenu = () => {
 
   const standardColumnWidth = '40px';
   const smallFontSize = '9px';
-  const tableFontFamily = 'Arial, sans-serif'; // Fuente moderna
+  const tableFontFamily = 'Arial, sans-serif';
 
   const tableStyle = {
     borderCollapse: 'collapse',
@@ -143,7 +128,7 @@ const renderTablaMenu = () => {
     textAlign: 'center',
     fontSize: smallFontSize,
     width: standardColumnWidth,
-    height: '14px', // Altura fija de 30px
+    height: '14px',
     overflow: 'hidden',
     whiteSpace: 'nowrap',
   };
@@ -162,7 +147,7 @@ const renderTablaMenu = () => {
   const nameCellStyle = {
     ...cellStyle,
     backgroundColor: '#F0FFF0',
-    height: '14px', // Altura fija de 30px
+    height: '14px', 
   };
 
   const numericCellStyle = {
@@ -189,7 +174,6 @@ const renderTablaMenu = () => {
     margin: 0,
   };
   const handleColumnDeduceChange = (colIndex, value) => {
-      // Opcional: acepta solo números
       const numericValue = value.replace(/[^0-9]/g, ''); 
       setConnectorAngleData(prev => {
           const newDeduce = [...prev.columnDeduce];
@@ -199,14 +183,12 @@ const renderTablaMenu = () => {
   };
   
   const handleDataChange = (rowIndex, colIndex, value) => {
-      // Función para actualizar un valor específico de la tabla
-      const newData = JSON.parse(JSON.stringify(data)); // Copia profunda
+      const newData = JSON.parse(JSON.stringify(data)); 
       if (!newData[rowIndex]) newData[rowIndex] = [];
       newData[rowIndex][colIndex] = value;
       setConnectorAngleData(prev => ({ ...prev, data: newData }));
   };
-  
-  // Función para actualizar el valor general (ej. el que está en vertical)
+
   const handleGeneralDeduceChange = (value) => {
       const numericValue = value.replace(/[^0-9.]/g, '');
       setConnectorAngleData(prev => ({ ...prev, generalDeduce: value }));
@@ -228,7 +210,7 @@ const renderTablaMenu = () => {
       flexDirection: 'column',
       minWidth: '400px',
       maxWidth: '600px',
-      fontFamily: tableFontFamily, // Fuente para el contenedor exterior
+      fontFamily: tableFontFamily, 
     }}>
       <div style={{
         display: 'flex',
@@ -350,7 +332,6 @@ const renderTablaMenu = () => {
     return;
   }
 
-  // ✅ Incluir columnDeduce en el objeto que se guarda en la línea
   const newAngleData = { data, filas, columnas, generalDeduce, columnDeduce }; 
   
     const updatedLines = [...lines];
@@ -364,12 +345,10 @@ const renderTablaMenu = () => {
       lineToUpdate.deduce2 = "ang";
     }
 
-    // 3. Guardar el estado
     handleStateChange(updatedLines); 
-    
-    // 4. Resetear y cerrar
     setTablaMenu(false);
     setConnectorAngleData({ lineIndex: null, end: null, data: [], filas: 5, columnas: 3, generalDeduce: '', columnDeduce: [] });
+        
   }}>Agregar ángulo</button>
           <button onClick={() => {
     setTablaMenu(false);
@@ -386,7 +365,7 @@ const botonExpandido = {
   width: '150px'
 };
   const handleMouseDown = (e) => {
-  if (e.evt.button === 1) { // botón central (scroll)
+  if (e.evt.button === 1) { 
     setIsPanning(true);
     setLastPos({ x: e.evt.clientX, y: e.evt.clientY });
   }
@@ -503,7 +482,6 @@ const handleDeleteSPL = () => {
   // Busca la otra línea que comparte el mismo punto SPL
   const otherLineIndex = lines.findIndex((line, idx) => {
     if (idx === lineIndex) return false;
-    // ✅ CORREGIDO: Usando 'propagationDistance' en lugar de 'proximityThreshold'
     const p1Matches = Math.hypot(line.p1.x - splPoint.x, line.p1.y - splPoint.y) < propagationDistance;
     const p2Matches = Math.hypot(line.p2.x - splPoint.x, line.p2.y - splPoint.y) < propagationDistance;
     return p1Matches || p2Matches;
@@ -551,10 +529,6 @@ const handleDeleteSPL = () => {
 
   const [hoverBoton, setHoverBoton] = useState(null);
 
-
-  // ✅ Usando la nueva variable de estado
-  // const proximityThreshold = 35;
-
   const getClosestEndpoint = (pos) => {
     let closest = null;
     let minDist = Infinity;
@@ -564,7 +538,7 @@ const handleDeleteSPL = () => {
         const point = line[end];
         const objType = line[end === 'p1' ? 'obj1' : 'obj2'];
         const dist = Math.hypot(pos.x - point.x, pos.y - point.y);
-        // ✅ Usando la nueva variable de estado
+
         if (dist < propagationDistance && dist < minDist) {
           closest = { point, objType }; 
           minDist = dist;
@@ -586,16 +560,15 @@ const handleStageClick = (e) => {
 const menuX = (e.evt.clientX - containerRect.left) + 10;
 const menuY = (e.evt.clientY - containerRect.top) + 10;
 
-  // 1. Lógica de AGREGAR SPL (Máxima Prioridad)
   if (addingSPL) {
     e.cancelBubble = true;
 
-    // Caso 1: Clic en un SEGMENTO de línea (tempSPL está activo) -> DIVIDIR LA LÍNEA
+
     if (tempSPL) {
         
       const { lineIndex, proj, original, dim1, dim2 } = tempSPL;
       
-      // Creamos la primera nueva línea (p1 original -> SPL)
+
       const lineA = {
         p1: { ...original.p1 },
         p2: { x: proj.x, y: proj.y },
@@ -609,7 +582,7 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
         item: original.item || null
       };
       
-      // Creamos la segunda nueva línea (SPL -> p2 original)
+
       const lineB = {
         p1: { x: proj.x, y: proj.y },
         p2: { ...original.p2 },
@@ -624,7 +597,7 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
       };
 
       const updated = [...lines];
-      // Reemplaza la línea original con las dos nuevas líneas (A y B)
+
       updated.splice(lineIndex, 1, lineA, lineB); 
       
       handleStateChange(updated);
@@ -634,7 +607,6 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
       return; // ⬅️ Salimos para evitar ejecutar la lógica de dibujo
     }
       
-    // Caso 2: Clic sobre un extremo existente (Para cambiar su tipo a SPL)
     if (e.target.attrs.id && (e.target.attrs.id.startsWith('point') || e.target.attrs.id.startsWith('label'))) {
       const lineIndex = e.target.attrs.id.startsWith('point') ? e.target.attrs.lineIndex : e.target.parent.attrs.lineIndex;
       const endType = e.target.attrs.id.startsWith('point') ? e.target.attrs.endType : e.target.parent.attrs.endType;
@@ -655,14 +627,13 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
       return; // ⬅️ Salimos para evitar ejecutar la lógica de dibujo
     }
 
-    // Caso 3: Clic en el lienzo (fondo) -> CANCELAR el modo SPL
+
     setStatusMessage('⚠️ Modo SPL cancelado.');
     setAddingSPL(false);
     setTempSPL(null); 
     return; // ⬅️ Salimos para evitar ejecutar la lógica de dibujo
   }
 
-  // --- Lógica de Goma (EraserMode) (Prioridad 2) ---
   if (eraserMode) {
     if (e.target.attrs.id && e.target.attrs.id.startsWith('line-')) {
       const index = e.target.attrs.lineIndex;
@@ -673,10 +644,10 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
     return;
   }
     
-  // --- Lógica del Lápiz (PencilMode) (Prioridad 3) ---
+
   if (pencilMode) {
 
-    // **1. DETECCIÓN DE PUNTO DE INICIO (drawingStep === 0)**
+
     if (drawingStep === 0) {
       const snap = getClosestEndpoint(pos); // Devuelve { point, objType }
 
@@ -700,7 +671,7 @@ const menuY = (e.evt.clientY - containerRect.top) + 10;
       setDrawingStep(1); // Esperando la selección del tipo de Extremo 1
     } 
     
-    // **2. PROCESAR EL SEGUNDO CLIC (drawingStep === 2)**
+
     else if (drawingStep === 2) { 
       let adjustedPos = { ...pos };
       
@@ -832,7 +803,6 @@ const confirmDimension = () => {
   setStatusMessage(`✅ Línea completada y dibujada con dimensión ${finalDimension}mm.`);
 };
 
-// ✅ ELIMINADA LA FUNCION updateNombre, su logica se mueve a handleUpdateFloatingMenu
 
   const handleLineClick = (index) => {
     if (eraserMode) {
@@ -1345,9 +1315,7 @@ const handleUpdateFloatingMenu = () => {
       targetLine.deduce2 = newDeduce;
     }
   }
-  
-  // ✅ Lógica de PROPAGACIÓN unificada para todos los tipos
-  // Busca otros extremos unidos en la misma posición
+
   updatedLines.forEach((line) => {
       const p1Proximity = Math.hypot(line.p1.x - targetPos.x, line.p1.y - targetPos.y);
       const p2Proximity = Math.hypot(line.p2.x - targetPos.x, line.p2.y - targetPos.y);
@@ -1364,7 +1332,7 @@ const handleUpdateFloatingMenu = () => {
   setFloatingMenu(null);
 };
   
-  // ✅ Nueva función para renderizar el menú flotante
+
   const renderFloatingMenu = () => {
     if (!floatingMenu) return null;
 
@@ -1481,17 +1449,17 @@ case 'Conector':
         if (!eraserMode && !pencilMode) {
           e.cancelBubble = true; // Evita que el clic se propague al Stage
           
-          // ✅ Nuevo: Obtener la posición del contenedor
+
           const containerRect = containerRef.current.getBoundingClientRect();
           
-          // ✅ Nuevo: Calcular la posición del menú
+
           const menuX = e.evt.clientX - containerRect.left;
           const menuY = e.evt.clientY - containerRect.top;
           
           const name = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
           const deduce = end === 'p1' ? line.deduce1 : line.deduce2;
           
-          // ✅ Se usan las nuevas coordenadas calculadas
+
           setFloatingMenu({ x: menuX, y: menuY, lineIndex: index, end, type: tipo });
           setMenuValues({ name, deduce });
         }
@@ -1523,10 +1491,8 @@ case 'Conector':
                 stroke="darkred"
                 strokeWidth={0.5}
                 rotation={45}      // Rota 45° para que parezca un diamante
-                // **POSICIONAMIENTO:** // Lo movemos a la esquina inferior derecha del conector (10, 10)
                 x={8} 
                 y={8}
-                // Hacemos que sea transparente a los clics
                 listening={false} 
               />
             )}
@@ -1538,16 +1504,16 @@ case 'Conector':
         return <Circle {...commonProps} x={x} y={y} radius={4} fill={isHovered ? 'Lime' : 'black'} />;
       case 'SPL': {
         const nombre = end === 'p1' ? line.nombre_obj1 : line.nombre_obj2;
-        const radius = 9; // ✅ Círculo de tamaño fijo
+        const radius = 9;
         
-        // **✅ Lógica de ajuste de fuente mejorada**
+
         let calculatedFontSize = 6;
         if (nombre.length > 3) {
             calculatedFontSize = Math.max(5, 6 - (nombre.length - 3) * 0.5);
         }
 
         return (
-          // ✅ El Group se centra en la coordenada (x,y) de la línea
+
           <Group {...commonProps} x={x} y={y}>
             <Circle
               radius={radius}
@@ -1557,7 +1523,7 @@ case 'Conector':
             />
             <Text
               text={nombre}
-              fontSize={calculatedFontSize} // ✅ Ahora usa el tamaño calculado
+              fontSize={calculatedFontSize} 
               fill="black"
               fontStyle="bold"
               width={radius * 2}
@@ -1567,7 +1533,7 @@ case 'Conector':
               offsetX={radius}
               offsetY={radius}
               wrap="none"
-              ellipsis={false} // ✅ Desactiva la elipsis para que no trunque el texto
+              ellipsis={false} 
             />
           </Group>
         );
