@@ -982,7 +982,7 @@ setRutaCalculada(result.path);
   }
        const data = JSON.stringify(lines);
        const blob = new Blob([data], { type: 'application/json' });
-       saveAs(blob, '${numeroParte.trim()}.json`);
+       saveAs(blob, `${numeroParte.trim()}.json`);
    };
 
    const handleAbrir = (event) => {
@@ -1168,7 +1168,7 @@ for (; i < end; i++) {
         XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
         const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        saveAs(blob, importedFileName || '${numeroParte.trim()}.xlsx`);
+        saveAs(blob, importedFileName || `${numeroParte.trim()}.xlsx`);
         setProcesandoExcel(false);
         setImportedFileName(null);
         setTotalCircuitos(0);
@@ -1246,7 +1246,7 @@ const handleExportExcel = () => {
 
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-  saveAs(blob, '${numeroParte.trim()}.xlsx`);
+  saveAs(blob, `${numeroParte.trim()}.xlsx`);
 
   setStatusMessage('✅ Archivo listo para descargar.');
   setArchivoProcesado(false);
