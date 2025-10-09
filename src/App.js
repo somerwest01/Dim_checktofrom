@@ -1168,7 +1168,7 @@ for (; i < end; i++) {
         XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, sheetName);
         const excelBuffer = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        saveAs(blob, importedFileName || 'resultado_procesado.xlsx');
+        saveAs(blob, importedFileName || '${numeroParte.trim()}.xlsx');
         setProcesandoExcel(false);
         setImportedFileName(null);
         setTotalCircuitos(0);
