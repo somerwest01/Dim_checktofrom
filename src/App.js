@@ -61,7 +61,8 @@ function App() {
   const [historyStep, setHistoryStep] = useState(0);
   const [tempSPL, setTempSPL] = useState(null);
   const [propagationDistance, setPropagationDistance] = useState(5);
-
+  const [numeroParte, setNumeroParte] = useState('');
+  
 
   //  FUNCIONES 
   const handleStateChange = (newLines) => {
@@ -975,9 +976,13 @@ setRutaCalculada(result.path);
 };
 
    const handleGuardar = () => {
+    if (numeroParte.trim() === '') {
+    alert('⚠️ Debes ingresar un número de parte antes de guardar el dibujo.');
+    return;
+  }
        const data = JSON.stringify(lines);
        const blob = new Blob([data], { type: 'application/json' });
-       saveAs(blob, 'dibujo_guardado.json');
+       saveAs(blob, '${numeroParte.trim()}.json');
    };
 
    const handleAbrir = (event) => {
@@ -1201,6 +1206,10 @@ for (; i < end; i++) {
   
 
 const handleExportExcel = () => {
+    if (numeroParte.trim() === '') {
+    alert('⚠️ Debes ingresar un número de parte antes de procesar el Excel.');
+    return;
+  }
   setStatusMessage('📤 Procesando archivo para exportar...');
   
   const exportData = lines.map((line, index) => {
@@ -1237,7 +1246,7 @@ const handleExportExcel = () => {
 
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-  saveAs(blob, 'resultado_procesado.xlsx');
+  saveAs(blob, '${numeroParte.trim()}.xlsx');
 
   setStatusMessage('✅ Archivo listo para descargar.');
   setArchivoProcesado(false);
@@ -1558,6 +1567,28 @@ case 'Conector':
 }}>
 
         <h3 style= {{ fontSize: '18px', textAlign: 'center' }}>Calculadora de dimensiones</h3>
+  <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+  <input
+    type="text"
+    placeholder="Número de parte"
+    value={numeroParte}
+    onChange={(e) => setNumeroParte(e.target.value)}
+    style={{
+      width: '80%',
+      padding: '8px',
+      borderRadius: '8px',
+      border: numeroParte.trim() === '' ? '2px solid red' : '2px solid #00c853',
+      outline: 'none',
+      textAlign: 'center',
+      fontFamily: 'Segoe UI, Roboto, sans-serif',
+      fontSize: '14px',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
+      boxShadow: numeroParte.trim() === '' 
+        ? '0 0 4px rgba(255,0,0,0.5)' 
+        : '0 0 6px rgba(0,200,83,0.4)',
+    }}
+  />
+</div>
         <hr style={{ borderTop: '1px solid lightgray', margin: '10px 0' }} />
 
       
